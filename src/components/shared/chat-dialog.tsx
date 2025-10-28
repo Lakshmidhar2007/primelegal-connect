@@ -16,31 +16,40 @@ type ChatDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   lawyerId: string;
+  userId?: string; // Optional: can be passed in from lawyer dashboard
+  chatId?: string; // Optional: can be passed in from lawyer dashboard
 };
 
-export function ChatDialog({ open, onOpenChange, lawyerId }: ChatDialogProps) {
-  const { user } = useUser();
+export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId, chatId: initialChatId }: ChatDialogProps) {
+  const { user: currentUser } = useUser();
   const firestore = useFirestore();
-  const [chatId, setChatId] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<string | null>(initialChatId || null);
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
 
-  const lawyerDocRef = useMemoFirebase(() => {
-    if (firestore && lawyerId) {
-      return doc(firestore, 'lawyer_profiles', lawyerId);
+  // Determine whose profile to fetch based on who is viewing the chat
+  const profileId = currentUser?.uid === lawyerId ? initialUserId : lawyerId;
+
+  const profileDocRef = useMemoFirebase(() => {
+    if (firestore && profileId) {
+        // If the current user is the lawyer, we fetch the other user's profile.
+        // If the current user is the client, we fetch the lawyer's profile.
+        const collectionName = currentUser?.uid === lawyerId ? 'users' : 'lawyer_profiles';
+        return doc(firestore, collectionName, profileId);
     }
     return null;
-  }, [firestore, lawyerId]);
-  const { data: lawyerProfile } = useDoc(lawyerDocRef);
+  }, [firestore, profileId, currentUser?.uid, lawyerId]);
+  const { data: profile } = useDoc(profileDocRef);
+
 
   useEffect(() => {
-    if (user && lawyerId) {
-      const generatedChatId = [user.uid, lawyerId].sort().join('_');
+    if (!initialChatId && currentUser && lawyerId) {
+      const generatedChatId = [currentUser.uid, lawyerId].sort().join('_');
       setChatId(generatedChatId);
     }
-  }, [user, lawyerId]);
+  }, [currentUser, lawyerId, initialChatId]);
 
   const messagesQuery = useMemoFirebase(() => {
     if (firestore && chatId) {
@@ -58,14 +67,14 @@ export function ChatDialog({ open, onOpenChange, lawyerId }: ChatDialogProps) {
   useEffect(scrollToBottom, [messages]);
   
   const handleSendMessage = async () => {
-    if (!message.trim() || !user || !chatId || !firestore) return;
+    if (!message.trim() || !currentUser || !chatId || !firestore) return;
 
     setIsSending(true);
 
     const messageData = {
       id: uuidv4(),
       text: message,
-      senderId: user.uid,
+      senderId: currentUser.uid,
       timestamp: serverTimestamp(),
     };
     
@@ -76,11 +85,13 @@ export function ChatDialog({ open, onOpenChange, lawyerId }: ChatDialogProps) {
         const chatDoc = await getDoc(chatRef);
         if (!chatDoc.exists()) {
             await setDoc(chatRef, {
-                participants: [user.uid, lawyerId],
+                participants: [currentUser.uid, lawyerId].sort(),
                 createdAt: serverTimestamp(),
             });
             
-            const aiResponse = await getAIChatResponse({ lawyerName: (lawyerProfile as any)?.firstName || 'the lawyer' });
+            const lawyerName = (currentUser?.uid === lawyerId ? 'You' : (profile as any)?.firstName) || 'the lawyer';
+            const aiResponse = await getAIChatResponse({ lawyerName });
+
             if (aiResponse.success && aiResponse.data) {
                 const aiMessage = {
                     id: uuidv4(),
@@ -105,29 +116,32 @@ export function ChatDialog({ open, onOpenChange, lawyerId }: ChatDialogProps) {
 
   const getInitials = (name: string = '') => name.charAt(0).toUpperCase();
 
+  const profileName = `${(profile as any)?.firstName} ${(profile as any)?.lastName}` || t('Chat');
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg h-[70vh] flex flex-col p-0">
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="flex items-center gap-3">
              <Avatar>
-                <AvatarImage src={(lawyerProfile as any)?.photoURL} />
-                <AvatarFallback>{getInitials((lawyerProfile as any)?.firstName)}</AvatarFallback>
+                <AvatarImage src={(profile as any)?.photoURL} />
+                <AvatarFallback>{getInitials((profile as any)?.firstName)}</AvatarFallback>
             </Avatar>
-            {`${(lawyerProfile as any)?.firstName} ${(lawyerProfile as any)?.lastName}` || t('Lawyer')}
+            {profileName}
           </DialogTitle>
         </DialogHeader>
         <div className="flex-grow p-4 overflow-y-auto">
            {isLoading ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> 
            : (messages || []).map((msg: any, index: number) => (
-             <div key={index} className={cn("flex items-end gap-2 mb-4", msg.senderId === user?.uid ? "justify-end" : "justify-start")}>
-                 {msg.senderId !== user?.uid && (
+             <div key={index} className={cn("flex items-end gap-2 mb-4", msg.senderId === currentUser?.uid ? "justify-end" : "justify-start")}>
+                 {msg.senderId !== currentUser?.uid && (
                     <Avatar className="h-8 w-8">
-                       <AvatarImage src={msg.senderId === 'ai-bot' ? undefined : (lawyerProfile as any)?.photoURL} />
-                       <AvatarFallback>{msg.senderId === 'ai-bot' ? 'AI' : getInitials((lawyerProfile as any)?.firstName)}</AvatarFallback>
+                       <AvatarImage src={msg.senderId === 'ai-bot' ? undefined : (profile as any)?.photoURL} />
+                       <AvatarFallback>{msg.senderId === 'ai-bot' ? 'AI' : getInitials((profile as any)?.firstName)}</AvatarFallback>
                     </Avatar>
                  )}
-                 <div className={cn("max-w-xs md:max-w-md p-3 rounded-lg", msg.senderId === user?.uid ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                 <div className={cn("max-w-xs md:max-w-md p-3 rounded-lg", msg.senderId === currentUser?.uid ? "bg-primary text-primary-foreground" : "bg-muted")}>
                    <p className="text-sm">{msg.text}</p>
                  </div>
              </div>
