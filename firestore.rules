@@ -1,97 +1,72 @@
-/**
- * @file Firebase Security Rules for PrímeLegal Connect
- * @version 2
- *
- * @description
- * Core Philosophy:
- * This ruleset enforces a user-ownership model for private user data and a public read, owner-write model for lawyer profiles.
- *
- * Data Structure:
- * - /users/{userId}: Stores private user account data, accessible only to the user themselves.
- * - /lawyer_profiles/{lawyerId}: Stores public lawyer profile data, readable by anyone but writable only by the owning lawyer.
- * - Cases are stored as an array inside the user document, which is not ideal for rules, but acceptable for this prototyping phase.
- *
- * Key Security Decisions:
- * - User listing is implicitly denied by the structure.
- * - Public read access is granted only to the `lawyer_profiles` collection.
- * - Missing data validation to allow for rapid prototyping.
- *
- * Denormalization for Authorization:
- * - Lawyer profiles use the `lawyerId` as the document ID, which must match the `userId` inside the document, and `request.auth.uid` of the user creating/modifying the document. This simplifies ownership checks.
- *
- * Structural Segregation:
- * - Lawyer profiles are stored in a separate `lawyer_profiles` collection to allow public read access without exposing private user data.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user account documents.
+     * @description Secure user account information.
      * @path /users/{userId}
-     * @allow (create) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can create their own document at /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @deny (create) User Abcdefg can't create a document at /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @allow (get, list) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can read their own document at /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @deny (get, list) User Abcdefg cannot read user Dx2RT7SMBqMVxOkNbmpgrDply1E3's document at /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @allow (update, delete) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can update/delete their own document at /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @deny (update, delete) User Abcdefg cannot update/delete user Dx2RT7SMBqMVxOkNbmpgrDply1E3's document at /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
+     * @allow (create) User with UID 'test_user' can create their own account (userId == auth.uid).
+     * @allow (get, update, delete) User with UID 'test_user' can access their own account.
+     * @deny (create) User with UID 'other_user' cannot create an account for 'test_user'.
+     * @deny (get, update, delete) User with UID 'other_user' cannot access the 'test_user' account.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Controls access to public lawyer profile documents.
+     * @description Secure public lawyer profiles.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get, list) Anyone can read lawyer profiles.
-     * @allow (create) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can create their own profile at /lawyer_profiles/Dx2RT7SMBqMVxOkNbmpgrDply1E3 if userId matches.
-     * @deny (create) User Abcdefg can't create a profile at /lawyer_profiles/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @allow (update, delete) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can update/delete their own profile at /lawyer_profiles/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @deny (update, delete) User Abcdefg cannot update/delete user Dx2RT7SMBqMVxOkNbmpgrDply1E3's profile at /lawyer_profiles/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @principle Allows public reads but enforces ownership for writes.
+     * @allow (get, list) Anyone can read the lawyer profiles.
+     * @allow (create, update, delete) Only the lawyer with UID 'test_lawyer' can create/update/delete their own profile (lawyerId == auth.uid).
+     * @deny (create, update, delete) User with UID 'other_user' cannot create/update/delete the 'test_lawyer' profile.
+     * @principle Allows public read access while enforcing ownership for write operations.
      */
     match /lawyer_profiles/{lawyerId} {
+      function isOwner(lawyerId) {
+        return request.auth != null && request.auth.uid == lawyerId;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       allow get, list: if true;
-      allow create: if isSignedIn() && request.auth.uid == lawyerId && request.resource.data.userId == lawyerId;
-      allow update: if isExistingOwnerLawyerProfiles(lawyerId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwnerLawyerProfiles(lawyerId);
+      allow create: if isSignedIn() && isOwner(lawyerId);
+      allow update: if isOwner(lawyerId);
+      allow delete: if isOwner(lawyerId);
     }
 
         /**
-     * @description Cases are stored inside the User document as an array, this is not ideal.
-     * @path /cases
-     * @allow (list) Any signed in user can list cases.
-     * @allow (get, create, update, delete) No access.
-     * @principle Allows public reads but enforces ownership for writes.
+     * @description Prevents unauthenticated users from listing appointments.
+     * @path /appointments
+     * @allow (get) Authenticated users can retrieve data.
+     * @allow (list) Authenticated users can list data.
+     * @deny (create, update, delete) No one can create, update or delete data in this path.
+     * @principle Prevents open write access.
      */
-        match /cases/{caseId} {
-            allow list: if isSignedIn();
-            allow get, create, update, delete: if false;
+    match /appointments/{document} {
+        function isSignedIn() {
+          return request.auth != null;
         }
-
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    function isOwnerLawyerProfiles(lawyerId) {
-      return isSignedIn() && request.auth.uid == lawyerId;
-    }
-
-    function isExistingOwnerLawyerProfiles(lawyerId) {
-      return isOwnerLawyerProfiles(lawyerId) && resource != null;
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
     }
 
   }
