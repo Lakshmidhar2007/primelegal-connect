@@ -36,6 +36,24 @@
           "type": "string",
           "description": "URL of the user's profile picture.",
           "format": "uri"
+        },
+        "specialty": {
+            "type": "string",
+            "description": "The lawyer's primary area of legal practice."
+        },
+        "bio": {
+            "type": "string",
+            "description": "A professional biography for the lawyer."
+        },
+        "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "The lawyer's professional website."
+        },
+        "linkedin": {
+            "type": "string",
+            "format": "uri",
+            "description": "A link to the lawyer's LinkedIn profile."
         }
       },
       "required": [
