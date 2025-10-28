@@ -10,12 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { BrainCircuit, Loader2, Sparkles } from 'lucide-react';
+import { BrainCircuit, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useUser } from '@/firebase';
 import { AuthDialog } from '@/components/auth/auth-dialog';
 import { useTranslation } from '@/hooks/use-translation';
-import { AskQuestionDialog } from '../shared/ask-question-dialog';
+import { AIInitialQueryResponseOutput } from '@/ai/flows/ai-initial-query-response';
 
 const formSchema = z.object({
   query: z.string().min(10, {
@@ -28,7 +28,7 @@ type HeroSectionProps = {
 };
 
 export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [aiResponse, setAiResponse] = useState<AIInitialQueryResponseOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -55,7 +55,7 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
     const result = await getAIResponse({ query: values.query });
 
     if (result.success && result.data) {
-      setAiResponse(result.data.initialResponse);
+      setAiResponse(result.data);
     } else {
       setError(result.error || t('Failed to get a response.'));
     }
@@ -161,7 +161,8 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
             )}
 
             {error && (
-                <div className="mt-6 text-red-500">
+                <div className="mt-6 text-red-500 bg-red-500/10 p-4 rounded-md flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5" />
                     <p>{t(error)}</p>
                 </div>
             )}
@@ -175,7 +176,20 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="prose prose-sm max-w-none text-foreground/90 prose-p:text-foreground/90 prose-strong:text-foreground">
-                  <p>{t(aiResponse)}</p>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg">{t('Problem')}</h3>
+                      <p className="mt-1">{t(aiResponse.problem)}</p>
+                    </div>
+                     <div>
+                      <h3 className="font-semibold text-lg">{t('Solution')}</h3>
+                      <p className="mt-1">{t(aiResponse.solution)}</p>
+                    </div>
+                     <div>
+                      <h3 className="font-semibold text-lg">{t('Applicable Indian Penal Code Sections')}</h3>
+                      <p className="mt-1 whitespace-pre-wrap">{t(aiResponse.ipcSections)}</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}

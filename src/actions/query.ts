@@ -1,10 +1,10 @@
 'use server';
 
-import { aiInitialQueryResponse, AIInitialQueryResponseInput } from '@/ai/flows/ai-initial-query-response';
+import { aiInitialQueryResponse, AIInitialQueryResponseInput, AIInitialQueryResponseOutput } from '@/ai/flows/ai-initial-query-response';
 
 type AIResponse = {
   success: boolean;
-  data?: { initialResponse: string };
+  data?: AIInitialQueryResponseOutput;
   error?: string;
 }
 
