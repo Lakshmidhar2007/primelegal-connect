@@ -35,28 +35,16 @@ export function HowItWorks({ onAskQuestionClick }: HowItWorksProps) {
         </p>
       </div>
       <div className="mt-12 grid gap-8 md:grid-cols-3">
-        {steps.map((step, i) => {
-          const card = (
-            <Card key={step.title} className="flex flex-col text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-black text-white animate-fade-in-up overflow-hidden border border-transparent hover:border-primary hover:scale-105" style={{animationDelay: `${400 + 150 * i}ms`}}>
-              <CardHeader className="items-center p-6 flex-grow">
-                <CardTitle className="mt-4 font-headline text-2xl">{step.title}</CardTitle>
-                <CardDescription className="px-6 pb-6 text-white/80 flex-grow">
-                {step.description}
-              </CardDescription>
-              </CardHeader>
-            </Card>
-          );
-
-          if (step.id === 'ask' || step.id === 'insights') {
-            return (
-              <div key={step.id} onClick={onAskQuestionClick} className="cursor-pointer">
-                {card}
-              </div>
-            );
-          }
-          
-          return card;
-        })}
+        {steps.map((step, i) => (
+          <Card key={step.title} className="flex flex-col text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-black text-white animate-fade-in-up overflow-hidden border border-transparent hover:border-primary hover:scale-105" style={{animationDelay: `${400 + 150 * i}ms`}}>
+            <CardHeader className="items-center p-6 flex-grow">
+              <CardTitle className="mt-4 font-headline text-2xl">{step.title}</CardTitle>
+              <CardDescription className="px-6 pb-6 text-white/80 flex-grow">
+              {step.description}
+            </CardDescription>
+            </CardHeader>
+          </Card>
+        ))}
       </div>
     </section>
   );
