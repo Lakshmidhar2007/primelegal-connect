@@ -166,7 +166,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
 
   return (
     <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="flex gap-4">
             <FormField
                 control={form.control}
@@ -365,7 +365,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                 {t('Login')}
             </Button>
         </div>
-        </form>
+      </form>
     </Form>
   );
 }
