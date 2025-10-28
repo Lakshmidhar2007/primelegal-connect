@@ -25,7 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
@@ -43,14 +43,12 @@ export function DocumentForm() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const userDocRef = useMemoFirebase(() => {
+  const casesCollectionRef = useMemoFirebase(() => {
     if (firestore && user) {
-      return doc(firestore, 'users', user.uid);
+      return collection(firestore, 'users', user.uid, 'cases');
     }
     return null;
   }, [firestore, user]);
-
-  const { data: userProfile } = useDoc(userDocRef);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -63,7 +61,7 @@ export function DocumentForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore || !userDocRef) {
+    if (!user || !firestore || !casesCollectionRef) {
         toast({
             variant: 'destructive',
             title: 'Authentication Error',
@@ -76,11 +74,8 @@ export function DocumentForm() {
     try {
         const file = values.file[0];
         
-        // Generate a unique ID for the new case client-side
-        const newCaseId = doc(collection(firestore, 'users')).id;
-
+        // Firestore will generate a unique ID for the new case
         const newCase = {
-            caseId: newCaseId,
             caseSubject: values.caseSubject,
             documentType: values.documentType,
             notes: values.notes,
@@ -89,11 +84,11 @@ export function DocumentForm() {
             status: 'Submitted',
         };
 
-        const existingCases = (userProfile as any)?.cases || [];
-        const updatedCases = [...existingCases, newCase];
+        const docRef = await addDocumentNonBlocking(casesCollectionRef, newCase);
         
-        setDocumentNonBlocking(userDocRef, { cases: updatedCases }, { merge: true });
-        
+        // Optionally add the generated ID to the document
+        // updateDocumentNonBlocking(doc(casesCollectionRef, docRef.id), { caseId: docRef.id });
+
         toast({
           title: 'Case Filed Successfully',
           description: `Your case regarding "${values.caseSubject}" has been submitted.`,

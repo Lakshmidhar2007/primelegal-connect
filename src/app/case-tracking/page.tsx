@@ -17,8 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
@@ -41,18 +41,18 @@ export default function CaseTrackingPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const userDocRef = useMemoFirebase(() => {
+  const casesCollectionRef = useMemoFirebase(() => {
     if (firestore && user) {
-      return doc(firestore, 'users', user.uid);
+      return collection(firestore, 'users', user.uid, 'cases');
     }
     return null;
   }, [firestore, user]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+  const { data: cases, isLoading: areCasesLoading } = useCollection(casesCollectionRef);
 
-  const cases = (userProfile as any)?.cases?.sort((a: any, b: any) => new Date(b.submitted).getTime() - new Date(a.submitted).getTime()) || [];
+  const sortedCases = cases?.sort((a, b) => new Date(b.submitted).getTime() - new Date(a.submitted).getTime()) || [];
 
-  const isLoading = isUserLoading || isProfileLoading;
+  const isLoading = isUserLoading || areCasesLoading;
 
   return (
     <div className="container py-12 lg:py-24">
@@ -86,8 +86,8 @@ export default function CaseTrackingPage() {
                       <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto" /></TableCell>
                     </TableRow>
                   ))
-                ) : cases && cases.length > 0 ? (
-                  cases.map((caseItem: any) => (
+                ) : sortedCases && sortedCases.length > 0 ? (
+                  sortedCases.map((caseItem: any) => (
                     <TableRow key={caseItem.caseId}>
                       <TableCell className="font-medium">{caseItem.caseSubject}</TableCell>
                       <TableCell>{format(new Date(caseItem.submitted), 'PPP')}</TableCell>
