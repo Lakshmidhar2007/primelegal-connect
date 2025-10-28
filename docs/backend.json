@@ -157,7 +157,7 @@
         "definition": {
             "entityName": "PublicLawyerProfile",
             "schema": { "$ref": "#/backend/entities/PublicLawyerProfile" },
-            "description": "Stores public-facing information for lawyers. This collection is readable by any authenticated user.",
+            "description": "Stores public-facing information for lawyers. This collection is readable by any authenticated user. Security rules allow authenticated read.",
             "params": [
                 {
                     "name": "lawyerId",
@@ -187,6 +187,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication, account management, and user-specific case submissions. It leverages path-based ownership for user accounts and their associated cases to ensure data privacy and security. This approach simplifies security rules, allowing direct enforcement of access control based on the user's ID. This design prioritizes Authorization Independence, eliminating the need for `get()` calls in security rules, enabling atomic operations. The structure avoids mixing data with different access needs within the same collections (Structural Segregation). Security rules updated."
+    "reasoning": "The Firestore structure is designed to support user authentication, account management, and user-specific case submissions. It leverages path-based ownership for user accounts and their associated cases to ensure data privacy and security. This approach simplifies security rules, allowing direct enforcement of access control based on the user's ID. This design prioritizes Authorization Independence, eliminating the need for `get()` calls in security rules, enabling atomic operations. The structure avoids mixing data with different access needs within the same collections (Structural Segregation). Security rules have been updated to allow authenticated users to list lawyers and manage their own cases."
   }
 }
