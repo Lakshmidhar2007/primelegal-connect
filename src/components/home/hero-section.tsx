@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -57,94 +58,108 @@ export function HeroSection() {
 
   return (
     <>
-      <section id="ask-ai" className="container py-12 text-center lg:py-24">
-        <div className="mx-auto max-w-3xl animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl">
-            Get Instant Legal Insights with AI
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground md:text-xl">
-            Describe your legal issue below, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.
-          </p>
+      <section id="ask-ai" className="relative py-12 text-center lg:py-24">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="https://images.unsplash.com/photo-1541336028-912853587905?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.0.3"
+            alt="Courthouse background"
+            fill
+            style={{ objectFit: 'cover' }}
+            className="opacity-20"
+            data-ai-hint="courthouse building"
+            priority
+          />
+          <div className="absolute inset-0 bg-background/80 bg-gradient-to-b from-background/50 via-background/90 to-background"></div>
         </div>
+        <div className="container relative z-10">
+          <div className="mx-auto max-w-3xl animate-fade-in" style={{ animationDelay: '100ms' }}>
+            <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl">
+              Get Instant Legal Insights with AI
+            </h1>
+            <p className="mt-4 text-lg text-muted-foreground md:text-xl">
+              Describe your legal issue below, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.
+            </p>
+          </div>
 
-        <div className="mx-auto mt-8 max-w-2xl animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-          <Card className="shadow-lg bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-center gap-2 font-headline text-2xl">
-                <Sparkles className="h-6 w-6 text-accent" />
-                Ask Our AI Assistant
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="query"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Textarea
-                            placeholder="For example: 'I had a dispute with my landlord over the security deposit...'"
-                            className="min-h-[120px] resize-none text-base bg-background/70"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || isUserLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      'Get AI Analysis'
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
-          {isLoading && (
-            <Card className="mt-6 text-left">
+          <div className="mx-auto mt-8 max-w-2xl animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+            <Card className="shadow-lg bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline">
-                  <BrainCircuit className="h-6 w-6" />
-                  AI Generated Insights
+                <CardTitle className="flex items-center justify-center gap-2 font-headline text-2xl">
+                  <Sparkles className="h-6 w-6 text-accent" />
+                  Ask Our AI Assistant
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-1/2" />
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="query"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea
+                              placeholder="For example: 'I had a dispute with my landlord over the security deposit...'"
+                              className="min-h-[120px] resize-none text-base bg-background/70"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || isUserLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        'Get AI Analysis'
+                      )}
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
-          )}
 
-          {error && (
-              <div className="mt-6 text-red-500">
-                  <p>{error}</p>
-              </div>
-          )}
+            {isLoading && (
+              <Card className="mt-6 text-left">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-headline">
+                    <BrainCircuit className="h-6 w-6" />
+                    AI Generated Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardContent>
+              </Card>
+            )}
 
-          {aiResponse && (
-            <Card className="mt-6 text-left animate-in fade-in-50 duration-500 bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline text-2xl">
-                  <BrainCircuit className="h-6 w-6" />
-                  AI Generated Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="prose prose-sm max-w-none text-foreground/90 prose-p:text-foreground/90 prose-strong:text-foreground">
-                <p>{aiResponse}</p>
-              </CardContent>
-            </Card>
-          )}
+            {error && (
+                <div className="mt-6 text-red-500">
+                    <p>{error}</p>
+                </div>
+            )}
+
+            {aiResponse && (
+              <Card className="mt-6 text-left animate-in fade-in-50 duration-500 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-headline text-2xl">
+                    <BrainCircuit className="h-6 w-6" />
+                    AI Generated Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="prose prose-sm max-w-none text-foreground/90 prose-p:text-foreground/90 prose-strong:text-foreground">
+                  <p>{aiResponse}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </section>
       <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
