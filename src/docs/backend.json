@@ -54,6 +54,13 @@
             "type": "string",
             "format": "uri",
             "description": "A link to the lawyer's LinkedIn profile."
+        },
+        "cases": {
+          "type": "array",
+          "description": "An array of cases filed by the user.",
+          "items": {
+            "$ref": "#/backend/entities/Case"
+          }
         }
       },
       "required": [
@@ -100,6 +107,11 @@
             "type": "string",
             "format": "uri",
             "description": "The lawyer's professional website."
+        },
+        "linkedin": {
+          "type": "string",
+          "format": "uri",
+          "description": "A link to the lawyer's LinkedIn profile."
         }
       },
       "required": ["userId", "firstName", "lastName"]
@@ -172,26 +184,6 @@
           ]
         }
       },
-      {
-        "path": "/users/{userId}/cases/{caseId}",
-        "definition": {
-            "entityName": "Case",
-            "schema": {
-                "$ref": "#/backend/entities/Case"
-            },
-            "description": "Stores cases for a specific user.",
-            "params": [
-                {
-                    "name": "userId",
-                    "description": "The user's UID."
-                },
-                {
-                    "name": "caseId",
-                    "description": "A unique ID for the case."
-                }
-            ]
-        }
-      },
        {
         "path": "/lawyer_profiles/{lawyerId}",
         "definition": {
@@ -209,6 +201,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases to ensure data privacy and security. A new top-level collection, `lawyer_profiles`, has been added to store public information about lawyers. This separation allows for more open read access for all authenticated users on the `lawyer_profiles` collection, while keeping the main `users` collection private to each individual user. This solves the previous issue of being unable to query for a list of all lawyers."
+    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases (stored as an array in the user doc) to ensure data privacy and security. The `lawyer_profiles` collection stores public information about lawyers, allowing for open read access for all authenticated users, while keeping the main `users` collection private. This separation is key to securely displaying a list of lawyers."
   }
 }
