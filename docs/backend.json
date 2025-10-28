@@ -46,6 +46,47 @@
         "isLawyer",
         "registrationDate"
       ]
+    },
+    "Case": {
+      "title": "Case",
+      "type": "object",
+      "description": "Represents a legal case submitted by a user.",
+      "properties": {
+        "caseSubject": {
+          "type": "string",
+          "description": "The subject line of the case."
+        },
+        "documentType": {
+          "type": "string",
+          "description": "The primary type of document associated with the case."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The name of the uploaded file."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Detailed notes or description of the case."
+        },
+        "submitted": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the case was submitted."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the case.",
+          "enum": [
+            "Submitted",
+            "In Review",
+            "Expert Assigned",
+            "Resolved",
+            "Documents Submitted",
+            "Initial Filing"
+          ]
+        }
+      },
+      "required": ["caseSubject", "documentType", "submitted", "status"]
     }
   },
   "auth": {
@@ -71,8 +112,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/cases/{caseId}",
+        "definition": {
+          "entityName": "Case",
+          "schema": {
+            "$ref": "#/backend/entities/Case"
+          },
+          "description": "Stores the cases submitted by a specific user. Access is controlled by user ownership.",
+          "params": [
+             {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns the case."
+            },
+            {
+              "name": "caseId",
+              "description": "The unique identifier for the case."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to primarily support user authentication and account management.  It leverages path-based ownership for user accounts to ensure data privacy and security. This approach simplifies security rules, allowing direct enforcement of access control based on the user's ID. This design prioritizes Authorization Independence, eliminating the need for `get()` calls in security rules, enabling atomic operations.  The structure avoids mixing data with different access needs within the same collections (Structural Segregation)."
+    "reasoning": "The Firestore structure is designed to support user authentication, account management, and user-specific case submissions. It leverages path-based ownership for user accounts and their associated cases to ensure data privacy and security. This approach simplifies security rules, allowing direct enforcement of access control based on the user's ID. This design prioritizes Authorization Independence, eliminating the need for `get()` calls in security rules, enabling atomic operations. The structure avoids mixing data with different access needs within the same collections (Structural Segregation)."
   }
 }

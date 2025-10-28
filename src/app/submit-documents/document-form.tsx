@@ -25,6 +25,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   caseSubject: z.string().min(5, 'Please provide a brief subject for your case.'),
@@ -36,6 +39,10 @@ const formSchema = z.object({
 export function DocumentForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,19 +53,51 @@ export function DocumentForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user || !firestore) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'You must be logged in to submit a case.',
+        });
+        return;
+    }
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    const newCaseId = `CASE-${String(Math.floor(Math.random() * 900) + 100).padStart(3, '0')}`;
-    console.log({ caseId: newCaseId, ...values});
-    setIsSubmitting(false);
+    
+    try {
+        const casesCollectionRef = collection(firestore, 'users', user.uid, 'cases');
+        const file = values.file[0];
 
-    toast({
-      title: 'Case Filed Successfully',
-      description: `Your case regarding "${values.caseSubject}" has been submitted with ID ${newCaseId}.`,
-      variant: 'default',
-    });
-    form.reset();
+        const newCase = {
+            caseSubject: values.caseSubject,
+            documentType: values.documentType,
+            notes: values.notes,
+            fileName: file.name,
+            submitted: new Date().toISOString(),
+            status: 'Submitted',
+        };
+
+        const docRefPromise = addDocumentNonBlocking(casesCollectionRef, newCase);
+        
+        toast({
+          title: 'Case Filed Successfully',
+          description: `Your case regarding "${values.caseSubject}" has been submitted.`,
+          variant: 'default',
+        });
+        
+        form.reset();
+        
+        // Wait for the promise to resolve to get the ID, then navigate
+        const docRef = await docRefPromise;
+        if(docRef) {
+            // Optional: navigate to the case tracking page after submission
+             router.push('/case-tracking');
+        }
+
+    } catch (error) {
+        // This will be caught by the non-blocking update handler which emits a global error
+    } finally {
+        setIsSubmitting(false);
+    }
   }
 
   return (

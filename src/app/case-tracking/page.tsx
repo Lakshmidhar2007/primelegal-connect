@@ -1,3 +1,5 @@
+'use client';
+
 import { PageHeader } from '@/components/shared/page-header';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,39 +17,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-
-const cases = [
-  {
-    id: 'CASE-001',
-    subject: 'Landlord-Tenant Security Deposit Dispute',
-    submitted: '2024-05-20',
-    status: 'Expert Assigned',
-  },
-  {
-    id: 'CASE-002',
-    subject: 'Review of Employment Contract Terms',
-    submitted: '2024-05-18',
-    status: 'In Review',
-  },
-  {
-    id: 'CASE-003',
-    subject: 'Intellectual Property Trademark Application',
-    submitted: '2024-05-15',
-    status: 'Initial Filing',
-  },
-  {
-    id: 'CASE-004',
-    subject: 'Child Custody Agreement Modification',
-    submitted: '2024-05-12',
-    status: 'Resolved',
-  },
-  {
-    id: 'CASE-005',
-    subject: 'Small Business Incorporation',
-    submitted: '2024-05-10',
-    status: 'Documents Submitted',
-  },
-];
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, orderBy, query } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
 
 const getStatusVariant = (status: string) => {
   switch (status) {
@@ -57,12 +30,27 @@ const getStatusVariant = (status: string) => {
       return 'secondary';
     case 'Resolved':
       return 'outline';
+    case 'Submitted':
+        return 'default'
     default:
       return 'secondary';
   }
 };
 
 export default function CaseTrackingPage() {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const casesQuery = useMemoFirebase(() => {
+    if (firestore && user) {
+      return query(collection(firestore, 'users', user.uid, 'cases'), orderBy('submitted', 'desc'));
+    }
+    return null;
+  }, [firestore, user]);
+
+  const { data: cases, isLoading: areCasesLoading } = useCollection(casesQuery);
+  const isLoading = isUserLoading || areCasesLoading;
+
   return (
     <div className="container py-12 lg:py-24">
       <PageHeader
@@ -81,25 +69,39 @@ export default function CaseTrackingPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[150px]">Case ID</TableHead>
                   <TableHead>Subject</TableHead>
-                  <TableHead className="w-[150px]">Date Submitted</TableHead>
+                  <TableHead className="w-[200px]">Date Submitted</TableHead>
                   <TableHead className="w-[180px] text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cases.map((caseItem) => (
-                  <TableRow key={caseItem.id}>
-                    <TableCell className="font-medium">{caseItem.id}</TableCell>
-                    <TableCell>{caseItem.subject}</TableCell>
-                    <TableCell>{caseItem.submitted}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant={getStatusVariant(caseItem.status) as any}>
-                        {caseItem.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-5 w-24 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : cases && cases.length > 0 ? (
+                  cases.map((caseItem) => (
+                    <TableRow key={caseItem.id}>
+                      <TableCell className="font-medium">{(caseItem as any).caseSubject}</TableCell>
+                      <TableCell>{format(new Date((caseItem as any).submitted), 'PPP')}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={getStatusVariant((caseItem as any).status) as any}>
+                          {(caseItem as any).status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                    <TableRow>
+                        <TableCell colSpan={3} className="text-center h-24">
+                            You have not submitted any cases yet.
+                        </TableCell>
+                    </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
