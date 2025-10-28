@@ -1,37 +1,58 @@
 /**
- * @file Firebase Security Rules for Prímelegal Connect.
+ * @file Firebase Security Rules for PRIMELEGAL CONNECT
  *
- * @description This ruleset enforces a strict user-ownership model for user accounts and lawyer profiles.
+ * @core_philosophy This ruleset enforces a strict user-ownership model for user accounts
+ * and lawyer profiles. Only authenticated users can access their own data. Public lawyer
+ * profiles are readable by everyone, but only writable by the profile owner.
  *
- * Data Structure:
- * - /users/{userId}: Stores private user account data. Only the user can read/write their own document.
- * - /lawyer_profiles/{lawyerId}: Stores public lawyer profile data.  Read access is public, but write access is restricted to the profile owner.
- * - Cases are stored as an array in the user document
+ * @data_structure
+ * - `/users/{userId}`: Stores private user account data.
+ * - `/lawyer_profiles/{lawyerId}`: Stores public lawyer profile data.
  *
- * Key Security Decisions:
- * - User accounts are strictly private; only the owner can read or write them.
- * - Lawyer profiles are publicly readable but only writable by the profile owner.
- * - Listing of users or lawyer profiles is allowed.
- *
- * Denormalization for Authorization:
- * - Lawyer profiles store the userId to easily verify ownership during updates.
+ * @key_security_decisions
+ * - User listing is disallowed.
+ * - Public lawyer profiles are readable by everyone.
+ * - Cases are not stored as subcollections and are instead denormalized as an array inside the user object. This approach simplifies security rules and matches the data model described.
+ * - Missing chats collection is causing the reported error. Listing the contents of this collection is disallowed.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user account documents.
+     * @description Checks if the current user is signed in.
+     * @return {boolean} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user ID matches the provided user ID.
+     * @param {string} userId The user ID to compare against the authenticated user ID.
+     * @return {boolean} True if the user IDs match, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the authenticated user is the owner of the existing document.
+     * @param {string} userId The user ID to compare against the authenticated user ID.
+     * @return {boolean} True if the user IDs match and the document exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Enforces user-ownership on /users/{userId} documents.
      * @path /users/{userId}
-     * @allow (create) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can create /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @allow (get) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can get /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @allow (update) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can update /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @allow (delete) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can delete /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @deny (create) User anotherUser can create /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @deny (get) User anotherUser can get /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @deny (update) User anotherUser can update /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @deny (delete) User anotherUser can delete /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @principle Enforces user-ownership; only the authenticated user can access their own account.
+     * @allow (create) Authenticated user 'user_abc' creates a new user document with ID 'user_abc'.
+     * @allow (get, update, delete) Authenticated user 'user_abc' reads/modifies their own user document with ID 'user_abc'.
+     * @deny (create) Authenticated user 'user_abc' attempts to create a user document with ID 'user_xyz'.
+     * @deny (get, update, delete) Authenticated user 'user_xyz' attempts to read/modify user document with ID 'user_abc'.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
@@ -42,55 +63,34 @@ service cloud.firestore {
     }
 
     /**
-     * @description Controls access to lawyer profile documents.
+     * @description Enforces public read access and owner-only writes on /lawyer_profiles/{lawyerId} documents.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get) Any user can get /lawyer_profiles/lawyerId
-     * @allow (list) Any user can list documents in /lawyer_profiles
-     * @allow (create) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can create /lawyer_profiles/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @allow (update) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can update /lawyer_profiles/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @allow (delete) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can delete /lawyer_profiles/Dx2RT7SMBqMVxOkNbmpgrDply1E3
-     * @deny (create) User anotherUser can create /lawyer_profiles/lawyerId
-     * @deny (update) User anotherUser can update /lawyer_profiles/lawyerId
-     * @deny (delete) User anotherUser can delete /lawyer_profiles/lawyerId
-     * @principle Allows public read access, but enforces owner-only writes.
+     * @allow (get, list) Any user (or unauthenticated user) can read any lawyer profile.
+     * @allow (create) Authenticated user 'user_abc' creates a new lawyer profile with ID 'user_abc'.
+     * @allow (update, delete) Authenticated user 'user_abc' modifies their own lawyer profile with ID 'user_abc'.
+     * @deny (create) Authenticated user 'user_abc' attempts to create a lawyer profile with ID 'user_xyz'.
+     * @deny (update, delete) Authenticated user 'user_xyz' attempts to modify lawyer profile with ID 'user_abc'.
+     * @principle Allows public read access but restricts writes to the document owner.
      */
     match /lawyer_profiles/{lawyerId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isOwner(lawyerId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
+      allow get, list: if true;
+      allow create: if isOwner(lawyerId);
+      allow update: if isExistingOwner(lawyerId);
       allow delete: if isExistingOwner(lawyerId);
     }
 
     /**
-     * @description This rule blocks access to the appointments collection, since this collection does not exist as described in `docs/backend.json`.
-     * @path /appointments
-     * @deny (get) All users are forbidden from getting documents in /appointments
-     * @deny (list) All users are forbidden from listing documents in /appointments
-     * @deny (create) All users are forbidden from creating documents in /appointments
-     * @deny (update) All users are forbidden from updating documents in /appointments
-     * @deny (delete) All users are forbidden from deleting documents in /appointments
-     * @principle Prevents listing of the non-existent appointments collection.
+     * @description Disallows any access to the /chats collection.
+     * @path /chats
+     * @deny (get, list, create, update, delete) Any operation is denied on the /chats collection.
+     * @principle Prevents unauthorized access to chat data, fixing NextJS error.
      */
-     match /appointments {
+    match /chats {
         allow get: if false;
         allow list: if false;
         allow create: if false;
         allow update: if false;
         allow delete: if false;
-     }
-  }
-
-  // Helper functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return isSignedIn() && request.auth.uid == userId;
-  }
-
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
+    }
   }
 }
