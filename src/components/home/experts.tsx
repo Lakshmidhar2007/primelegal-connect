@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useState } from 'react';
@@ -17,6 +17,7 @@ type Lawyer = {
     lastName?: string;
     photoURL?: string;
     specialty?: string;
+    isLawyer: boolean;
 };
 
 export function Experts() {
@@ -27,7 +28,7 @@ export function Experts() {
   const lawyersQuery = useMemoFirebase(() => {
     // Only fetch lawyers if a user is logged in.
     if (firestore && user) {
-      return query(collection(firestore, 'lawyers'));
+      return query(collection(firestore, 'users'), where('isLawyer', '==', true));
     }
     return null;
   }, [firestore, user]);
