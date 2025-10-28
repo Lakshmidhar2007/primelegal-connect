@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -23,12 +23,22 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/use-translation';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 const formSchema = z.object({
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
     email: z.string().email(),
     photoURL: z.string().optional(),
+    phone: z.string().optional(),
+    address: z.string().optional(),
+    gender: z.enum(['male', 'female', 'other', 'prefer-not-to-say']).optional(),
+    dateOfBirth: z.date().optional(),
 });
 
 export default function ProfilePage() {
@@ -55,6 +65,8 @@ export default function ProfilePage() {
             lastName: '',
             email: '',
             photoURL: '',
+            phone: '',
+            address: '',
         },
     });
 
@@ -65,6 +77,10 @@ export default function ProfilePage() {
                 lastName: (userProfile as any).lastName || '',
                 email: (userProfile as any).email || '',
                 photoURL: (userProfile as any).photoURL || '',
+                phone: (userProfile as any).phone || '',
+                address: (userProfile as any).address || '',
+                gender: (userProfile as any).gender,
+                dateOfBirth: (userProfile as any).dateOfBirth ? new Date((userProfile as any).dateOfBirth) : undefined,
             });
             if((userProfile as any).photoURL) {
                 setPreviewImage((userProfile as any).photoURL);
@@ -95,7 +111,12 @@ export default function ProfilePage() {
         }
 
         try {
-            const { email, ...updateData } = values; // email should not be updated here
+            const { email, ...rest } = values;
+            const updateData = {
+                ...rest,
+                dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString().split('T')[0] : null,
+            };
+
             setDocumentNonBlocking(userDocRef, updateData, { merge: true });
 
              // Also update lawyer_profiles if the user is a lawyer
@@ -105,6 +126,7 @@ export default function ProfilePage() {
                     firstName: values.firstName,
                     lastName: values.lastName,
                     photoURL: values.photoURL,
+                    dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString().split('T')[0] : null,
                 };
                 setDocumentNonBlocking(lawyerProfileRef, lawyerUpdateData, { merge: true });
             }
@@ -143,6 +165,8 @@ export default function ProfilePage() {
                                     <Skeleton className="h-10 flex-1" />
                                     <Skeleton className="h-10 flex-1" />
                                 </div>
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
                                 <Skeleton className="h-10 w-full" />
                                 <Skeleton className="h-10 w-full mt-4" />
                             </div>
@@ -205,6 +229,97 @@ export default function ProfilePage() {
                                             </FormItem>
                                         )}
                                     />
+                                    <FormField
+                                        control={form.control}
+                                        name="phone"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t('Phone')}</FormLabel>
+                                                <FormControl>
+                                                    <Input type="tel" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="address"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t('Address')}</FormLabel>
+                                                <FormControl>
+                                                    <Textarea {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="flex gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="gender"
+                                            render={({ field }) => (
+                                                <FormItem className="flex-1">
+                                                    <FormLabel>{t('Gender')}</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder={t("Select your gender")} />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="male">{t('Male')}</SelectItem>
+                                                            <SelectItem value="female">{t('Female')}</SelectItem>
+                                                            <SelectItem value="other">{t('Other')}</SelectItem>
+                                                            <SelectItem value="prefer-not-to-say">{t('Prefer not to say')}</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="dateOfBirth"
+                                            render={({ field }) => (
+                                            <FormItem className="flex flex-col flex-1">
+                                                <FormLabel>{t('Date of Birth')}</FormLabel>
+                                                <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                    <Button
+                                                        variant={'outline'}
+                                                        className={cn(
+                                                        'pl-3 text-left font-normal',
+                                                        !field.value && 'text-muted-foreground'
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                        format(field.value, 'PPP')
+                                                        ) : (
+                                                        <span>{t('Pick a date')}</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={field.value}
+                                                        onSelect={field.onChange}
+                                                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
                                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         {t('Save Changes')}

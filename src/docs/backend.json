@@ -37,6 +37,19 @@
           "description": "URL of the user's profile picture.",
           "format": "uri"
         },
+        "phone": {
+            "type": "string",
+            "description": "The user's phone number."
+        },
+        "address": {
+            "type": "string",
+            "description": "The user's address."
+        },
+        "gender": {
+            "type": "string",
+            "description": "The user's gender.",
+            "enum": ["male", "female", "other", "prefer-not-to-say"]
+        },
         "specialty": {
           "type": "string",
           "description": "The lawyer's primary area of legal practice."
@@ -58,7 +71,7 @@
         "dateOfBirth": {
             "type": "string",
             "format": "date",
-            "description": "The lawyer's date of birth."
+            "description": "The user's or lawyer's date of birth."
         },
         "nationality": {
             "type": "string",
