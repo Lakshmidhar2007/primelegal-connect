@@ -21,8 +21,6 @@ function LawyerProfile() {
   const lawyerId = searchParams.get('id');
   const firestore = useFirestore();
   const { t } = useTranslation();
-  const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { user } = useUser();
 
   const lawyerDocRef = useMemoFirebase(() => {
@@ -34,14 +32,6 @@ function LawyerProfile() {
 
   const { data: lawyer, isLoading } = useDoc(lawyerDocRef);
   
-  const handleConnectClick = () => {
-    if (!user) {
-      setShowAuthDialog(true);
-      return;
-    }
-    setIsChatDialogOpen(true);
-  };
-
   if (isLoading) {
     return <LawyerProfileSkeleton />;
   }
@@ -57,7 +47,6 @@ function LawyerProfile() {
   const fullName = `${(lawyer as any).firstName} ${(lawyer as any).lastName}`;
   const initials = `${(lawyer as any).firstName?.charAt(0)}${(lawyer as any).lastName?.charAt(0)}`;
   const dateOfBirth = (lawyer as any).dateOfBirth ? new Date((lawyer as any).dateOfBirth) : null;
-  const canConnect = user && user.uid !== lawyerId;
 
 
   return (
@@ -75,9 +64,6 @@ function LawyerProfile() {
                         <CardTitle className="font-headline text-3xl">{fullName}</CardTitle>
                         <p className="text-muted-foreground flex items-center justify-center md:justify-start gap-2"><Briefcase className="h-4 w-4" />{t((lawyer as any).specialty || "Not specified")}</p>
                     </div>
-                    {canConnect && (
-                      <Button onClick={handleConnectClick} size="lg">{t('Connect Now')}</Button>
-                    )}
                 </CardHeader>
                 <CardContent className="mt-6 grid gap-8 md:grid-cols-3">
                     <div className="md:col-span-2">
@@ -127,14 +113,6 @@ function LawyerProfile() {
             </Card>
         </div>
     </div>
-    {isChatDialogOpen && lawyerId && (
-        <ChatDialog 
-            open={isChatDialogOpen} 
-            onOpenChange={setIsChatDialogOpen}
-            lawyerId={lawyerId}
-        />
-    )}
-    <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
     </>
   );
 }
