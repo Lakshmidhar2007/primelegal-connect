@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
@@ -21,16 +21,20 @@ type Lawyer = {
 
 export function Experts() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
 
   const lawyersQuery = useMemoFirebase(() => {
-    if (firestore) {
+    // Only fetch lawyers if a user is logged in.
+    if (firestore && user) {
       return query(collection(firestore, 'users'), where('isLawyer', '==', true));
     }
     return null;
-  }, [firestore]);
+  }, [firestore, user]);
 
   const { data: lawyers, isLoading } = useCollection<Lawyer>(lawyersQuery);
+
+  const showLoading = isLoading || !firestore || !user;
 
   return (
     <>
@@ -44,7 +48,7 @@ export function Experts() {
         </p>
       </div>
       <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-        {isLoading ? (
+        {showLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} className="overflow-hidden text-center">
                 <CardHeader className="p-0">
@@ -85,7 +89,9 @@ export function Experts() {
             </Card>
           ))
         ) : (
-            <p className="col-span-full text-center text-muted-foreground">No lawyers have registered yet.</p>
+            <p className="col-span-full text-center text-muted-foreground">
+              {user ? 'No lawyers have registered yet.' : 'Please log in to see our legal experts.'}
+            </p>
         )}
       </div>
     </section>
