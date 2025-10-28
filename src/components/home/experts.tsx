@@ -67,7 +67,7 @@ export function Experts() {
               </CardContent>
               <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                 <Button asChild variant="outline" className="w-full">
-                  <Link href={`/lawyers/${expert.id}`}>View Profile</Link>
+                  <Link href="/lawyers/profile">View Profile</Link>
                 </Button>
                 <Button variant="default" className="w-full" onClick={() => setIsQuestionDialogOpen(true)}>Connect</Button>
               </CardFooter>
