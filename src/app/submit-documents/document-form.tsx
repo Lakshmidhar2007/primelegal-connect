@@ -25,7 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useUser, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
@@ -74,9 +74,14 @@ export function DocumentForm() {
     try {
         const file = values.file[0];
         
+        // 1. Create a reference to a new, empty document in the 'cases' subcollection
         const newCaseRef = doc(casesCollectionRef);
+
+        // 2. This new reference now has a unique ID.
+        const newCaseId = newCaseRef.id;
+        
         const newCase = {
-            caseId: newCaseRef.id,
+            caseId: newCaseId, // Use the generated ID
             caseSubject: values.caseSubject,
             documentType: values.documentType,
             notes: values.notes,
@@ -85,7 +90,8 @@ export function DocumentForm() {
             status: 'Submitted',
         };
 
-        await addDocumentNonBlocking(casesCollectionRef, newCase);
+        // 3. Use setDocumentNonBlocking with the new reference to create the document.
+        setDocumentNonBlocking(newCaseRef, newCase, {});
 
         toast({
           title: 'Case Filed Successfully',
