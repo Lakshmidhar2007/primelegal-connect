@@ -64,7 +64,7 @@ export function Header() {
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Logo className="h-8 w-8 text-primary" />
             <span className="font-bold font-headline text-lg">
-              PRIMELEGAL CONNECT
+              PrimeLegal CONNECT
             </span>
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
@@ -113,7 +113,7 @@ export function Header() {
               <Link href="/" className="mb-8 flex items-center" onClick={() => setIsSheetOpen(false)}>
                 <Logo className="mr-2 h-6 w-6 text-primary" />
                 <span className="font-bold font-headline text-lg">
-                  PRIMELEGAL CONNECT
+                  PrimeLegal CONNECT
                 </span>
               </Link>
               <nav className="flex flex-col space-y-4">
