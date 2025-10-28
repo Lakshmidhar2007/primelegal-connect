@@ -3,14 +3,15 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScheduleForm } from './schedule-form';
 import { useTranslation } from '@/hooks/use-translation';
+import { AppointmentList } from './appointment-list';
 
 export default function MakeSchedulePage() {
   const { t } = useTranslation();
   return (
     <div className="container py-12 lg:py-24">
       <PageHeader
-        title={t("Make Schedule")}
-        subtitle={t("Set your availability for appointments.")}
+        title={t('Make Schedule')}
+        subtitle={t('Set your availability for appointments.')}
       />
       <div className="mt-12 max-w-2xl mx-auto">
         <Card>
@@ -21,6 +22,7 @@ export default function MakeSchedulePage() {
             <ScheduleForm />
           </CardContent>
         </Card>
+        <AppointmentList />
       </div>
     </div>
   );
