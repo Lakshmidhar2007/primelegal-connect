@@ -37,13 +37,6 @@ export default function CaseTrackingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Alert>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>Feature Under Maintenance</AlertTitle>
-              <AlertDescription>
-                We are currently performing maintenance on the case tracking system to improve its reliability. Your submitted cases are secure. Please check back later to see your case status. We apologize for any inconvenience.
-              </AlertDescription>
-            </Alert>
             <Table>
               <TableHeader>
                 <TableRow>
