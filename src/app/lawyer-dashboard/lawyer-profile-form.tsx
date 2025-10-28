@@ -76,14 +76,20 @@ export function LawyerProfileForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    if (!userDocRef || !user || !firestore) {
-        toast({ variant: 'destructive', title: 'Error', description: 'User not found.' });
+    if (!user || !firestore) {
+        toast({ variant: 'destructive', title: t('Error'), description: t('User not found.') });
         setIsSubmitting(false);
         return;
     }
 
     try {
-        setDocumentNonBlocking(userDocRef, values, { merge: true });
+        // Update the private user document
+        const privateUserRef = doc(firestore, 'users', user.uid);
+        setDocumentNonBlocking(privateUserRef, values, { merge: true });
+
+        // Update the public lawyer_profiles document
+        const publicProfileRef = doc(firestore, 'lawyer_profiles', user.uid);
+        setDocumentNonBlocking(publicProfileRef, values, { merge: true });
 
         toast({
             title: t('Profile Updated'),

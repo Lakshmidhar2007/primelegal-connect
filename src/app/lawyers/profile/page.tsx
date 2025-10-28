@@ -6,12 +6,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
-import { Linkedin, Link as LinkIcon } from 'lucide-react';
+import { Linkedin, Link as LinkIcon, Briefcase, User, Calendar, Flag } from 'lucide-react';
 import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
+import { format } from 'date-fns';
 
 function LawyerProfile() {
   const searchParams = useSearchParams();
@@ -54,21 +55,22 @@ function LawyerProfile() {
                         <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                     <CardTitle className="mt-4 font-headline text-3xl">{fullName}</CardTitle>
-                    <p className="text-muted-foreground">{t((lawyer as any).specialty)}</p>
+                    <p className="text-muted-foreground flex items-center gap-2"><Briefcase className="h-4 w-4" />{t((lawyer as any).specialty)}</p>
                 </CardHeader>
                 <CardContent className="mt-6 grid gap-8 md:grid-cols-3">
                     <div className="md:col-span-2">
                         {(lawyer as any).bio && (
                             <div>
-                                <h3 className="text-lg font-semibold font-headline">{t('About')} {(lawyer as any).firstName}</h3>
+                                <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><User className="h-5 w-5" />{t('About')} {(lawyer as any).firstName}</h3>
                                 <p className="mt-2 text-muted-foreground whitespace-pre-wrap">{t((lawyer as any).bio)}</p>
                             </div>
                         )}
+                        
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold font-headline">{t('Connect')}</h3>
-                        <div className="mt-2 space-y-2">
-                            {(lawyer as any).website && (
+                        <h3 className="text-lg font-semibold font-headline">{t('Details')}</h3>
+                        <div className="mt-2 space-y-4">
+                           {(lawyer as any).website && (
                                 <Button asChild variant="outline" className="w-full justify-start">
                                     <Link href={(lawyer as any).website} target="_blank" rel="noopener noreferrer">
                                         <LinkIcon className="mr-2 h-4 w-4" />
