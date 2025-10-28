@@ -1,40 +1,36 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can only read and write their own data.
+    // Users can only read and write to their own user document.
     match /users/{userId} {
       allow read, write: if request.auth.uid == userId;
     }
 
-    // Lawyer profiles are public, but only the lawyer can edit their own.
+    // Lawyer profiles are publically readable, but only the lawyer can write their own profile.
     match /lawyer_profiles/{lawyerId} {
-      allow read: if true;
+      allow get;
+      allow list;
       allow write: if request.auth.uid == lawyerId;
     }
-
-    // Appointments can be read by anyone, but only edited by the lawyer who owns it.
-    match /appointments/{appointmentId} {
-      allow read: if true;
-      // A user can update an appointment to book it.
-      allow create, delete: if request.auth.uid == resource.data.lawyerId;
-      allow update: if request.auth.uid == resource.data.lawyerId || request.auth.uid == request.resource.data.bookedBy;
-      // Lawyers can query for their own appointments filtered by status.
-      allow list: if request.query.where.lawyerId == request.auth.uid && request.query.where.status != null;
-    }
     
-    // Chat metadata can only be accessed by participants.
+    // A lawyer can query for their own appointments that are available.
+    match /appointments/{appointmentId} {
+      allow read, write: if request.auth.uid == resource.data.lawyerId;
+      allow list: if request.auth.uid == request.query.where.lawyerId && request.query.where.status == 'Available';
+    }
+
+    // Chat documents can only be read or written to by participants.
     match /chats/{chatId} {
       allow read, write: if request.auth.uid in resource.data.participants;
-      
-      // Users can query for chats they are a part of.
-      allow list: if request.auth != null && request.auth.uid == request.query.where.participants;
+      // Allow a user to list chats they are a part of.
+      allow list: if request.auth.uid in request.query.where.participants;
+    }
 
-      // Chat messages can only be accessed by chat participants.
-      match /messages/{messageId} {
-        allow read, write: if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-      }
+    // Messages can only be read or written by chat participants.
+    match /chats/{chatId}/messages/{messageId} {
+       allow read, write: if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
     }
   }
 }
+    

@@ -57,6 +57,7 @@ function LawyerProfile() {
   const fullName = `${(lawyer as any).firstName} ${(lawyer as any).lastName}`;
   const initials = `${(lawyer as any).firstName?.charAt(0)}${(lawyer as any).lastName?.charAt(0)}`;
   const dateOfBirth = (lawyer as any).dateOfBirth ? new Date((lawyer as any).dateOfBirth) : null;
+  const canConnect = user && user.uid !== lawyerId;
 
 
   return (
@@ -65,13 +66,18 @@ function LawyerProfile() {
         <div className="mx-auto max-w-4xl">
             <PageHeader title={fullName} subtitle={t((lawyer as any).specialty || 'Legal Professional')} />
             <Card className="mt-12">
-                <CardHeader className="items-center text-center border-b pb-6">
+                <CardHeader className="flex flex-col md:flex-row items-center text-center md:text-left gap-6 border-b p-6">
                     <Avatar className="h-24 w-24">
                         <AvatarImage src={(lawyer as any).photoURL} />
                         <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
-                    <CardTitle className="mt-4 font-headline text-3xl">{fullName}</CardTitle>
-                    <p className="text-muted-foreground flex items-center gap-2"><Briefcase className="h-4 w-4" />{t((lawyer as any).specialty || "Not specified")}</p>
+                    <div className="flex-grow">
+                        <CardTitle className="font-headline text-3xl">{fullName}</CardTitle>
+                        <p className="text-muted-foreground flex items-center justify-center md:justify-start gap-2"><Briefcase className="h-4 w-4" />{t((lawyer as any).specialty || "Not specified")}</p>
+                    </div>
+                    {canConnect && (
+                      <Button onClick={handleConnectClick} size="lg">{t('Connect Now')}</Button>
+                    )}
                 </CardHeader>
                 <CardContent className="mt-6 grid gap-8 md:grid-cols-3">
                     <div className="md:col-span-2">
@@ -142,10 +148,13 @@ function LawyerProfileSkeleton() {
             <Skeleton className="h-6 w-1/3 mx-auto" />
         </div>
         <Card className="mt-12">
-            <CardHeader className="items-center text-center border-b pb-6">
+            <CardHeader className="flex flex-col md:flex-row items-center gap-6 border-b p-6">
                 <Skeleton className="h-24 w-24 rounded-full" />
-                <Skeleton className="h-8 w-48 mt-4" />
-                <Skeleton className="h-5 w-32" />
+                <div className="flex-grow space-y-2">
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-5 w-32" />
+                </div>
+                <Skeleton className="h-12 w-32" />
             </CardHeader>
             <CardContent className="mt-6 grid gap-8 md:grid-cols-3">
                 <div className="md:col-span-2 space-y-4">
@@ -175,3 +184,4 @@ export default function LawyerProfilePage() {
     </Suspense>
   );
 }
+    

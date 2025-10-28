@@ -44,6 +44,7 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
 
 
   useEffect(() => {
+    // If a chat ID isn't provided, create a consistent one.
     if (!initialChatId && currentUser && lawyerId) {
       const generatedChatId = [currentUser.uid, lawyerId].sort().join('_');
       setChatId(generatedChatId);
@@ -81,6 +82,7 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
     const messagesRef = collection(chatRef, 'messages');
 
     try {
+        // Ensure the chat document exists before adding a message
         const chatDoc = await getDoc(chatRef);
         if (!chatDoc.exists()) {
             await setDoc(chatRef, {
@@ -89,11 +91,13 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
             });
         }
         
+        // Use non-blocking write for the message
         addDocumentNonBlocking(messagesRef, messageData);
 
         setMessage('');
     } catch (error) {
         console.error('Error sending message:', error);
+        // Optionally show a toast to the user
     } finally {
         setIsSending(false);
     }
@@ -120,7 +124,7 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
         <div className="flex-grow p-4 overflow-y-auto">
            {isLoading ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> 
            : (messages || []).map((msg: any, index: number) => (
-             <div key={index} className={cn("flex items-end gap-2 mb-4", msg.senderId === currentUser?.uid ? "justify-end" : "justify-start")}>
+             <div key={msg.id || index} className={cn("flex items-end gap-2 mb-4", msg.senderId === currentUser?.uid ? "justify-end" : "justify-start")}>
                  {msg.senderId !== currentUser?.uid && (
                     <Avatar className="h-8 w-8">
                        <AvatarImage src={msg.senderId === 'ai-bot' ? undefined : (profile as any)?.photoURL} />
@@ -141,6 +145,7 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !isSending && handleSendMessage()}
                 placeholder={t("Type a message...")}
+                disabled={isSending}
             />
             <Button onClick={handleSendMessage} disabled={isSending}>
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -151,3 +156,4 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
     </Dialog>
   );
 }
+    

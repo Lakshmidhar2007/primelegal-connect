@@ -34,6 +34,9 @@ export function Lawyers() {
       setShowAuthDialog(true);
       return;
     }
+    // Prevent lawyers from chatting with themselves or other lawyers from this UI
+    if (user.uid === lawyerId) return;
+
     setSelectedLawyerId(lawyerId);
     setIsChatDialogOpen(true);
   };
@@ -86,7 +89,9 @@ export function Lawyers() {
                  <Button asChild variant="outline" className="w-full">
                   <Link href={`/lawyers/profile?id=${lawyer.userId}`}>{t('View Profile')}</Link>
                 </Button>
-                <Button variant="default" className="w-full" onClick={() => handleConnectClick(lawyer.userId)}>{t('Connect')}</Button>
+                {user?.uid !== lawyer.userId && (
+                  <Button variant="default" className="w-full" onClick={() => handleConnectClick(lawyer.userId)}>{t('Connect')}</Button>
+                )}
               </CardFooter>
             </Card>
           ))
@@ -108,3 +113,4 @@ export function Lawyers() {
     </>
   );
 }
+    

@@ -264,19 +264,17 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the chat session."
+          "description": "Unique identifier for the chat session. Typically a composite of the two participant UIDs."
         },
         "participants": {
           "type": "array",
           "items": { "type": "string" },
           "description": "An array containing the UIDs of the two participants (user and lawyer)."
         },
-        "lastMessage": {
-          "$ref": "#/backend/entities/Message"
-        },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the chat was created."
         }
       },
       "required": ["id", "participants", "createdAt"]
@@ -286,12 +284,13 @@
       "type": "object",
       "description": "Represents a single message within a chat.",
       "properties": {
-        "id": { "type": "string" },
-        "text": { "type": "string" },
-        "senderId": { "type": "string" },
+        "id": { "type": "string", "description": "A unique ID for the message." },
+        "text": { "type": "string", "description": "The content of the message." },
+        "senderId": { "type": "string", "description": "The UID of the user who sent the message." },
         "timestamp": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "description": "Timestamp when the message was sent."
         }
       },
       "required": ["id", "text", "senderId", "timestamp"]
@@ -354,6 +353,17 @@
         }
       },
        {
+        "path": "/chats/{chatId}",
+        "definition": {
+          "entityName": "Chat",
+          "schema": { "$ref": "#/backend/entities/Chat" },
+          "description": "Metadata for each chat. Read/write access is limited to participants.",
+          "params": [
+            { "name": "chatId", "description": "The unique ID of the chat." }
+          ]
+        }
+      },
+      {
         "path": "/chats/{chatId}/messages/{messageId}",
         "definition": {
           "entityName": "Message",
@@ -364,19 +374,9 @@
             { "name": "messageId", "description": "The unique ID of the message." }
           ]
         }
-      },
-      {
-        "path": "/chats/{chatId}",
-        "definition": {
-          "entityName": "Chat",
-          "schema": { "$ref": "#/backend/entities/Chat" },
-          "description": "Metadata for each chat. Read/write access is limited to participants.",
-          "params": [
-            { "name": "chatId", "description": "The unique ID of the chat." }
-          ]
-        }
       }
     ],
     "reasoning": "The Firestore structure is designed to support user authentication, case submissions, public lawyer profiles, and now real-time chat. The `chats` collection stores metadata, and each chat has a subcollection for `messages`. This is a common and scalable pattern for chat applications in Firestore."
   }
 }
+    
