@@ -177,9 +177,6 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href="/profile">{t('Profile')}</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
                       <Link href="/settings"><SettingsIcon className="mr-2 h-4 w-4" />{t('Settings')}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
