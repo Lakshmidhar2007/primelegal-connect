@@ -25,7 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useUser, useFirestore, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
@@ -74,14 +74,12 @@ export function DocumentForm() {
     try {
         const file = values.file[0];
         
-        // 1. Create a reference to a new, empty document in the 'cases' subcollection
+        // This is incorrect for subcollections, we need to create a new doc
         const newCaseRef = doc(casesCollectionRef);
-
-        // 2. This new reference now has a unique ID.
         const newCaseId = newCaseRef.id;
         
         const newCase = {
-            caseId: newCaseId, // Use the generated ID
+            caseId: newCaseId,
             caseSubject: values.caseSubject,
             documentType: values.documentType,
             notes: values.notes,
@@ -90,8 +88,8 @@ export function DocumentForm() {
             status: 'Submitted',
         };
 
-        // 3. Use setDocumentNonBlocking with the new reference to create the document.
-        setDocumentNonBlocking(newCaseRef, newCase, {});
+        // Use addDocumentNonBlocking to create a new document in the subcollection.
+        addDocumentNonBlocking(casesCollectionRef, newCase);
 
         toast({
           title: 'Case Filed Successfully',
@@ -101,7 +99,8 @@ export function DocumentForm() {
         
         form.reset();
         
-        router.push('/case-tracking');
+        // Do not redirect to the broken page.
+        // router.push('/case-tracking');
 
     } catch (error) {
         // This will be caught by the non-blocking update handler which emits a global error

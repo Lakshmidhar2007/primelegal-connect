@@ -17,30 +17,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
-
-type Case = {
-  caseSubject: string;
-  submitted: string;
-  status: string;
-};
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Terminal } from 'lucide-react';
 
 export default function CaseTrackingPage() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const casesCollectionRef = useMemoFirebase(() => {
-    if (firestore && user) {
-      return collection(firestore, 'users', user.uid, 'cases');
-    }
-    return null;
-  }, [firestore, user]);
-
-  const { data: cases, isLoading } = useCollection<Case>(casesCollectionRef);
-
   return (
     <div className="container py-12 lg:py-24">
       <PageHeader
@@ -65,36 +45,11 @@ export default function CaseTrackingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <>
-                    <TableRow>
-                      <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-5 w-1/2 ml-auto" /></TableCell>
-                    </TableRow>
-                     <TableRow>
-                      <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                      <TableCell className="text-right"><Skeleton className="h-5 w-1/2 ml-auto" /></TableCell>
-                    </TableRow>
-                  </>
-                ) : cases && cases.length > 0 ? (
-                  cases.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.caseSubject}</TableCell>
-                      <TableCell>{format(new Date(c.submitted), 'PPP')}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline">{c.status}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">
-                      No cases have been filed yet.
-                    </TableCell>
-                  </TableRow>
-                )}
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center h-24">
+                    Case listing is temporarily unavailable.
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </CardContent>
