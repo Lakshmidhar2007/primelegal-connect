@@ -18,7 +18,12 @@ const steps = [
   },
 ];
 
-export function HowItWorks() {
+type HowItWorksProps = {
+  onAskQuestionClick: () => void;
+};
+
+
+export function HowItWorks({ onAskQuestionClick }: HowItWorksProps) {
   return (
     <section className="container py-12 lg:py-24">
       <div className="mx-auto max-w-3xl text-center animate-slide-in-from-left" style={{ animationDelay: '300ms' }}>
@@ -42,11 +47,11 @@ export function HowItWorks() {
             </Card>
           );
 
-          if (step.id === 'insights') {
+          if (step.id === 'ask' || step.id === 'insights') {
             return (
-              <a key={step.id} href="#ask-ai" className="no-underline">
+              <div key={step.id} onClick={onAskQuestionClick} className="cursor-pointer">
                 {card}
-              </a>
+              </div>
             );
           }
           

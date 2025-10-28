@@ -49,7 +49,7 @@ export function Header() {
       return doc(firestore, 'users', user.uid);
     }
     return null;
-  }, [firestore, user]);
+  }, [firestore, user?.uid]);
 
   const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 

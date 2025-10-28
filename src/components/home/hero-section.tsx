@@ -15,6 +15,7 @@ import { Skeleton } from '../ui/skeleton';
 import { useUser } from '@/firebase';
 import { AuthDialog } from '@/components/auth/auth-dialog';
 import { useTranslation } from '@/hooks/use-translation';
+import { AskQuestionDialog } from '../shared/ask-question-dialog';
 
 const formSchema = z.object({
   query: z.string().min(10, {
@@ -22,7 +23,11 @@ const formSchema = z.object({
   }),
 });
 
-export function HeroSection() {
+type HeroSectionProps = {
+  onAskQuestionClick?: () => void;
+};
+
+export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +61,19 @@ export function HeroSection() {
     }
 
     setIsLoading(false);
+  }
+
+  const handleGetAnalysisClick = () => {
+    // This will trigger the form submission logic
+    form.handleSubmit(onSubmit)();
+  };
+
+  const handlePrimaryActionClick = () => {
+    if (onAskQuestionClick) {
+      onAskQuestionClick();
+    } else {
+      handleGetAnalysisClick();
+    }
   }
 
   return (
