@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
+import { ModeToggle } from '../mode-toggle';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -45,12 +46,6 @@ export function Header() {
   };
 
   const allNavLinks = [...navLinks];
-  if (isLawyer) {
-    // The user requested to remove this, but lawyers still need a way to access their dashboard.
-    // A profile dropdown would be a good place for it.
-    // For now, removing it as requested. Lawyers can access it via direct URL.
-    // allNavLinks.push({ href: '/lawyer-dashboard', label: 'Lawyer Dashboard' });
-  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -75,6 +70,7 @@ export function Header() {
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
+          <ModeToggle />
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button
