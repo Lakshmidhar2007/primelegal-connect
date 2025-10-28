@@ -4,12 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-translation';
 import { Loader2, Send } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/hooks/use-toast';
 
 type ChatDialogProps = {
   open: boolean;
@@ -27,6 +28,7 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   // Determine whose profile to fetch based on who is viewing the chat
   const profileId = currentUser?.uid === lawyerId ? initialUserId : lawyerId;
@@ -82,7 +84,6 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
     const messagesRef = collection(chatRef, 'messages');
 
     try {
-        // Ensure the chat document exists before adding a message
         const chatDoc = await getDoc(chatRef);
         if (!chatDoc.exists()) {
             await setDoc(chatRef, {
@@ -91,13 +92,15 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
             });
         }
         
-        // Use non-blocking write for the message
-        addDocumentNonBlocking(messagesRef, messageData);
-
+        await addDoc(messagesRef, messageData);
         setMessage('');
     } catch (error) {
         console.error('Error sending message:', error);
-        // Optionally show a toast to the user
+        toast({
+            variant: "destructive",
+            title: t("Error"),
+            description: t("Could not send message. Please try again."),
+        });
     } finally {
         setIsSending(false);
     }
@@ -147,7 +150,7 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
                 placeholder={t("Type a message...")}
                 disabled={isSending}
             />
-            <Button onClick={handleSendMessage} disabled={isSending}>
+            <Button onClick={handleSendMessage} disabled={isSending || !message.trim()}>
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
