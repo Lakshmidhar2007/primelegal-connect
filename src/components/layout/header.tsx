@@ -2,11 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Scale } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/icons/logo';
 import { useState } from 'react';
+import { useUser, useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -16,6 +18,12 @@ const navLinks = [
 
 export function Header() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,7 +47,7 @@ export function Header() {
             ))}
           </nav>
         </div>
-        <div className="flex flex-1 items-center justify-end">
+        <div className="flex flex-1 items-center justify-end space-x-2">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button
@@ -71,9 +79,18 @@ export function Header() {
               </nav>
             </SheetContent>
           </Sheet>
-          <Button asChild className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground">
-            <Link href="/#ask-ai">Get Started</Link>
-          </Button>
+          {isUserLoading ? null : user ? (
+            <Button onClick={handleLogout} variant="outline">Logout</Button>
+          ) : (
+            <>
+              <Button asChild variant="ghost">
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Link href="/signup">Sign Up</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
