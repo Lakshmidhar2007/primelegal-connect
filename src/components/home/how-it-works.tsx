@@ -11,7 +11,7 @@ const steps = [
     id: 'insights',
     title: '2. Get AI Insights',
     description: 'Our advanced AI instantly analyzes your query, providing preliminary information, identifying key legal concepts, and suggesting next steps.',
-    isClickable: false,
+    isClickable: true,
   },
   {
     id: 'connect',
