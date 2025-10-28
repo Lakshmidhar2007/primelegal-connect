@@ -1,194 +1,163 @@
 {
   "entities": {
-    "User": {
+    "UserAccount": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
+      "title": "UserAccount",
       "type": "object",
-      "description": "Represents a user of the PRIMELEGAL CONNECT platform.",
+      "description": "Represents a user account within the PRIMELEGAL CONNECT application.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user."
+          "description": "Unique identifier for the user account."
         },
         "email": {
           "type": "string",
-          "description": "Email address of the user.",
+          "description": "Email address of the user account.",
           "format": "email"
         },
-        "name": {
+        "firstName": {
           "type": "string",
-          "description": "Full name of the user."
+          "description": "The first name of the user."
         },
-        "location": {
+        "lastName": {
           "type": "string",
-          "description": "Location of the user."
+          "description": "The last name of the user."
         },
         "isLawyer": {
           "type": "boolean",
-          "description": "Indicates if the user is a lawyer."
+          "description": "Indicates whether the user is a lawyer or not."
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "Date and time the user registered.",
+          "format": "date-time"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
+        "specialty": {
+            "type": "string",
+            "description": "The lawyer's primary area of legal practice."
+        },
+        "bio": {
+            "type": "string",
+            "description": "A professional biography for the lawyer."
+        },
+        "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "The lawyer's professional website."
+        },
+        "linkedin": {
+            "type": "string",
+            "format": "uri",
+            "description": "A link to the lawyer's LinkedIn profile."
+        },
+        "cases": {
+          "type": "array",
+          "description": "An array of cases filed by the user.",
+          "items": {
+            "$ref": "#/backend/entities/Case"
+          }
         }
       },
       "required": [
         "id",
         "email",
-        "name"
+        "firstName",
+        "lastName",
+        "isLawyer",
+        "registrationDate"
       ]
     },
-    "LegalExpert": {
+    "PublicLawyerProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "LegalExpert",
+      "title": "PublicLawyerProfile",
       "type": "object",
-      "description": "Represents a legal expert (lawyer) on the PRIMELEGAL CONNECT platform.",
+      "description": "Publicly visible information for a lawyer, derived from their UserAccount.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the legal expert."
-        },
         "userId": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:1 LegalExpert)"
+          "description": "The UID of the user this profile belongs to."
         },
-        "specialization": {
+        "firstName": {
           "type": "string",
-          "description": "Area of legal specialization (e.g., family law, criminal law)."
+          "description": "The first name of the lawyer."
         },
-        "licenseNumber": {
+        "lastName": {
           "type": "string",
-          "description": "Legal license number of the expert."
+          "description": "The last name of the lawyer."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the lawyer's profile picture.",
+          "format": "uri"
+        },
+        "specialty": {
+          "type": "string",
+          "description": "The lawyer's primary area of legal practice."
         },
         "bio": {
+            "type": "string",
+            "description": "A professional biography for the lawyer."
+        },
+        "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "The lawyer's professional website."
+        },
+        "linkedin": {
           "type": "string",
-          "description": "Short biography of the legal expert."
+          "format": "uri",
+          "description": "A link to the lawyer's LinkedIn profile."
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "specialization",
-        "licenseNumber"
-      ]
+      "required": ["userId", "firstName", "lastName"]
     },
     "Case": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Case",
       "type": "object",
-      "description": "Represents a legal case.",
+      "description": "Represents a legal case submitted by a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the case."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Case)"
-        },
-        "legalExpertId": {
-          "type": "string",
-          "description": "Reference to LegalExpert. (Relationship: LegalExpert 1:N Case)"
-        },
-        "subject": {
-          "type": "string",
-          "description": "Subject of the legal case."
-        },
-        "description": {
-          "type": "string",
-          "description": "Detailed description of the case."
-        },
-        "status": {
-          "type": "string",
-          "description": "Current status of the case (e.g., open, in progress, closed)."
-        },
-        "openDate": {
-          "type": "string",
-          "description": "The date the case was opened.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "subject",
-        "status"
-      ]
-    },
-    "Document": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Document",
-      "type": "object",
-      "description": "Represents a document submitted for a case.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the document."
-        },
         "caseId": {
           "type": "string",
-          "description": "Reference to Case. (Relationship: Case 1:N Document)"
+          "description": "A unique ID for the case."
         },
-        "fileName": {
+        "caseSubject": {
           "type": "string",
-          "description": "Name of the document file."
-        },
-        "fileType": {
-          "type": "string",
-          "description": "Type of the document file (e.g., PDF, DOCX)."
-        },
-        "uploadDate": {
-          "type": "string",
-          "description": "Date and time when the document was uploaded.",
-          "format": "date-time"
+          "description": "The subject line of the case."
         },
         "documentType": {
           "type": "string",
-          "description": "The type of document, for example 'Court Order', 'Invoice' etc."
+          "description": "The primary type of document associated with the case."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The name of the uploaded file."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Detailed notes or description of the case."
+        },
+        "submitted": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the case was submitted."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the case.",
+          "enum": [
+            "Submitted",
+            "In Review",
+            "Expert Assigned",
+            "Resolved"
+          ]
         }
       },
-      "required": [
-        "id",
-        "caseId",
-        "fileName",
-        "fileType",
-        "uploadDate"
-      ]
-    },
-    "Query": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Query",
-      "type": "object",
-      "description": "Represents a user query submitted to the AI system.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the query."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Query)"
-        },
-        "queryText": {
-          "type": "string",
-          "description": "The text of the user's query."
-        },
-        "response": {
-          "type": "string",
-          "description": "The AI's response to the query."
-        },
-        "submissionDate": {
-          "type": "string",
-          "description": "Date and time when the query was submitted.",
-          "format": "date-time"
-        },
-        "caseId": {
-          "type": "string",
-          "description": "Reference to Case. (Relationship: Case 1:1 Query).  The Case that this Query related to, if any."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "queryText",
-        "submissionDate"
-      ]
+      "required": ["caseId", "caseSubject", "documentType", "submitted", "status", "fileName"]
     }
   },
   "auth": {
@@ -202,100 +171,36 @@
       {
         "path": "/users/{userId}",
         "definition": {
-          "entityName": "User",
+          "entityName": "UserAccount",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/backend/entities/UserAccount"
           },
-          "description": "Stores user profiles.  The 'userId' parameter is used to ensure only the authenticated user can access their own profile.",
+          "description": "Stores user account information. Only the user themselves can read all fields and write to their own document.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user."
+              "description": "The unique identifier for the user. This is also the Firebase Authentication UID."
             }
           ]
         }
       },
-      {
-        "path": "/legalExperts/{legalExpertId}",
+       {
+        "path": "/lawyer_profiles/{lawyerId}",
         "definition": {
-          "entityName": "LegalExpert",
+          "entityName": "PublicLawyerProfile",
           "schema": {
-            "$ref": "#/backend/entities/LegalExpert"
+            "$ref": "#/backend/entities/PublicLawyerProfile"
           },
-          "description": "Stores legal expert profiles.",
+          "description": "Stores public-facing profiles for lawyers. This collection is publicly readable by any user, authenticated or not. Only the lawyer themselves can create or update their own profile.",
           "params": [
             {
-              "name": "legalExpertId",
-              "description": "The unique identifier of the legal expert."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/cases/{caseId}",
-        "definition": {
-          "entityName": "Case",
-          "schema": {
-            "$ref": "#/backend/entities/Case"
-          },
-          "description": "Stores legal cases associated with a user. The 'userId' parameter ensures that only the authenticated user can access their cases.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "caseId",
-              "description": "The unique identifier of the case."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/cases/{caseId}/documents/{documentId}",
-        "definition": {
-          "entityName": "Document",
-          "schema": {
-            "$ref": "#/backend/entities/Document"
-          },
-          "description": "Stores documents associated with a specific case.  The 'userId' and 'caseId' parameters ensure that only the authenticated user can access documents related to their cases.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "caseId",
-              "description": "The unique identifier of the case."
-            },
-            {
-              "name": "documentId",
-              "description": "The unique identifier of the document."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/queries/{queryId}",
-        "definition": {
-          "entityName": "Query",
-          "schema": {
-            "$ref": "#/backend/entities/Query"
-          },
-          "description": "Stores user queries. The 'userId' parameter ensures that only the authenticated user can access their queries.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "queryId",
-              "description": "The unique identifier of the query."
+              "name": "lawyerId",
+              "description": "The unique ID for the lawyer profile, which should be the same as the user's UID."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to provide a secure and scalable solution for the PRIMELEGAL CONNECT application. It adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, QAPs, and Invariants.\n\n**Authorization Independence (Denormalization):**\nTo avoid hierarchical authorization dependencies, the structure denormalizes authorization-related data. For example, access to documents related to a user (Cases, Documents, and Queries) is governed by the user's ID in the path, removing the need for `get()` calls in security rules.  Any data requiring collaborative access would use a membership map.  In this structure, all access control is based on the document paths and/or the request authentication, thus facilitating atomic operations.\n\n**Structural Segregation (Homogeneous Security Posture):**\nThe structure segregates data with different access requirements into separate collections.  User-specific data resides under `/users/{userId}` paths.  This allows for simple security rules based on `request.auth.uid`.\n\n**Access Modeling:**\n*   **Private Data:** User-owned data (cases, documents, queries) are placed under `/users/{userId}` paths, enforcing path-based ownership.\n*   **Collaborative Data:** The membership map pattern (`members: {uid1: \"role\", uid2: \"role\"}`) is used if a case requires access by multiple users. However, based on the initial problem description, collaborative access control is not necessary.\n*   **Global Roles (DBAC):** Existence-based roles (e.g., `/roles_admin/{uid}`) are used for administrative privileges, if needed. However, there is no need for admin roles at this stage.\n\n**QAPs (Rules are not Filters):**\nThe structure enables secure list operations. Since all documents in a collection share the same security requirements, listing documents is secure. The user specific subcollections restrict listing to the authenticated user.\n\nIn the `Document` subcollection, I have not included the `fileType` property, as that would be automatically included as metadata to the document in Firebase storage, which is where the document content itself should be stored, whilst firestore only stores a pointer (download URL) to that document."
+    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases (stored as an array in the user doc) to ensure data privacy and security. The `lawyer_profiles` collection stores public information about lawyers, allowing for open read access for all users, while keeping the main `users` collection private. This separation is key to securely displaying a list of lawyers."
   }
 }
