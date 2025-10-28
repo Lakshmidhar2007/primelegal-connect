@@ -44,7 +44,6 @@ export function useTranslation() {
       }
       
       // If not translated yet, initiate translation
-      // This is a simplified version. In a real app, you'd handle loading states.
       getTranslation({ text, targetLanguage: language }).then(response => {
         if (response.success && response.data) {
           const translatedText = response.data.translatedText;
