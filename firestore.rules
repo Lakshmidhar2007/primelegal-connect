@@ -1,87 +1,40 @@
-/**
- * @fileOverview Firestore Security Rules for the PRIMELEGAL CONNECT application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for private user data and cases,
- * while allowing public read access to lawyer profiles. Only authenticated users can access
- * their own data, and lawyer profiles are publicly accessible but only editable by the owner.
- *
- * Data Structure:
- * - /users/{userId}: Stores private user account information. Accessible only by the user.
- * - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles. Publicly readable, writable only by the lawyer.
- *
- * Key Security Decisions:
- * - User accounts are strictly owned by the authenticated user.
- * - Public lawyer profiles are readable by anyone but only writable by the profile owner.
- * - Listing of users is implicitly disallowed.
- *
- * Denormalization for Authorization:
- * - The 'userId' field is used within the lawyer_profiles collection to quickly verify ownership.
- */
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Allows access to user documents, enforcing strict ownership.
-     * @path /users/{userId}
-     * @allow (create) User with UID 'testUID' can create their own document at /users/testUID.
-     * @allow (get, update, delete) User with UID 'testUID' can read, update, and delete their own document at /users/testUID.
-     * @deny (create) User with UID 'anotherUID' cannot create a document at /users/testUID.
-     * @deny (get, update, delete) User with UID 'anotherUID' cannot read, update, or delete the document at /users/testUID.
-     * @principle Enforces document ownership for all operations.
-     */
+    // Users can only read and write their own data.
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false; // Listing users is not permitted
-
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if request.auth.uid == userId;
     }
 
-    /**
-     * @description Allows public read access to lawyer profiles, with owner-only write access.
-     * @path /lawyer_profiles/{lawyerId}
-     * @allow (get, list) Any user (authenticated or not) can read the lawyer profiles.
-     * @allow (create, update, delete) Lawyer with UID 'testLawyerUID' can create, update, and delete their own profile at /lawyer_profiles/testLawyerUID.
-     * @deny (create, update, delete) User with UID 'anotherUID' cannot create, update, or delete the lawyer profile at /lawyer_profiles/testLawyerUID.
-     * @principle Allows public reads, enforces ownership for writes.
-     */
+    // Lawyer profiles are public, but only the lawyer can edit their own.
     match /lawyer_profiles/{lawyerId} {
-      function isOwner(lawyerId) {
-        return request.auth.uid == lawyerId;
-      }
-
-      function isExistingOwner(lawyerId) {
-        return isOwner(lawyerId) && resource != null;
-      }
-      
-      allow get, list: if true;
-
-      allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(lawyerId);
+      allow read: if true;
+      allow write: if request.auth.uid == lawyerId;
     }
 
-        /**
-     * @description Allows public read access to chats collection
-     * @path /chats
-     * @allow (get, list) Any user (authenticated or not) can read the chats.
-     * @deny (create, update, delete) Not granted at this level of security
-     * @principle Allows public reads.
-     */
-    match /chats {
-      allow get, list: if true;
-      allow create, update, delete: if false; 
+    // Appointments can be read by anyone, but only edited by the lawyer who owns it.
+    match /appointments/{appointmentId} {
+      allow read: if true;
+      // A user can update an appointment to book it.
+      allow create, delete: if request.auth.uid == resource.data.lawyerId;
+      allow update: if request.auth.uid == resource.data.lawyerId || request.auth.uid == request.resource.data.bookedBy;
+      // Lawyers can query for their own appointments filtered by status.
+      allow list: if request.query.where.lawyerId == request.auth.uid && request.query.where.status != null;
+    }
+    
+    // Chat metadata can only be accessed by participants.
+    match /chats/{chatId} {
+      allow read, write: if request.auth.uid in resource.data.participants;
+      
+      // Users can query for chats they are a part of.
+      allow list: if request.auth != null && request.auth.uid == request.query.where.participants;
+
+      // Chat messages can only be accessed by chat participants.
+      match /messages/{messageId} {
+        allow read, write: if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+      }
     }
   }
 }
