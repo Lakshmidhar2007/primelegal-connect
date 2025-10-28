@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-translation';
 import { Loader2, Send } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { getAIChatResponse } from '@/actions/chat';
 
 type ChatDialogProps = {
   open: boolean;
@@ -88,19 +87,6 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
                 participants: [currentUser.uid, lawyerId].sort(),
                 createdAt: serverTimestamp(),
             });
-            
-            const lawyerName = (currentUser?.uid === lawyerId ? 'You' : (profile as any)?.firstName) || 'the lawyer';
-            const aiResponse = await getAIChatResponse({ lawyerName });
-
-            if (aiResponse.success && aiResponse.data) {
-                const aiMessage = {
-                    id: uuidv4(),
-                    text: aiResponse.data.response,
-                    senderId: 'ai-bot',
-                    timestamp: serverTimestamp(),
-                };
-                addDocumentNonBlocking(messagesRef, aiMessage);
-            }
         }
         
         addDocumentNonBlocking(messagesRef, messageData);
