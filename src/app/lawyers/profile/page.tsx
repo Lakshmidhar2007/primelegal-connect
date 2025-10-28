@@ -115,9 +115,6 @@ function LawyerProfile() {
                                     </Link>
                                 </Button>
                             )}
-                             <Button className="w-full" onClick={handleConnectClick}>
-                                {t('Connect Now')}
-                            </Button>
                         </div>
                     </div>
                 </CardContent>
