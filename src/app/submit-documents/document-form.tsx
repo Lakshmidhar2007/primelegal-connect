@@ -101,8 +101,7 @@ export function DocumentForm() {
         
         form.reset();
         
-        // Do not redirect to case-tracking page for now
-        // router.push('/case-tracking');
+        router.push('/case-tracking');
 
     } catch (error) {
         // This will be caught by the non-blocking update handler which emits a global error
