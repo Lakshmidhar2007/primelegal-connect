@@ -1,3 +1,26 @@
+/**
+ * @file Firebase Security Rules for PRIMELEGAL CONNECT.
+ *
+ * @corePhilosophy This ruleset enforces a strict user-ownership model for user accounts,
+ *   allowing users to manage their own data. Public lawyer profiles are readable by anyone,
+ *   but only lawyers can create or modify their profiles. Cases are stored directly in the user document, only accessible by that user.
+ *
+ * @dataStructure
+ *   /users/{userId}: Stores private user account information.
+ *   /lawyer_profiles/{lawyerId}: Stores public lawyer profiles.
+ *
+ * @keySecurityDecisions
+ *   - User listing is implicitly disallowed (no top-level collection scans allowed).
+ *   - Public lawyer profiles are readable by anyone, authenticated or not.
+ *
+ * @denormalizationForAuthorization
+ *   - Lawyer profiles are stored in a separate collection to allow public read access
+ *     without compromising the security of user accounts.  The lawyerId is the same as the userId.
+ *
+ * @structuralSegregation
+ *   - Public and private data are stored in separate collections (/users and /lawyer_profiles)
+ *     to optimize read access and maintain security.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -22,7 +45,7 @@ service cloud.firestore {
 
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
     }
@@ -44,8 +67,9 @@ service cloud.firestore {
         return request.auth != null;
       }
 
-      allow get, list: if true;
-      allow create: if isSignedIn() && isOwner(lawyerId);
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && request.auth.uid == lawyerId;
       allow update: if isOwner(lawyerId);
       allow delete: if isOwner(lawyerId);
     }
@@ -58,7 +82,7 @@ service cloud.firestore {
      * @deny (create, update, delete) No one can create, update or delete data in this path.
      * @principle Prevents open write access.
      */
-    match /appointments/{document} {
+    match /appointments/{documentId} {
         function isSignedIn() {
           return request.auth != null;
         }
