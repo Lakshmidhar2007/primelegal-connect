@@ -114,7 +114,7 @@
           "description": "A link to the lawyer's LinkedIn profile."
         }
       },
-      "required": ["userId", "firstName", "lastName"]
+      "required": ["userId", "firstName", "lastName", "email"]
     },
     "Case": {
       "title": "Case",

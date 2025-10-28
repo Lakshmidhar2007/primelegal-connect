@@ -77,7 +77,6 @@ export default function ProfilePage() {
             reader.onloadend = () => {
                 const dataUrl = reader.result as string;
                 setPreviewImage(dataUrl);
-                // For now, we'll just store the data URL. In a real app, you'd upload this to a service like Firebase Storage.
                 form.setValue('photoURL', dataUrl);
             };
             reader.readAsDataURL(file);
@@ -96,6 +95,17 @@ export default function ProfilePage() {
         try {
             const { email, ...updateData } = values; // email should not be updated here
             setDocumentNonBlocking(userDocRef, updateData, { merge: true });
+
+             // Also update lawyer_profiles if the user is a lawyer
+            if ((userProfile as any)?.isLawyer) {
+                const lawyerProfileRef = doc(firestore, 'lawyer_profiles', user.uid);
+                const lawyerUpdateData = {
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    photoURL: values.photoURL,
+                };
+                setDocumentNonBlocking(lawyerProfileRef, lawyerUpdateData, { merge: true });
+            }
 
             toast({
                 title: 'Profile Updated',

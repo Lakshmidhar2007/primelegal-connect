@@ -1,107 +1,94 @@
+/**
+ * @fileoverview Firestore Security Rules for PRIMELEGAL CONNECT.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user accounts,
+ * ensuring that only the authenticated user can access their own data.
+ * Public lawyer profiles are readable by everyone, but writable only by the profile owner.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores private user account data.  Access is restricted to the owning user.
+ * - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles. Publicly readable, owner-writable.
+ *
+ * Key Security Decisions:
+ * - User accounts are strictly private; listing all users is not permitted.
+ * - Public lawyer profiles are separated from private user data for open access while maintaining ownership.
+ *
+ * Denormalization for Authorization:
+ * - The `lawyer_profiles` documents must have a `userId` field that matches the document ID (`lawyerId`). This is validated on create.  Updates also enforce this immutability.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description This ruleset enforces a strict user-ownership model for the "users" collection and its subcollections.
-     * @corePhilosophy  The security model is based on individual user identity.
-     * @dataStructure   Data is nested under `/users/{userId}` for private user data, top level `/legalExperts/{legalExpertId}` for experts, and top level collections for public data.
-     * @keySecurityDecisions   Users can only access their own data, and data is segregated for security.
-     * @denormalization   No denormalization is required as the rules are based on path and user id.
+     * @description Secure user accounts. Only the user can read/write their own data.
+     * @path /users/{userId}
+     * @allow (create, update, delete) User with matching {userId} can modify their account.
+     * @allow (get, list) User with matching {userId} can read their account.
+     * @deny (create, update, delete) User attempts to modify another user's account.
+     * @deny (get, list) User attempts to read another user's account.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      /**
-       * @description  Controls access to user profile documents.
-       * @path  /users/{userId}
-       * @allow  (create) request.auth.uid == userId AND the first name, last name and photo url are present.
-       * @allow  (get, update, delete) if isSignedIn() && isOwner(userId).
-       * @deny  (list) Listing all users is not permitted.
-       * @principle  Enforces user-ownership; only the authenticated user can access their own profile.
-       */
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if request.auth.uid == userId;
-      allow update: if isSignedIn() && isOwner(userId) && resource != null;
-      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-
-      /**
-       * @description  Controls access to cases associated with a specific user.
-       * @path  /users/{userId}/cases/{caseId}
-       * @allow  (get, list) if isSignedIn() && isOwner(userId).
-       * @allow  (create) if isSignedIn() && request.auth.uid == userId.
-       * @allow  (update, delete) if isSignedIn() && isOwner(userId) && resource != null.
-       * @deny  No specific denial conditions.
-       * @principle  Enforces user-ownership; only the authenticated user can access their own cases.
-       */
-      match /cases/{caseId} {
-        allow get, list: if isSignedIn() && isOwner(userId);
-        allow create: if isSignedIn() && request.auth.uid == userId;
-        allow update: if isSignedIn() && isOwner(userId) && resource != null;
-        allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-
-        /**
-         * @description Controls access to documents associated with a specific case.
-         * @path /users/{userId}/cases/{caseId}/documents/{documentId}
-         * @allow (get, list) if isSignedIn() && isOwner(userId).
-         * @allow (create) if isSignedIn() && request.auth.uid == userId.
-         * @allow (update, delete) if isSignedIn() && isOwner(userId) && resource != null.
-         * @deny  No specific denial conditions.
-         * @principle Enforces user-ownership; only the authenticated user can access documents related to their cases.
-         */
-        match /documents/{documentId} {
-          allow get, list: if isSignedIn() && isOwner(userId);
-          allow create: if isSignedIn() && request.auth.uid == userId;
-          allow update: if isSignedIn() && isOwner(userId) && resource != null;
-          allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-        }
-
-        /**
-         * @description Controls access to queries associated with a specific case.
-         * @path /users/{userId}/queries/{queryId}
-         * @allow (get, list) if isSignedIn() && isOwner(userId).
-         * @allow (create) if isSignedIn() && request.auth.uid == userId.
-         * @allow (update, delete) if isSignedIn() && isOwner(userId) && resource != null.
-         * @deny  No specific denial conditions.
-         * @principle Enforces user-ownership; only the authenticated user can access queries related to their cases.
-         */
-        match /queries/{queryId} {
-          allow get, list: if isSignedIn() && isOwner(userId);
-          allow create: if isSignedIn() && request.auth.uid == userId;
-          allow update: if isSignedIn() && isOwner(userId) && resource != null;
-          allow delete: if isSignedIn() && isOwner(userId) && resource != null;
-        }
+      function isSignedIn() {
+        return request.auth != null;
       }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      // Allow the user to read their own document
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      // Allow the user to create their own document, enforcing userId consistency.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+
+      // Allow the user to update their own document, preventing userId changes.
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Allow the user to delete their own document.
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to legal expert profiles.
-     * @path /legalExperts/{legalExpertId}
-     * @allow get, list: if true;
-     * @allow create, update, delete: if false; // TODO: Add role-based or admin access control if needed.
-     * @principle Allows public read access to legal expert profiles, but restricts modification access for prototyping.
+     * @description Secure public lawyer profiles. Publicly readable, owner-writable.
+     * @path /lawyer_profiles/{lawyerId}
+     * @allow (get, list) Any user can read lawyer profiles.
+     * @allow (create, update, delete) Lawyer with matching {lawyerId} can modify their profile.
+     * @deny (create, update, delete) User attempts to modify another lawyer's profile.
+     * @principle Public read access with owner-only writes, enforces immutability of the `userId` field.
      */
-    match /legalExperts/{legalExpertId} {
+    match /lawyer_profiles/{lawyerId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(lawyerId) {
+        return isSignedIn() && request.auth.uid == lawyerId;
+      }
+
+       function isExistingOwner(lawyerId) {
+        return isOwner(lawyerId) && resource != null;
+      }
+
+      // Allow anyone to read lawyer profiles
       allow get, list: if true;
-      allow create, update, delete: if false; // TODO: Add role-based or admin access control if needed.
+
+      // Allow a lawyer to create their own profile, enforcing lawyerId consistency.
+      allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
+
+      // Allow a lawyer to update their own profile, preventing lawyerId changes.
+      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
+
+      // Allow a lawyer to delete their own profile.
+      allow delete: if isExistingOwner(lawyerId);
     }
-  }
-
-  /**
-   * @description  Helper function to determine if the authenticated user is the owner of the document.
-   * @param  userId  The user ID from the path.
-   * @return  True if the authenticated user's ID matches the user ID in the path, false otherwise.
-   * @principle  Verifies identity for secure data access.
-   */
-  function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-
-  /**
-   * @description  Helper function to determine if a user is signed in.
-   * @return  True if the user is signed in, false otherwise.
-   * @principle  Verifies user's authentication status.
-   */
-  function isSignedIn() {
-    return request.auth != null;
   }
 }
