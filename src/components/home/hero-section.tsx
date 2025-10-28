@@ -57,8 +57,8 @@ export function HeroSection() {
 
   return (
     <>
-      <section id="ask-ai" className="container py-12 text-center lg:py-24 animate-fade-in-up">
-        <div className="mx-auto max-w-3xl">
+      <section id="ask-ai" className="container py-12 text-center lg:py-24">
+        <div className="mx-auto max-w-3xl animate-fade-in" style={{ animationDelay: '100ms' }}>
           <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl">
             Get Instant Legal Insights with AI
           </h1>
@@ -67,8 +67,8 @@ export function HeroSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-8 max-w-2xl">
-          <Card className="shadow-lg">
+        <div className="mx-auto mt-8 max-w-2xl animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+          <Card className="shadow-lg bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center justify-center gap-2 font-headline text-2xl">
                 <Sparkles className="h-6 w-6 text-accent" />
@@ -86,7 +86,7 @@ export function HeroSection() {
                         <FormControl>
                           <Textarea
                             placeholder="For example: 'I had a dispute with my landlord over the security deposit...'"
-                            className="min-h-[120px] resize-none text-base"
+                            className="min-h-[120px] resize-none text-base bg-background/70"
                             {...field}
                           />
                         </FormControl>
@@ -133,14 +133,14 @@ export function HeroSection() {
           )}
 
           {aiResponse && (
-            <Card className="mt-6 text-left animate-in fade-in-50 duration-500">
+            <Card className="mt-6 text-left animate-in fade-in-50 duration-500 bg-card/50 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline text-2xl">
                   <BrainCircuit className="h-6 w-6" />
                   AI Generated Insights
                 </CardTitle>
               </CardHeader>
-              <CardContent className="prose prose-sm max-w-none text-foreground">
+              <CardContent className="prose prose-sm max-w-none text-foreground/90 prose-p:text-foreground/90 prose-strong:text-foreground">
                 <p>{aiResponse}</p>
               </CardContent>
             </Card>

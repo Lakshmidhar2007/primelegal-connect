@@ -21,8 +21,8 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="container py-12 lg:py-24 animate-fade-in-up animation-delay-200">
-      <div className="mx-auto max-w-3xl text-center">
+    <section className="container py-12 lg:py-24">
+      <div className="mx-auto max-w-3xl text-center animate-slide-in-from-left" style={{ animationDelay: '300ms' }}>
         <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
           Your Path to Legal Clarity
         </h2>
@@ -32,12 +32,12 @@ export function HowItWorks() {
       </div>
       <div className="mt-12 grid gap-8 md:grid-cols-3">
         {steps.map((step, i) => (
-          <Card key={step.title} className="flex flex-col items-center p-6 text-center shadow-md hover:shadow-xl transition-shadow animate-fade-in-up" style={{animationDelay: `${200 * (i + 1)}ms`}}>
+          <Card key={step.title} className="flex flex-col items-center p-6 text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-card/50 animate-fade-in-up" style={{animationDelay: `${400 + 150 * i}ms`}}>
             <CardHeader className="items-center">
               {step.icon}
               <CardTitle className="mt-4 font-headline text-2xl">{step.title}</CardTitle>
             </CardHeader>
-            <CardDescription className="mt-2">
+            <CardDescription className="mt-2 text-foreground/80">
               {step.description}
             </CardDescription>
           </Card>

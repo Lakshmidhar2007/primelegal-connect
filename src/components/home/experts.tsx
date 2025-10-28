@@ -28,8 +28,8 @@ const expertsData = [
 
 export function Experts() {
   return (
-    <section className="container py-12 lg:py-24 animate-fade-in-up animation-delay-600">
-      <div className="mx-auto max-w-3xl text-center">
+    <section className="container py-12 lg:py-24">
+      <div className="mx-auto max-w-3xl text-center animate-fade-in" style={{ animationDelay: '700ms' }}>
         <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
           Meet Our Legal Experts
         </h2>
@@ -39,17 +39,19 @@ export function Experts() {
       </div>
       <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {expertsData.map((expert, i) => (
-          <Card key={expert.name} className="overflow-hidden text-center animate-fade-in-up" style={{animationDelay: `${200 * (i + 1)}ms`}}>
+          <Card key={expert.name} className="overflow-hidden text-center bg-card/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 animate-fade-in-up" style={{animationDelay: `${800 + 150 * i}ms`}}>
             <CardHeader className="p-0">
               {expert.image && (
-                <Image
-                  src={expert.image.imageUrl}
-                  alt={`Portrait of ${expert.name}`}
-                  width={400}
-                  height={400}
-                  className="aspect-square object-cover w-full"
-                  data-ai-hint={expert.image.imageHint}
-                />
+                <div className="aspect-square overflow-hidden">
+                  <Image
+                    src={expert.image.imageUrl}
+                    alt={`Portrait of ${expert.name}`}
+                    width={400}
+                    height={400}
+                    className="aspect-square object-cover w-full transition-transform duration-300 group-hover:scale-105"
+                    data-ai-hint={expert.image.imageHint}
+                  />
+                </div>
               )}
             </CardHeader>
             <CardContent className="p-4">
