@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { Linkedin, Link as LinkIcon, Briefcase, User, Calendar, Flag } from 'lucide-react';
 import Link from 'next/link';
-import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
@@ -27,18 +27,8 @@ function LawyerProfile() {
     return null;
   }, [firestore, lawyerId]);
 
-  const userDocRef = useMemoFirebase(() => {
-    if (firestore && lawyerId) {
-      // The user document has the same ID as the lawyer profile
-      return doc(firestore, 'users', lawyerId);
-    }
-    return null;
-  }, [firestore, lawyerId]);
+  const { data: lawyerProfile, isLoading } = useDoc(lawyerProfileRef);
 
-  const { data: lawyerProfile, isLoading: isLoadingProfile } = useDoc(lawyerProfileRef);
-  const { data: userProfile, isLoading: isLoadingUser } = useDoc(userDocRef);
-
-  const isLoading = isLoadingProfile || isLoadingUser;
 
   if (isLoading) {
     return <LawyerProfileSkeleton />;
@@ -52,7 +42,7 @@ function LawyerProfile() {
     );
   }
 
-  const lawyer = { ...(lawyerProfile as any), ...(userProfile as any) };
+  const lawyer = lawyerProfile as any;
 
   const fullName = `${lawyer.firstName} ${lawyer.lastName}`;
   const initials = `${lawyer.firstName?.charAt(0)}${lawyer.lastName?.charAt(0)}`;
