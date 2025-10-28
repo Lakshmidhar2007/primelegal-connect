@@ -3,6 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from './use-language';
 import { getTranslation } from '@/actions/translate';
+import { z } from 'zod';
+
+const TranslateTextInputSchema = z.object({
+  text: z.string().describe('The text to be translated.'),
+  targetLanguage: z.string().describe('The language to translate the text into (e.g., "Spanish", "Hindi").'),
+});
+type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const translationsCache: Record<string, Record<string, string>> = {};
 

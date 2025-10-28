@@ -1,12 +1,5 @@
 'use server';
-import { translateText } from '@/ai/flows/translate-text';
-import { z } from 'zod';
-
-export const TranslateTextInputSchema = z.object({
-    text: z.string().describe('The text to be translated.'),
-    targetLanguage: z.string().describe('The language to translate the text into (e.g., "Spanish", "Hindi").'),
-});
-export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
+import { translateText, type TranslateTextInput } from '@/ai/flows/translate-text';
 
 type TranslationResponse = {
     success: boolean;
