@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { Linkedin, Link as LinkIcon, Briefcase, User, Calendar, Flag } from 'lucide-react';
 import Link from 'next/link';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
 import { format } from 'date-fns';
 import { ChatDialog } from '@/components/shared/chat-dialog';
+import { AuthDialog } from '@/components/auth/auth-dialog';
 
 function LawyerProfile() {
   const searchParams = useSearchParams();
@@ -21,6 +22,8 @@ function LawyerProfile() {
   const firestore = useFirestore();
   const { t } = useTranslation();
   const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const { user } = useUser();
 
   const lawyerDocRef = useMemoFirebase(() => {
     if (firestore && lawyerId) {
@@ -30,6 +33,14 @@ function LawyerProfile() {
   }, [firestore, lawyerId]);
 
   const { data: lawyer, isLoading } = useDoc(lawyerDocRef);
+  
+  const handleConnectClick = () => {
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
+    }
+    setIsChatDialogOpen(true);
+  };
 
   if (isLoading) {
     return <LawyerProfileSkeleton />;
@@ -104,7 +115,7 @@ function LawyerProfile() {
                                     </Link>
                                 </Button>
                             )}
-                             <Button className="w-full" onClick={() => setIsChatDialogOpen(true)}>
+                             <Button className="w-full" onClick={handleConnectClick}>
                                 {t('Connect Now')}
                             </Button>
                         </div>
@@ -120,6 +131,7 @@ function LawyerProfile() {
             lawyerId={lawyerId}
         />
     )}
+    <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
     </>
   );
 }

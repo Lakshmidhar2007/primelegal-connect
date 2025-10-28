@@ -1,6 +1,6 @@
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,13 +10,15 @@ import { Button } from '../ui/button';
 import { useState } from 'react';
 import { ChatDialog } from '../shared/chat-dialog';
 import { useTranslation } from '@/hooks/use-translation';
-
+import { AuthDialog } from '../auth/auth-dialog';
 
 export function Lawyers() {
   const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
   const [selectedLawyerId, setSelectedLawyerId] = useState<string | null>(null);
   const firestore = useFirestore();
   const { t } = useTranslation();
+  const { user } = useUser();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   
   const lawyersQuery = useMemoFirebase(() => {
     if (firestore) {
@@ -28,6 +30,10 @@ export function Lawyers() {
   const { data: lawyers, isLoading } = useCollection(lawyersQuery);
 
   const handleConnectClick = (lawyerId: string) => {
+    if (!user) {
+      setShowAuthDialog(true);
+      return;
+    }
     setSelectedLawyerId(lawyerId);
     setIsChatDialogOpen(true);
   };
@@ -98,6 +104,7 @@ export function Lawyers() {
             lawyerId={selectedLawyerId}
         />
     )}
+    <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
     </>
   );
 }
