@@ -119,11 +119,11 @@ export default {
         },
         'slide-and-fade-in': {
             '0%': {
-                transform: 'translateX(20px)',
+                transform: 'translateY(10px)',
                 opacity: '0',
             },
             '100%': {
-                transform: 'translateX(0)',
+                transform: 'translateY(0)',
                 opacity: '1',
             },
         },
