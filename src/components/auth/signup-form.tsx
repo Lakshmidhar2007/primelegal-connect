@@ -121,7 +121,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
           ...userDataToSave,
           id: user.uid,
           registrationDate: new Date().toISOString(),
-          dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : undefined,
+          dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString().split('T')[0] : undefined,
         };
         
         if (values.nationalityProof) {
@@ -140,7 +140,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                 firstName: values.firstName,
                 lastName: values.lastName,
                 email: values.email,
-                dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : undefined,
+                dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString().split('T')[0] : undefined,
                 nationality: values.nationality,
                 barCouncilNumber: values.barCouncilNumber,
             }
@@ -165,209 +165,207 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
   }
 
   return (
-    <div>
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="flex gap-4">
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="flex gap-4">
+            <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                <FormItem className="flex-1">
+                    <FormLabel>{t('First Name')}</FormLabel>
+                    <FormControl>
+                    <Input placeholder={t("John")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                <FormItem className="flex-1">
+                    <FormLabel>{t('Last Name')}</FormLabel>
+                    <FormControl>
+                    <Input placeholder={t("Doe")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+        </div>
+        <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>{t('Email')}</FormLabel>
+                <FormControl>
+                <Input type="email" placeholder="m@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>{t('Password')}</FormLabel>
+                <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+            <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>{t('Confirm Password')}</FormLabel>
+                <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        <FormField
+            control={form.control}
+            name="isLawyer"
+            render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                <FormLabel>{t('Are you a lawyer?')}</FormLabel>
+                <FormDescription>
+                    {t('Enable this if you are a legal professional.')}
+                </FormDescription>
+                </div>
+                <FormControl>
+                <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                />
+                </FormControl>
+            </FormItem>
+            )}
+        />
+
+        {isLawyer && (
+            <div className="space-y-4 pt-4 border-t">
                 <FormField
                     control={form.control}
-                    name="firstName"
+                    name="dateOfBirth"
                     render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>{t('First Name')}</FormLabel>
-                        <FormControl>
-                        <Input placeholder={t("John")} {...field} />
-                        </FormControl>
+                        <FormItem className="flex flex-col">
+                        <FormLabel>{t('Date of Birth')}</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>{t('Pick a date')}</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
                         <FormMessage />
-                    </FormItem>
+                        </FormItem>
                     )}
                 />
                 <FormField
                     control={form.control}
-                    name="lastName"
+                    name="nationality"
                     render={({ field }) => (
-                    <FormItem className="flex-1">
-                        <FormLabel>{t('Last Name')}</FormLabel>
+                        <FormItem>
+                        <FormLabel>{t('Nationality')}</FormLabel>
                         <FormControl>
-                        <Input placeholder={t("Doe")} {...field} />
+                            <Input {...field} />
                         </FormControl>
                         <FormMessage />
-                    </FormItem>
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="nationalityProof"
+                    render={({ field: { onChange, ...rest } }) => (
+                        <FormItem>
+                            <FormLabel>{t('Proof of Nationality')}</FormLabel>
+                            <FormControl>
+                                <Input type="file" accept="image/*,.pdf" onChange={(e) => onChange(e.target.files)} {...rest} />
+                            </FormControl>
+                            <FormDescription>{t('Aadhar, PAN, Driving License, etc.')}</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                    <FormField
+                    control={form.control}
+                    name="barCouncilNumber"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>{t('Bar Council Registration Number')}</FormLabel>
+                        <FormControl>
+                            <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                    <FormField
+                    control={form.control}
+                    name="licensePdf"
+                    render={({ field: { onChange, ...rest } }) => (
+                        <FormItem>
+                            <FormLabel>{t("Lawyer's License (PDF)")}</FormLabel>
+                            <FormControl>
+                                <Input type="file" accept=".pdf" onChange={(e) => onChange(e.target.files)} {...rest} />
+                            </FormControl>
+                            <FormDescription>{t("Upload for verification.")}</FormDescription>
+                            <FormMessage />
+                        </FormItem>
                     )}
                 />
             </div>
-            <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>{t('Email')}</FormLabel>
-                    <FormControl>
-                    <Input type="email" placeholder="m@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>{t('Password')}</FormLabel>
-                    <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-                <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>{t('Confirm Password')}</FormLabel>
-                    <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="isLawyer"
-                render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                    <FormLabel>{t('Are you a lawyer?')}</FormLabel>
-                    <FormDescription>
-                        {t('Enable this if you are a legal professional.')}
-                    </FormDescription>
-                    </div>
-                    <FormControl>
-                    <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                    />
-                    </FormControl>
-                </FormItem>
-                )}
-            />
-
-            {isLawyer && (
-                <div className="space-y-4 pt-4 border-t">
-                    <FormField
-                        control={form.control}
-                        name="dateOfBirth"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>{t('Date of Birth')}</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>{t('Pick a date')}</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date > new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="nationality"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>{t('Nationality')}</FormLabel>
-                            <FormControl>
-                                <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="nationalityProof"
-                        render={({ field: { onChange, ...rest } }) => (
-                            <FormItem>
-                                <FormLabel>{t('Proof of Nationality')}</FormLabel>
-                                <FormControl>
-                                    <Input type="file" accept="image/*,.pdf" onChange={(e) => onChange(e.target.files)} {...rest} />
-                                </FormControl>
-                                <FormDescription>{t('Aadhar, PAN, Driving License, etc.')}</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="barCouncilNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>{t('Bar Council Registration Number')}</FormLabel>
-                            <FormControl>
-                                <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="licensePdf"
-                        render={({ field: { onChange, ...rest } }) => (
-                            <FormItem>
-                                <FormLabel>{t("Lawyer's License (PDF)")}</FormLabel>
-                                <FormControl>
-                                    <Input type="file" accept=".pdf" onChange={(e) => onChange(e.target.files)} {...rest} />
-                                </FormControl>
-                                <FormDescription>{t("Upload for verification.")}</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-            )}
-            
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t('Sign Up')}
-            </Button>
-            </form>
-        </Form>
+        )}
+        
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t('Sign Up')}
+        </Button>
         <div className="mt-4 text-center text-sm">
             {t('Already have an account?')}{' '}
             <Button variant="link" className="p-0 h-auto" onClick={onLoginClick}>
                 {t('Login')}
             </Button>
         </div>
-    </div>
+        </form>
+    </Form>
   );
 }
