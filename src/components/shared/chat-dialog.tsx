@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-translation';
@@ -79,31 +79,49 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
       senderId: currentUser.uid,
       timestamp: serverTimestamp(),
     };
-    
+
     const chatRef = doc(firestore, 'chats', chatId);
     const messagesRef = collection(chatRef, 'messages');
 
     try {
-        const chatDoc = await getDoc(chatRef);
-        if (!chatDoc.exists()) {
-            await setDoc(chatRef, {
-                participants: [currentUser.uid, lawyerId].sort(),
-                createdAt: serverTimestamp(),
-            });
-        }
-        
-        await addDoc(messagesRef, messageData);
-        setMessage('');
-    } catch (error) {
-        console.error('Error sending message:', error);
-        toast({
-            variant: "destructive",
-            title: t("Error"),
-            description: t("Could not send message. Please try again."),
+      const chatDoc = await getDoc(chatRef);
+      if (!chatDoc.exists()) {
+        await setDoc(chatRef, {
+          participants: [currentUser.uid, lawyerId].sort(),
+          createdAt: serverTimestamp(),
         });
-    } finally {
-        setIsSending(false);
+      }
+    } catch (error) {
+      // This is a read/write to the parent chat doc, also needs error handling
+       errorEmitter.emit(
+        'permission-error',
+        new FirestorePermissionError({
+          path: chatRef.path,
+          operation: 'write',
+          requestResourceData: {
+            participants: [currentUser.uid, lawyerId].sort(),
+          },
+        })
+      );
+      setIsSending(false);
+      return;
     }
+    
+    addDoc(messagesRef, messageData)
+      .then(() => {
+        setMessage('');
+      })
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: messagesRef.path,
+          operation: 'create',
+          requestResourceData: messageData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSending(false);
+      });
   };
 
 
