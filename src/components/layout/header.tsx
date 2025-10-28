@@ -150,23 +150,30 @@ export function Header() {
           {isUserLoading ? null : user ? (
             <div className="flex items-center gap-2">
                  {isLawyer && (
-                    <Button asChild variant="outline" size="sm">
+                    <Button asChild variant="outline" size="sm" className="hidden md:flex">
                         <Link href="/lawyer-dashboard">Lawyer Dashboard</Link>
                     </Button>
                 )}
-              <Button asChild variant="ghost" size="icon" className="rounded-full">
-                <Link href="/profile">
-                  <Avatar className="h-8 w-8">
-                      <AvatarImage src={userProfile?.photoURL} />
-                      <AvatarFallback>
-                        {userProfile?.firstName?.charAt(0)}
-                        {userProfile?.lastName?.charAt(0)}
-                      </AvatarFallback>
-                  </Avatar>
-                  <span className="sr-only">Profile</span>
-                </Link>
-              </Button>
-              <Button onClick={handleLogout} variant="outline">Logout</Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button asChild variant="ghost" size="icon" className="rounded-full">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={userProfile?.photoURL} />
+                        <AvatarFallback>
+                          {userProfile?.firstName?.charAt(0)}
+                          {userProfile?.lastName?.charAt(0)}
+                        </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <>
