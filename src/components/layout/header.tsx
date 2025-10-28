@@ -14,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Globe } from '../icons/globe';
@@ -90,6 +91,10 @@ export function Header() {
               <DropdownMenuItem>Spanish</DropdownMenuItem>
               <DropdownMenuItem>French</DropdownMenuItem>
               <DropdownMenuItem>German</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Hindi</DropdownMenuItem>
+              <DropdownMenuItem>Bengali</DropdownMenuItem>
+              <DropdownMenuItem>Tamil</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
