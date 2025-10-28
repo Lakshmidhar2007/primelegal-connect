@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { LanguageProvider } from '@/hooks/use-language';
 
 export const metadata: Metadata = {
-  title: 'PRIMELEGAL CONNECT',
+  title: 'PrimeLegal CONNECT',
   description: 'Connect with real legal experts for advice.',
 };
 
@@ -36,6 +36,7 @@ export default function RootLayout({
           <LanguageProvider>
             <FirebaseClientProvider>
             <div className="relative min-h-screen flex flex-col">
+                <div className="animated-gradient-bg fixed top-0 left-0 -z-10 h-full w-full"></div>
                 <Header />
                 <main className="flex-grow">{children}</main>
                 <Footer />
