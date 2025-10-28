@@ -81,16 +81,7 @@ export function LawyerProfileForm() {
     }
 
     try {
-        // Update the private /users/{userId} document
         setDocumentNonBlocking(userDocRef, values, { merge: true });
-
-        // Update the public /lawyers/{lawyerId} document
-        const lawyerDocRef = doc(firestore, 'lawyers', user.uid);
-        const publicProfileData = {
-            specialty: values.specialty,
-            // We only copy fields that should be public
-        };
-        setDocumentNonBlocking(lawyerDocRef, publicProfileData, { merge: true });
 
         toast({
             title: 'Profile Updated',

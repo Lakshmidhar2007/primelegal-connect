@@ -1,0 +1,190 @@
+{
+  "entities": {
+    "UserAccount": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserAccount",
+      "type": "object",
+      "description": "Represents a user account within the PRIMELEGAL CONNECT application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user account."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user account.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "isLawyer": {
+          "type": "boolean",
+          "description": "Indicates whether the user is a lawyer or not."
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "Date and time the user registered.",
+          "format": "date-time"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile picture.",
+          "format": "uri"
+        },
+        "specialty": {
+            "type": "string",
+            "description": "The lawyer's primary area of legal practice."
+        },
+        "bio": {
+            "type": "string",
+            "description": "A professional biography for the lawyer."
+        },
+        "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "The lawyer's professional website."
+        },
+        "linkedin": {
+            "type": "string",
+            "format": "uri",
+            "description": "A link to the lawyer's LinkedIn profile."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "isLawyer",
+        "registrationDate"
+      ]
+    },
+    "PublicLawyerProfile": {
+      "title": "Public Lawyer Profile",
+      "type": "object",
+      "description": "DEPRECATED: This entity is no longer in use. Public lawyer data is derived from the UserAccount entity with field-level security.",
+      "properties": {
+          "firstName": {
+              "type": "string"
+          },
+          "lastName": {
+              "type": "string"
+          },
+          "photoURL": {
+              "type": "string",
+              "format": "uri"
+          },
+          "specialty": {
+              "type": "string"
+          }
+      },
+      "required": ["firstName", "lastName"]
+    },
+    "Case": {
+      "title": "Case",
+      "type": "object",
+      "description": "Represents a legal case submitted by a user.",
+      "properties": {
+        "caseSubject": {
+          "type": "string",
+          "description": "The subject line of the case."
+        },
+        "documentType": {
+          "type": "string",
+          "description": "The primary type of document associated with the case."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The name of the uploaded file."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Detailed notes or description of the case."
+        },
+        "submitted": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the case was submitted."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the case.",
+          "enum": [
+            "Submitted",
+            "In Review",
+            "Expert Assigned",
+            "Resolved"
+          ]
+        }
+      },
+      "required": ["caseSubject", "documentType", "submitted", "status"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserAccount",
+          "schema": {
+            "$ref": "#/backend/entities/UserAccount"
+          },
+          "description": "Stores user account information. The user can read/write their own document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user. This is also the Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/lawyers/{lawyerId}",
+        "definition": {
+            "entityName": "PublicLawyerProfile",
+            "schema": { "$ref": "#/backend/entities/PublicLawyerProfile" },
+            "description": "DEPRECATED: This collection is no longer in use.",
+            "params": [
+                {
+                    "name": "lawyerId",
+                    "description": "The unique identifier for the lawyer, which matches their Firebase Auth UID."
+                }
+            ]
+        }
+      },
+      {
+        "path": "/users/{userId}/cases/{caseId}",
+        "definition": {
+          "entityName": "Case",
+          "schema": {
+            "$ref": "#/backend/entities/Case"
+          },
+          "description": "Stores the cases submitted by a specific user. Access is controlled by user ownership. Users can read/write their own cases.",
+          "params": [
+             {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns the case."
+            },
+            {
+              "name": "caseId",
+              "description": "The unique identifier for the case."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support user-specific data. Each user has a document in the `/users` collection. Their legal cases are stored in a subcollection, `/users/{userId}/cases`, with security rules ensuring only the user can access their own cases. The `/lawyers` collection is deprecated."
+  }
+}

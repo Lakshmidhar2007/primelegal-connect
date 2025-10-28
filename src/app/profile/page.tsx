@@ -97,16 +97,6 @@ export default function ProfilePage() {
             const { email, ...updateData } = values; // email should not be updated here
             setDocumentNonBlocking(userDocRef, updateData, { merge: true });
 
-            if((userProfile as any)?.isLawyer) {
-                const lawyerDocRef = doc(firestore, 'lawyers', user.uid);
-                const publicProfileData = {
-                    firstName: values.firstName,
-                    lastName: values.lastName,
-                    photoURL: values.photoURL,
-                };
-                setDocumentNonBlocking(lawyerDocRef, publicProfileData, { merge: true });
-            }
-
             toast({
                 title: 'Profile Updated',
                 description: 'Your information has been saved successfully.',
