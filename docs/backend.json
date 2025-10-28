@@ -91,6 +91,10 @@
       "type": "object",
       "description": "Represents a legal case submitted by a user.",
       "properties": {
+        "caseId": {
+          "type": "string",
+          "description": "A unique ID for the case."
+        },
         "caseSubject": {
           "type": "string",
           "description": "The subject line of the case."
@@ -123,7 +127,7 @@
           ]
         }
       },
-      "required": ["caseSubject", "documentType", "submitted", "status"]
+      "required": ["caseId", "caseSubject", "documentType", "submitted", "status"]
     }
   },
   "auth": {
