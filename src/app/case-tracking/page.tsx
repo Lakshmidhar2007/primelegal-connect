@@ -18,24 +18,25 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { format } from 'date-fns';
 
 export default function CaseTrackingPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const casesCollectionRef = useMemoFirebase(() => {
+  const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
-      return collection(firestore, 'users', user.uid, 'cases');
+      return doc(firestore, 'users', user.uid);
     }
     return null;
   }, [firestore, user]);
 
-  const { data: cases, isLoading: areCasesLoading } = useCollection(casesCollectionRef);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
-  const isLoading = isUserLoading || areCasesLoading;
+  const cases = (userProfile as any)?.cases || [];
+  const isLoading = isUserLoading || isProfileLoading;
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -84,8 +85,8 @@ export default function CaseTrackingPage() {
                     </TableRow>
                   ))
                 ) : cases && cases.length > 0 ? (
-                  cases.map((caseItem) => (
-                    <TableRow key={caseItem.id}>
+                  cases.map((caseItem: any) => (
+                    <TableRow key={caseItem.caseId}>
                       <TableCell className="font-medium">{caseItem.caseSubject}</TableCell>
                       <TableCell>{format(new Date(caseItem.submitted), 'PPP')}</TableCell>
                       <TableCell className="text-right">

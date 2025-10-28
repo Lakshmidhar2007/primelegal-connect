@@ -54,6 +54,13 @@
             "type": "string",
             "format": "uri",
             "description": "A link to the lawyer's LinkedIn profile."
+        },
+        "cases": {
+          "type": "array",
+          "description": "An array of legal cases submitted by the user.",
+          "items": {
+            "$ref": "#/backend/entities/Case"
+          }
         }
       },
       "required": [
@@ -68,7 +75,7 @@
     "PublicLawyerProfile": {
       "title": "Public Lawyer Profile",
       "type": "object",
-      "description": "DEPRECATED: This entity is no longer in use. Public lawyer data is derived from the UserAccount entity with field-level security.",
+      "description": "Publicly visible information for a lawyer, derived from their UserAccount.",
       "properties": {
           "firstName": {
               "type": "string"
@@ -82,9 +89,12 @@
           },
           "specialty": {
               "type": "string"
+          },
+          "isLawyer": {
+              "type": "boolean"
           }
       },
-      "required": ["firstName", "lastName"]
+      "required": ["firstName", "lastName", "isLawyer"]
     },
     "Case": {
       "title": "Case",
@@ -153,42 +163,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/lawyers/{lawyerId}",
-        "definition": {
-            "entityName": "PublicLawyerProfile",
-            "schema": { "$ref": "#/backend/entities/PublicLawyerProfile" },
-            "description": "DEPRECATED: Public lawyer data is now read directly from the /users collection with field-level security.",
-            "params": [
-                {
-                    "name": "lawyerId",
-                    "description": "The unique identifier for the lawyer, which matches their Firebase Auth UID."
-                }
-            ]
-        }
-      },
-      {
-        "path": "/users/{userId}/cases/{caseId}",
-        "definition": {
-          "entityName": "Case",
-          "schema": {
-            "$ref": "#/backend/entities/Case"
-          },
-          "description": "Stores the cases for a specific user. A user can create, read, update, and delete their own cases. No one else can access them.",
-          "params": [
-             {
-              "name": "userId",
-              "description": "The unique identifier for the user who owns the case."
-            },
-            {
-              "name": "caseId",
-              "description": "The unique identifier for the case."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts and their associated cases to ensure data privacy and security. The homepage now queries the /users collection directly for lawyers, and security rules enforce that only specific public-safe fields are readable by other authenticated users. This approach simplifies the data model by removing the now-deprecated /lawyers collection and enforces security directly through rules. Users can manage their own cases in the cases subcollection."
+    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts to ensure data privacy and security. Cases are stored as an array within the user document, simplifying security rules to only require ownership of the user document itself. The homepage now queries the /users collection directly for lawyers, and security rules enforce that only specific public-safe fields are readable by other authenticated users. This approach simplifies the data model by removing the need for subcollections for cases and enforces security directly through rules on the /users collection."
   }
 }

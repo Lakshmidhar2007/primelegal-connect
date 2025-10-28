@@ -25,9 +25,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useUser, useFirestore, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   caseSubject: z.string().min(5, 'Please provide a brief subject for your case.'),
@@ -43,9 +44,9 @@ export function DocumentForm() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const casesCollectionRef = useMemoFirebase(() => {
+   const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
-      return collection(firestore, 'users', user.uid, 'cases');
+      return doc(firestore, 'users', user.uid);
     }
     return null;
   }, [firestore, user]);
@@ -61,7 +62,7 @@ export function DocumentForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore || !casesCollectionRef) {
+    if (!user || !firestore || !userDocRef) {
         toast({
             variant: 'destructive',
             title: 'Authentication Error',
@@ -74,9 +75,8 @@ export function DocumentForm() {
     try {
         const file = values.file[0];
         
-        // Create a reference for a new document to get a unique ID
-        const newCaseRef = doc(casesCollectionRef);
-        const newCaseId = newCaseRef.id;
+        // Generate a unique ID for the new case
+        const newCaseId = uuidv4();
         
         const newCase = {
             caseId: newCaseId,
@@ -87,9 +87,14 @@ export function DocumentForm() {
             submitted: new Date().toISOString(),
             status: 'Submitted',
         };
+        
+        // Get the current user document
+        const userDoc = await getDoc(userDocRef);
+        const existingCases = userDoc.exists() && userDoc.data().cases ? userDoc.data().cases : [];
 
-        // Use setDocumentNonBlocking to create the new document with the generated ID.
-        setDocumentNonBlocking(newCaseRef, newCase, { merge: false });
+        const updatedCases = [...existingCases, newCase];
+
+        setDocumentNonBlocking(userDocRef, { cases: updatedCases }, { merge: true });
 
         toast({
           title: 'Case Filed Successfully',
@@ -102,7 +107,12 @@ export function DocumentForm() {
         router.push('/case-tracking');
 
     } catch (error) {
-        // This will be caught by the non-blocking update handler which emits a global error
+        console.error("Error submitting case:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Submission Error',
+          description: 'Could not submit your case. Please try again.',
+        });
     } finally {
         setIsSubmitting(false);
     }
