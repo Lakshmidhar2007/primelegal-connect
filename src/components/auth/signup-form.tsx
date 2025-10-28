@@ -100,6 +100,8 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
       isLawyer: false,
       nationality: '',
       barCouncilNumber: '',
+      nationalityProof: undefined,
+      licensePdf: undefined,
     },
   });
 
@@ -174,7 +176,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                     <FormItem className="flex-1">
                         <FormLabel>{t('First Name')}</FormLabel>
                         <FormControl>
-                        <Input placeholder="John" {...field} />
+                        <Input placeholder={t("John")} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -187,7 +189,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                     <FormItem className="flex-1">
                         <FormLabel>{t('Last Name')}</FormLabel>
                         <FormControl>
-                        <Input placeholder="Doe" {...field} />
+                        <Input placeholder={t("Doe")} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -361,7 +363,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
             </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-            {t('Already have an account?')}
+            {t('Already have an account?')}{' '}
             <Button variant="link" className="p-0 h-auto" onClick={onLoginClick}>
                 {t('Login')}
             </Button>
