@@ -2,12 +2,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
-import { getFirestore } from 'firebase-admin/firestore';
-import { v4 as uuidv4 } from 'uuid';
 
 const AIChatResponseInputSchema = z.object({
-  chatId: z.string().describe("The ID of the chat session."),
   lawyerName: z.string().describe("The name of the lawyer."),
 });
 export type AIChatResponseInput = z.infer<typeof AIChatResponseInputSchema>;
@@ -42,20 +38,11 @@ const aiChatResponseFlow = ai.defineFlow(
     outputSchema: AIChatResponseOutputSchema,
   },
   async (input) => {
-
     const { output } = await prompt({ lawyerName: input.lawyerName });
     const responseText = output!.response;
-
-    const firestore = getFirestore();
-    const messagesRef = collection(firestore, 'chats', input.chatId, 'messages');
-
-    await addDoc(messagesRef, {
-        id: uuidv4(),
-        text: responseText,
-        senderId: 'ai-bot',
-        timestamp: serverTimestamp(),
-    });
     
+    // The client will be responsible for creating the message document in Firestore.
+    // This flow's only job is to generate the response text.
     return { response: responseText };
   }
 );

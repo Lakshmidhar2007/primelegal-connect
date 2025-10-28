@@ -1,12 +1,19 @@
 'use server';
 
-import { aiChatResponse, AIChatResponseInput } from '@/ai/flows/chat-flow';
+import { aiChatResponse, AIChatResponseInput, AIChatResponseOutput } from '@/ai/flows/chat-flow';
 
-export async function getAIChatResponse(input: AIChatResponseInput) {
+type AIResponse = {
+  success: boolean;
+  data?: AIChatResponseOutput;
+  error?: string;
+}
+
+export async function getAIChatResponse(input: AIChatResponseInput): Promise<AIResponse> {
   try {
-    await aiChatResponse(input);
+    const response = await aiChatResponse(input);
+    return { success: true, data: response };
   } catch (error) {
     console.error('Error getting AI chat response:', error);
-    // We don't return an error to the client here, as it's a background task.
+    return { success: false, error: 'An unexpected error occurred.' };
   }
 }

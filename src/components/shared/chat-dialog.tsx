@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-translation';
@@ -78,12 +78,21 @@ export function ChatDialog({ open, onOpenChange, lawyerId }: ChatDialogProps) {
             await setDoc(chatRef, {
                 participants: [user.uid, lawyerId],
                 createdAt: serverTimestamp(),
-                lastMessage: messageData,
             });
-            await getAIChatResponse({ lawyerName: (lawyerProfile as any)?.firstName || 'the lawyer', chatId: chatId });
+            
+            const aiResponse = await getAIChatResponse({ lawyerName: (lawyerProfile as any)?.firstName || 'the lawyer' });
+            if (aiResponse.success && aiResponse.data) {
+                const aiMessage = {
+                    id: uuidv4(),
+                    text: aiResponse.data.response,
+                    senderId: 'ai-bot',
+                    timestamp: serverTimestamp(),
+                };
+                addDocumentNonBlocking(messagesRef, aiMessage);
+            }
         }
         
-        await addDoc(messagesRef, messageData);
+        addDocumentNonBlocking(messagesRef, messageData);
 
         setMessage('');
     } catch (error) {

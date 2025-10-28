@@ -1,77 +1,95 @@
 /**
  * @file Firestore Security Rules for PRIMELEGAL CONNECT
- * @version Prototyping Mode - Data shape is not enforced.
+ * @version Prototyping Mode - Data shape is not enforced; authorization is strict.
  *
- * @description This ruleset enforces a user-ownership model for user accounts and a public-read, owner-write model for lawyer profiles.
+ * @Core Philosophy:
+ *  This ruleset enforces a strict user-ownership model for private user data and
+ *  allows public read access to lawyer profiles. Write access is restricted to
+ *  authenticated users, with ownership checks based on the `request.auth.uid`.
  *
- * Data Structure:
- * - /users/{userId}: Stores private user account data, accessible only to the user themselves.
- * - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles, readable by everyone but writable only by the profile owner.
+ * @Data Structure:
+ *  - /users/{userId}: Stores private user account information.
+ *  - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles.
  *
- * Key Security Decisions:
- * - User listing is disallowed.
- * - Lawyer profiles are publicly readable but only lawyers can create/modify their profiles.
+ * @Key Security Decisions:
+ *  - Users can only read and write their own user documents.
+ *  - Public lawyer profiles are readable by everyone but writable only by the
+ *    profile owner.
+ *  - Data validation is minimized for prototyping but includes essential checks
+ *    for authorization and relational integrity.
  *
- * Denormalization for Authorization:
- * - The lawyer_profiles/{lawyerId} document's ID is equivalent to the user's UID.
+ * @Denormalization for Authorization:
+ *  - The `lawyer_profiles` document `lawyerId` is required to match the authenticated
+ *    user's UID to simplify owner validation.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user account documents.
+     * @description Controls access to user account information.
      * @path /users/{userId}
-     * @allow (create) - If the user's auth UID matches the userId.
-     * @allow (get, list, update, delete) - If the user's auth UID matches the userId and the document exists.
-     * @deny (create) - If the user's auth UID does not match the userId.
-     * @deny (get, list, update, delete) - If the user's auth UID does not match the userId or the document does not exist.
-     * @principle Enforces document ownership; only the user can read/write their own data.
+     * @allow (get) Signed-in user requests their own document.
+     * @allow (list) Signed-in user requests their own documents.
+     * @allow (create) Signed-in user creates their own document.
+     * @allow (update) Signed-in user updates their own document.
+     * @allow (delete) Signed-in user deletes their own document.
+     * @deny (get) Signed-in user requests another user's document.
+     * @deny (create) Signed-in user attempts to create a document with an ID that doesn't match their own.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
+      // Helper function to check if the request is made by the owner of the resource.
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
+      // Helper function to check if the request is made by the owner of an existing resource.
       function isExistingOwner(userId) {
-        return isOwner(userId) && exists(resource);
+        return isOwner(userId) && resource != null;
       }
 
+      // Allow a user to read their own document.
       allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId) ;
-      allow update: if isExistingOwner(userId);
+      // Allow a user to list their own documents.
+      allow list: if isOwner(userId);
+      // Allow a user to create their own document.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      // Allow a user to update their own document. Enforce immutability of the id field.
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      // Allow a user to delete their own document.
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to public lawyer profile documents.
+     * @description Controls access to public lawyer profiles.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get, list) - Public read access for all users.
-     * @allow (create, update, delete) - Only the lawyer can create/update/delete their own profile.
-     * @deny (create, update, delete) - If the user is not the owner or the document does not exist for updates/deletes.
+     * @allow (get) Any user can read lawyer profiles.
+     * @allow (list) Any user can list lawyer profiles.
+     * @allow (create) A lawyer can create their own profile.
+     * @allow (update) A lawyer can update their own profile.
+     * @allow (delete) A lawyer can delete their own profile.
+     * @deny (create) A lawyer attempts to create a profile with an ID that doesn't match their own.
      * @principle Allows public read access but restricts write access to the profile owner.
      */
     match /lawyer_profiles/{lawyerId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
+      // Helper function to check if the request is made by the owner of the resource.
       function isOwner(lawyerId) {
         return request.auth.uid == lawyerId;
       }
 
-       function isExistingOwner(lawyerId) {
-        return isOwner(lawyerId) && exists(resource);
+      // Helper function to check if the request is made by the owner of an existing resource.
+      function isExistingOwner(lawyerId) {
+        return isOwner(lawyerId) && resource != null;
       }
 
+      // Allow anyone to read lawyer profiles.
       allow get, list: if true;
-      allow create: if isSignedIn() && isOwner(lawyerId);
-      allow update: if isExistingOwner(lawyerId);
+      // Allow a lawyer to create their own profile.
+      allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
+      // Allow a lawyer to update their own profile. Enforce immutability of the userId field.
+      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
+      // Allow a lawyer to delete their own profile.
       allow delete: if isExistingOwner(lawyerId);
     }
   }
