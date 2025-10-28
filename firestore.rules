@@ -1,104 +1,98 @@
 /**
- * @fileoverview Firestore Security Rules for the PRIMELEGAL CONNECT application.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a user-centric security model for the Prímelegal Connect application.
  *
  * Core Philosophy:
- * This ruleset employs a strict user-ownership model for private data and allows public read access to lawyer profiles.
+ *  - Strict User Ownership: Users have full control over their own data (e.g., profile information).
+ *  - Public Lawyer Profiles: Public profiles are readable by anyone, but only writable by the profile owner.
+ *  - Shared Access for Chats: Participants of the chat have access to the chat data.
  *
  * Data Structure:
- * - `/users/{userId}`: Stores detailed user account information. Only the user can read and write their own document.
- * - `/lawyer_profiles/{lawyerId}`: Stores public lawyer profile information. Publicly readable, but only the lawyer can create or update their profile.
- * - `/chats/{chatId}/messages/{messageId}`: Stores chat messages.  Access is based on chat participants.
+ *  - /users/{userId}: Private user account data.
+ *  - /lawyer_profiles/{lawyerId}: Public lawyer profiles.
+ *  - /chats/{chatId}: Chat messages between participants.
  *
  * Key Security Decisions:
- * - Users can only access their own data under the `/users/{userId}` path.
- * - Public lawyer profiles are readable by anyone.
- * - Listing of user documents is disabled for security.
- * - Chat messages are only listable to the participants of the chat.
+ *  - User listing is disallowed.
+ *  - Public lawyer profiles are publicly readable.
+ *  - The default security posture for ambiguous relationships is strict owner-only access.
  *
  * Denormalization for Authorization:
- *   The `PublicLawyerProfile` includes a `userId` field that must match the `lawyerId` in the path, ensuring only the correct user can create/update the profile.
+ *  - Chat documents include a `participants` array for easy access control.
+ *
+ * Structural Segregation:
+ *  - Private user data is stored in `/users/{userId}`, while public lawyer profiles are stored in `/lawyer_profiles/{lawyerId}`.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
+     * @description Grants or denies access to the current signed in user.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the authenticated user's UID matches the provided userId.
+     * @description Checks if the request is made by the owner of the document.
      */
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user's UID matches the provided userId and the resource exists.
+     * @description Checks if the request is made by the existing owner of the document.
      */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
-    
-    /**
-     * @description Enforces that the ID field in the data matches the document ID.
-     */
-    function isValidCreateRequest() {
-        return request.resource.data.id == request.auth.uid;
-    }
 
     /**
-     * @description
-     * Defines the structure for rules in the `/users/{userId}` collection.
-     * This structure secures user data, ensuring only the authenticated user can access their own information.
+     * @description Allows a user to read and write their own user account data.
      * @path /users/{userId}
-     * @allow (get, update, delete) User 'jYow8SwfObZBsTEms40MkpP6TSj2' can read, update, or delete their own profile.
-     * @allow (create) User 'jYow8SwfObZBsTEms40MkpP6TSj2' can create their own profile if the `id` field matches their UID.
-     * @deny (get, update, delete) User 'anotherUser' cannot read, update, or delete User 'jYow8SwfObZBsTEms40MkpP6TSj2' profile.
-     * @deny (create) User 'anotherUser' cannot create a profile as User 'jYow8SwfObZBsTEms40MkpP6TSj2'.
-     * @principle Enforces document ownership and prevents unauthorized data access.
+     * @allow (create) User with UID 'user123' can create their own document with matching ID.
+     * @allow (get, update, delete) User with UID 'user123' can read, update, and delete their own document.
+     * @deny (create, update, delete) User with UID 'user456' cannot modify user 'user123' data.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if false; // Listing users is not permitted.
-      allow create: if isOwner(userId) && isValidCreateRequest();
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; // Enforce immutability of userId on update
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description
-     * Defines the rules for the `/lawyer_profiles/{lawyerId}` collection.
-     * Allows public read access while restricting write access to the lawyer who owns the profile.
+     * @description Allows anyone to read lawyer profiles, but only the lawyer themselves can create, update, or delete their profile.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get, list) Any user can read lawyer profiles.
-     * @allow (create, update, delete) User 'jYow8SwfObZBsTEms40MkpP6TSj2' can create, update, or delete their profile if their UID matches the lawyerId.
-     * @deny (create, update, delete) User 'anotherUser' cannot create, update, or delete User 'jYow8SwfObZBsTEms40MkpP6TSj2' profile.
-     * @principle Allows public read access for lawyer profiles but enforces ownership for write access.
+     * @allow (get, list) Any user can read or list lawyer profiles.
+     * @allow (create, update, delete) Lawyer with UID 'lawyer123' can create, update, and delete their own profile.
+     * @deny (create, update, delete) User with UID 'user456' cannot modify lawyer 'lawyer123' profile.
+     * @principle Enforces document ownership for writes, allows public reads.
      */
     match /lawyer_profiles/{lawyerId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && isOwner(lawyerId) && request.resource.data.userId == lawyerId;
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
+      allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
+      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId on update
       allow delete: if isExistingOwner(lawyerId);
     }
     
-      /**
-       * @description  Allows list access to messages in a chat if the user is a participant in the chat.
-       * @path /chats/{chatId}/messages/{messageId}
-       * @allow (list) User 'jYow8SwfObZBsTEms40MkpP6TSj2' can list messages in a chat if the chat's ID matches their UID.
-       * @deny (list) User 'anotherUser' cannot list messages in User 'jYow8SwfObZBsTEms40MkpP6TSj2' chat.
-       * @principle Implements closed collaboration by restricting list access to chat messages based on chat participation.
-       */
-        match /chats/{chatId}/messages/{messageId} {
-          allow get: if false;
-          allow list: if chatId.split("_")[1] == request.auth.uid || chatId.split("_")[0] == request.auth.uid;
-          allow create: if false;
-          allow update: if false;
-          allow delete: if false;
-        }
+    /**
+     * @description Allows participants of a chat to read and write to the chat document.
+     * @path /chats/{chatId}
+     * @allow (create, update) User who is a participant in the chat can create and update the chat document.
+     * @allow (get) User who is a participant in the chat can read the chat document.
+     * @deny (create, update, delete) User who is not a participant cannot modify the chat document.
+     * @principle Enforces shared access based on the participants array.
+     */
+    match /chats/{chatId} {
+      allow get: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow delete: if false; // Deletion is not allowed
+    }
   }
 }
