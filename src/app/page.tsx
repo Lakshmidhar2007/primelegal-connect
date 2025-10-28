@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { HeroSection } from '@/components/home/hero-section';
 import { HowItWorks } from '@/components/home/how-it-works';
 import { Features } from '@/components/home/features';
-import { Experts } from '@/components/home/experts';
+import { Lawyers } from '@/components/home/lawyers';
 import { AskQuestionDialog } from '@/components/shared/ask-question-dialog';
 
 export default function Home() {
@@ -16,7 +16,7 @@ export default function Home() {
         <HeroSection onAskQuestionClick={() => setIsQuestionDialogOpen(true)} />
         <HowItWorks onAskQuestionClick={() => setIsQuestionDialogOpen(true)} />
         <Features />
-        <Experts />
+        <Lawyers />
       </div>
       <AskQuestionDialog open={isQuestionDialogOpen} onOpenChange={setIsQuestionDialogOpen} />
     </>

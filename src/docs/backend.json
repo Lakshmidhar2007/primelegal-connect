@@ -114,7 +114,7 @@
           "description": "A link to the lawyer's LinkedIn profile."
         }
       },
-      "required": ["userId", "firstName", "lastName"]
+      "required": ["userId", "firstName", "lastName", "email"]
     },
     "Case": {
       "title": "Case",
@@ -191,7 +191,7 @@
           "schema": {
             "$ref": "#/backend/entities/PublicLawyerProfile"
           },
-          "description": "Stores public-facing profiles for lawyers. Any authenticated user can read these profiles. Only the lawyer themselves can create or update their own profile.",
+          "description": "Stores public-facing profiles for lawyers. This collection is publicly readable by any user, authenticated or not. Only the lawyer themselves can create or update their own profile.",
           "params": [
             {
               "name": "lawyerId",
@@ -201,6 +201,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases (stored as an array in the user doc) to ensure data privacy and security. The `lawyer_profiles` collection stores public information about lawyers, allowing for open read access for all authenticated users, while keeping the main `users` collection private. This separation is key to securely displaying a list of lawyers."
+    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases (stored as an array in the user doc) to ensure data privacy and security. The `lawyer_profiles` collection stores public information about lawyers, allowing for open read access for all users, while keeping the main `users` collection private. This separation is key to securely displaying a list of lawyers."
   }
 }
