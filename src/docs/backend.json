@@ -176,6 +176,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts. The homepage now queries the /users collection directly for lawyers, and security rules enforce that only specific public-safe fields are readable by other authenticated users. This approach simplifies the data model by removing the now-deprecated /lawyers collection and enforces security directly through rules. User cases are stored in an array within the user document itself."
+    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts. Any authenticated user can read public-safe fields from any user document, but only the user themselves can write to their own document, including updating their cases array. This enforces security while allowing necessary public data for the app to function."
   }
 }
