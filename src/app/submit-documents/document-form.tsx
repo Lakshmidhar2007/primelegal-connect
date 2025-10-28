@@ -74,7 +74,6 @@ export function DocumentForm() {
     try {
         const file = values.file[0];
         
-        // Firestore will generate a unique ID for the new case
         const newCaseRef = doc(casesCollectionRef);
         const newCase = {
             caseId: newCaseRef.id,
@@ -90,13 +89,14 @@ export function DocumentForm() {
 
         toast({
           title: 'Case Filed Successfully',
-          description: `Your case regarding "${values.caseSubject}" has been submitted.`,
+          description: `Your case regarding "${values.caseSubject}" has been submitted. You will be notified of any updates.`,
           variant: 'default',
         });
         
         form.reset();
         
-        router.push('/case-tracking');
+        // Do not redirect to case-tracking page for now
+        // router.push('/case-tracking');
 
     } catch (error) {
         // This will be caught by the non-blocking update handler which emits a global error
