@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, User } from 'lucide-react';
+import { Menu, User, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/icons/logo';
@@ -20,6 +20,7 @@ import {
 import { Globe } from '../icons/globe';
 import { useLanguage } from '@/hooks/use-language';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { AskQuestionDialog } from '../shared/ask-question-dialog';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -36,6 +37,7 @@ type UserProfile = {
 
 export function Header() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
@@ -66,6 +68,7 @@ export function Header() {
   const allNavLinks = [...navLinks];
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <div className="mr-4 flex">
@@ -88,6 +91,10 @@ export function Header() {
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
+          <Button variant="ghost" size="sm" onClick={() => setIsQuestionDialogOpen(true)}>
+            <HelpCircle className="h-5 w-5 mr-2" />
+            Ask a question
+          </Button>
           <ModeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -188,5 +195,7 @@ export function Header() {
         </div>
       </div>
     </header>
+    <AskQuestionDialog open={isQuestionDialogOpen} onOpenChange={setIsQuestionDialogOpen} />
+    </>
   );
 }
