@@ -90,13 +90,6 @@
             "type": "string",
             "format": "uri",
             "description": "URL to the lawyer's license document."
-        },
-        "cases": {
-          "type": "array",
-          "description": "An array of cases filed by the user.",
-          "items": {
-            "$ref": "#/backend/entities/Case"
-          }
         }
       },
       "required": [
@@ -172,52 +165,28 @@
     "Case": {
       "title": "Case",
       "type": "object",
-      "description": "Represents a legal case submitted by a user.",
+      "description": "Represents a legal case submitted by a user to a specific lawyer.",
       "properties": {
-        "caseId": {
-          "type": "string",
-          "description": "A unique ID for the case."
-        },
-        "caseSubject": {
-          "type": "string",
-          "description": "The subject line of the case."
-        },
-        "documentType": {
-          "type": "string",
-          "description": "The primary type of document associated with the case."
-        },
-        "fileName": {
-          "type": "string",
-          "description": "The name of the uploaded file."
-        },
-        "notes": {
-          "type": "string",
-          "description": "Detailed notes or description of the case."
-        },
-        "submitted": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the case was submitted."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the case.",
-          "enum": [
-            "Submitted",
-            "In Review",
-            "Expert Assigned",
-            "Resolved"
-          ]
-        }
+        "caseId": { "type": "string" },
+        "userId": { "type": "string" },
+        "lawyerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Submitted", "In Review", "Responded", "Closed"] },
+        "submittedAt": { "type": "string", "format": "date-time" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "contactMethod": { "type": "string" },
+        "legalIssueType": { "type": "string" },
+        "otherLegalIssue": { "type": "string" },
+        "issueDate": { "type": "string", "format": "date-time" },
+        "involvedParties": { "type": "string" },
+        "description": { "type": "string" },
+        "desiredOutcome": { "type": "string" },
+        "previousStepsTaken": { "type": "string" },
+        "previousStepsDescription": { "type": "string" },
+        "documents": { "type": "array", "items": { "type": "string" } }
       },
-      "required": [
-        "caseId",
-        "caseSubject",
-        "documentType",
-        "submitted",
-        "status",
-        "fileName"
-      ]
+      "required": ["caseId", "userId", "lawyerId", "status", "submittedAt", "fullName", "email", "description"]
     },
     "Appointment": {
       "title": "Appointment",
@@ -256,45 +225,6 @@
         "dateTime",
         "status"
       ]
-    },
-    "Chat": {
-      "title": "Chat",
-      "type": "object",
-      "description": "Represents a chat conversation between a user and a lawyer.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the chat session. Typically a composite of the two participant UIDs."
-        },
-        "participants": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "An array containing the UIDs of the two participants (user and lawyer)."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the chat was created."
-        }
-      },
-      "required": ["id", "participants", "createdAt"]
-    },
-    "Message": {
-      "title": "Message",
-      "type": "object",
-      "description": "Represents a single message within a chat.",
-      "properties": {
-        "id": { "type": "string", "description": "A unique ID for the message." },
-        "text": { "type": "string", "description": "The content of the message." },
-        "senderId": { "type": "string", "description": "The UID of the user who sent the message." },
-        "senderType": { "type": "string", "enum": ["user", "lawyer", "ai-bot"], "description": "The type of sender."},
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the message was sent."
-        }
-      },
-      "required": ["id", "text", "senderId", "senderType", "timestamp"]
     }
   },
   "auth": {
@@ -337,6 +267,22 @@
           ]
         }
       },
+       {
+        "path": "/cases/{caseId}",
+        "definition": {
+          "entityName": "Case",
+          "schema": {
+            "$ref": "#/backend/entities/Case"
+          },
+          "description": "Stores case submissions from users to lawyers. Readable by the user who created it and the lawyer it's assigned to. Writable only by the user who created it.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "A unique ID for the case submission."
+            }
+          ]
+        }
+      },
       {
         "path": "/appointments/{appointmentId}",
         "definition": {
@@ -352,32 +298,9 @@
             }
           ]
         }
-      },
-       {
-        "path": "/chats/{chatId}",
-        "definition": {
-          "entityName": "Chat",
-          "schema": { "$ref": "#/backend/entities/Chat" },
-          "description": "Metadata for each chat. Read/write access is limited to participants.",
-          "params": [
-            { "name": "chatId", "description": "The unique ID of the chat." }
-          ]
-        }
-      },
-      {
-        "path": "/chats/{chatId}/messages/{messageId}",
-        "definition": {
-          "entityName": "Message",
-          "schema": { "$ref": "#/backend/entities/Message" },
-          "description": "Stores messages for a specific chat. Only participants of the chat can read and write messages.",
-          "params": [
-            { "name": "chatId", "description": "The unique ID of the chat." },
-            { "name": "messageId", "description": "The unique ID of the message." }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, public lawyer profiles, and now real-time chat. The `chats` collection stores metadata, and each chat has a subcollection for `messages`. This is a common and scalable pattern for chat applications in Firestore."
+    "reasoning": "The Firestore structure is designed to support user authentication, public lawyer profiles, appointments, and direct case submissions from users to lawyers. The new `cases` collection is a top-level collection to store all case data, secured by rules that ensure only the involved user and lawyer can access it."
   }
 }
     

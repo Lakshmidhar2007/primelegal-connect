@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScheduleForm } from './schedule-form';
 import { useTranslation } from '@/hooks/use-translation';
 import { AppointmentList } from './appointment-list';
-import { ChatList } from './chat-list';
+import { ClientCaseList } from './client-case-list';
 
 export default function MakeSchedulePage() {
   const { t } = useTranslation();
@@ -12,7 +12,7 @@ export default function MakeSchedulePage() {
     <div className="container py-12 lg:py-24">
       <PageHeader
         title={t('Lawyer Dashboard')}
-        subtitle={t('Manage your schedule and client conversations.')}
+        subtitle={t('Manage your schedule and client cases.')}
       />
       <div className="mt-12 grid gap-8 md:grid-cols-2">
         <div>
@@ -27,7 +27,7 @@ export default function MakeSchedulePage() {
           <AppointmentList />
         </div>
         <div>
-            <ChatList />
+            <ClientCaseList />
         </div>
       </div>
     </div>

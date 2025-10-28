@@ -4,12 +4,11 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { getAIResponse } from '@/actions/query';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, FileUp } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { Loader2 } from 'lucide-react';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { AuthDialog } from '@/components/auth/auth-dialog';
 import { useTranslation } from '@/hooks/use-translation';
 import { Input } from '../ui/input';
@@ -22,6 +21,9 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
+import { collection } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: 'Full name is required.' }),
@@ -46,14 +48,17 @@ const formSchema = z.object({
 
 type AskQuestionFormProps = {
     onSuccess?: () => void;
+    lawyerId?: string;
 }
 
-export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
+export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -74,34 +79,46 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
   const previousStepsTaken = form.watch('previousStepsTaken');
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+    if (!user || !firestore) {
         setShowAuthDialog(true);
+        return;
+    }
+    if (!lawyerId) {
+        setError(t('No lawyer selected. Please select a lawyer first.'));
         return;
     }
 
     setIsLoading(true);
     setError(null);
 
-    // For now, we are just logging the form data.
-    // In a real application, you would send this to your backend, and likely not use the simple AI query action.
-    console.log("Form submitted:", values);
+    try {
+        const casesRef = collection(firestore, 'cases');
+        const caseData = {
+            ...values,
+            caseId: uuidv4(),
+            userId: user.uid,
+            lawyerId: lawyerId,
+            status: 'Submitted',
+            submittedAt: new Date().toISOString(),
+            issueDate: values.issueDate ? values.issueDate.toISOString() : null,
+            documents: values.documents ? Array.from(values.documents).map((file: any) => file.name) : [],
+        };
+        
+        await addDocumentNonBlocking(casesRef, caseData);
 
-    // Simulating an API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+        toast({
+            title: t('Case Submitted Successfully'),
+            description: t('The lawyer has been notified and will review your case shortly.'),
+        });
 
-    // For demonstration, let's call the simple AI response.
-    const result = await getAIResponse({ query: values.description });
+        if(onSuccess) onSuccess();
 
-    if (result.success && result.data) {
-      if(onSuccess) onSuccess();
-      // Perhaps show the AI response in a new dialog or a toast.
-      // For now, just logging it.
-      console.log("AI Response:", result.data.initialResponse);
-    } else {
-      setError(result.error || 'Failed to get a response.');
+    } catch (e) {
+        setError(t('An unexpected error occurred. Please try again.'));
+        console.error(e);
+    } finally {
+        setIsLoading(false);
     }
-
-    setIsLoading(false);
   }
 
   return (
@@ -109,7 +126,7 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
       <div className="mx-auto max-w-2xl">
         <Alert className="mb-4 bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200">
             <AlertDescription>
-            {t('All information provided will remain strictly confidential and used only for preliminary legal analysis.')}
+            {t('All information provided will remain strictly confidential and will be shared only with the selected lawyer for review.')}
             </AlertDescription>
         </Alert>
         <Form {...form}>
@@ -222,7 +239,7 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                         <div className="space-y-1 leading-none">
-                            <FormLabel>{t('Do you agree to share your information for the purpose of initial legal review?')}</FormLabel>
+                            <FormLabel>{t('I confirm that the information provided is accurate and I consent to share it with the selected lawyer.')}</FormLabel>
                             <FormMessage/>
                         </div>
                     </FormItem>
@@ -241,7 +258,7 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
                 t('Submit Form Securely')
               )}
             </Button>
-            <p className="text-xs text-center text-muted-foreground">{t('You will receive an acknowledgment within 24–48 hours. All data is encrypted and protected.')}</p>
+            <p className="text-xs text-center text-muted-foreground">{t('You will receive an acknowledgment. All data is encrypted and protected.')}</p>
           </form>
         </Form>
       </div>

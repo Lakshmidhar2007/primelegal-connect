@@ -9,8 +9,8 @@ import Link from 'next/link';
 import { Button } from '../ui/button';
 import { useTranslation } from '@/hooks/use-translation';
 import { useState } from 'react';
-import { ChatDialog } from '../shared/chat-dialog';
 import { AuthDialog } from '../auth/auth-dialog';
+import { AskQuestionDialog } from '../shared/ask-question-dialog';
 
 export function Lawyers() {
   const firestore = useFirestore();
@@ -18,7 +18,7 @@ export function Lawyers() {
   const { user } = useUser();
 
   const [selectedLawyerId, setSelectedLawyerId] = useState<string | null>(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   
   const lawyersQuery = useMemoFirebase(() => {
@@ -35,12 +35,12 @@ export function Lawyers() {
       setIsAuthOpen(true);
     } else {
       setSelectedLawyerId(lawyerId);
-      setIsChatOpen(true);
+      setIsQuestionDialogOpen(true);
     }
   };
 
-  const handleChatDialogClose = (open: boolean) => {
-    setIsChatOpen(open);
+  const handleDialogClose = (open: boolean) => {
+    setIsQuestionDialogOpen(open);
     if (!open) {
         setSelectedLawyerId(null);
     }
@@ -108,10 +108,10 @@ export function Lawyers() {
           )}
         </div>
       </section>
-      {isChatOpen && selectedLawyerId && (
-        <ChatDialog
-          open={isChatOpen}
-          onOpenChange={handleChatDialogClose}
+      {isQuestionDialogOpen && selectedLawyerId && (
+        <AskQuestionDialog
+          open={isQuestionDialogOpen}
+          onOpenChange={handleDialogClose}
           lawyerId={selectedLawyerId}
         />
       )}

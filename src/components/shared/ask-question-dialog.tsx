@@ -5,17 +5,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { AskQuestionForm } from './ask-question-form';
+import { useTranslation } from '@/hooks/use-translation';
 
 type AskQuestionDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  lawyerId?: string;
 };
 
-export function AskQuestionDialog({ open, onOpenChange }: AskQuestionDialogProps) {
-
+export function AskQuestionDialog({ open, onOpenChange, lawyerId }: AskQuestionDialogProps) {
+  const { t } = useTranslation();
   const handleClose = () => {
     onOpenChange(false);
   }
@@ -25,10 +26,10 @@ export function AskQuestionDialog({ open, onOpenChange }: AskQuestionDialogProps
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold font-headline text-center">
-            Ask a Question
+            {t('Contact Lawyer')}
           </DialogTitle>
         </DialogHeader>
-        <AskQuestionForm onSuccess={handleClose} />
+        <AskQuestionForm onSuccess={handleClose} lawyerId={lawyerId} />
       </DialogContent>
     </Dialog>
   );
