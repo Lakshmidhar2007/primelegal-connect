@@ -19,12 +19,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Globe } from '../icons/globe';
 import { useLanguage } from '@/hooks/use-language';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/case-tracking', label: 'Track Case' },
   { href: '/submit-documents', label: 'File a case' },
 ];
+
+type UserProfile = {
+  isLawyer: boolean;
+  photoURL?: string;
+  firstName?: string;
+  lastName?: string;
+}
 
 export function Header() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -41,7 +49,7 @@ export function Header() {
     return null;
   }, [firestore, user]);
 
-  const { data: userProfile } = useDoc<{ isLawyer: boolean }>(userDocRef);
+  const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
   useEffect(() => {
     if (userProfile) {
@@ -146,9 +154,15 @@ export function Header() {
                         <Link href="/lawyer-dashboard">Lawyer Dashboard</Link>
                     </Button>
                 )}
-              <Button asChild variant="ghost" size="icon">
+              <Button asChild variant="ghost" size="icon" className="rounded-full">
                 <Link href="/profile">
-                  <User />
+                  <Avatar className="h-8 w-8">
+                      <AvatarImage src={userProfile?.photoURL} />
+                      <AvatarFallback>
+                        {userProfile?.firstName?.charAt(0)}
+                        {userProfile?.lastName?.charAt(0)}
+                      </AvatarFallback>
+                  </Avatar>
                   <span className="sr-only">Profile</span>
                 </Link>
               </Button>
