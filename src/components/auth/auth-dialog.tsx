@@ -37,7 +37,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           </DialogTitle>
           <DialogDescription className="text-center">
             {isLoginView
-              ? t('Enter your credentials to access your account.')
+              ? t('You need to be logged in to use this feature.')
               : t('Create an account to get started.')}
           </DialogDescription>
         </DialogHeader>

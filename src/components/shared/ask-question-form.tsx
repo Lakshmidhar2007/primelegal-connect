@@ -109,7 +109,7 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
       <div className="mx-auto max-w-2xl">
         <Alert className="mb-4 bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200">
             <AlertDescription>
-            All information provided will remain strictly confidential and used only for preliminary legal analysis.
+            {t('All information provided will remain strictly confidential and used only for preliminary legal analysis.')}
             </AlertDescription>
         </Alert>
         <Form {...form}>
@@ -117,22 +117,22 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
             
             {/* Section 1 */}
             <fieldset className="space-y-4 rounded-lg border p-4">
-                <legend className="-ml-1 px-1 text-lg font-medium font-headline">Section 1: Personal Information</legend>
+                <legend className="-ml-1 px-1 text-lg font-medium font-headline">{t('Section 1: Personal Information')}</legend>
                 <FormField control={form.control} name="fullName" render={({ field }) => (
-                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('Full Name')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                  <FormField control={form.control} name="email" render={({ field }) => (
-                    <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('Email Address')}</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                  <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('Phone Number')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                 <FormField control={form.control} name="contactMethod" render={({ field }) => (
-                    <FormItem><FormLabel>Preferred Contact Method</FormLabel><FormControl>
+                    <FormItem><FormLabel>{t('Preferred Contact Method')}</FormLabel><FormControl>
                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="email" id="email" /></FormControl><FormLabel htmlFor="email" className="font-normal">Email</FormLabel></FormItem>
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="phone" id="phone" /></FormControl><FormLabel htmlFor="phone" className="font-normal">Phone Call</FormLabel></FormItem>
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="text" id="text" /></FormControl><FormLabel htmlFor="text" className="font-normal">WhatsApp / Text</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="email" id="email" /></FormControl><FormLabel htmlFor="email" className="font-normal">{t('Email')}</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="phone" id="phone" /></FormControl><FormLabel htmlFor="phone" className="font-normal">{t('Phone Call')}</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="text" id="text" /></FormControl><FormLabel htmlFor="text" className="font-normal">{t('WhatsApp / Text')}</FormLabel></FormItem>
                         </RadioGroup>
                     </FormControl><FormMessage /></FormItem>
                 )}/>
@@ -140,21 +140,21 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
 
             {/* Section 2 */}
             <fieldset className="space-y-4 rounded-lg border p-4">
-                <legend className="-ml-1 px-1 text-lg font-medium font-headline">Section 2: Case Details</legend>
+                <legend className="-ml-1 px-1 text-lg font-medium font-headline">{t('Section 2: Case Details')}</legend>
                 <FormField control={form.control} name="legalIssueType" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Type of Legal Issue</FormLabel>
+                        <FormLabel>{t('Type of Legal Issue')}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select the category that best fits your situation" /></SelectTrigger></FormControl>
+                            <FormControl><SelectTrigger><SelectValue placeholder={t('Select the category that best fits your situation')} /></SelectTrigger></FormControl>
                             <SelectContent>
-                                <SelectItem value="Civil Dispute">Civil Dispute</SelectItem>
-                                <SelectItem value="Criminal Matter">Criminal Matter</SelectItem>
-                                <SelectItem value="Family / Divorce">Family / Divorce</SelectItem>
-                                <SelectItem value="Property / Real Estate">Property / Real Estate</SelectItem>
-                                <SelectItem value="Employment / Workplace">Employment / Workplace</SelectItem>
-                                <SelectItem value="Contract / Business">Contract / Business</SelectItem>
-                                <SelectItem value="Consumer / Complaint">Consumer / Complaint</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
+                                <SelectItem value="Civil Dispute">{t('Civil Dispute')}</SelectItem>
+                                <SelectItem value="Criminal Matter">{t('Criminal Matter')}</SelectItem>
+                                <SelectItem value="Family / Divorce">{t('Family / Divorce')}</SelectItem>
+                                <SelectItem value="Property / Real Estate">{t('Property / Real Estate')}</SelectItem>
+                                <SelectItem value="Employment / Workplace">{t('Employment / Workplace')}</SelectItem>
+                                <SelectItem value="Contract / Business">{t('Contract / Business')}</SelectItem>
+                                <SelectItem value="Consumer / Complaint">{t('Consumer / Complaint')}</SelectItem>
+                                <SelectItem value="Other">{t('Other')}</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -162,14 +162,14 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
                 )}/>
                 {legalIssueType === 'Other' && (
                     <FormField control={form.control} name="otherLegalIssue" render={({ field }) => (
-                        <FormItem><FormLabel>Please Specify</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>{t('Please Specify')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                 )}
                  <FormField control={form.control} name="issueDate" render={({ field }) => (
-                    <FormItem className="flex flex-col"><FormLabel>When did this issue begin?</FormLabel>
+                    <FormItem className="flex flex-col"><FormLabel>{t('When did this issue begin?')}</FormLabel>
                         <Popover><PopoverTrigger asChild>
                             <FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
-                                {field.value ? (format(field.value, "PPP")) : (<span>Pick a date or approximate timeframe</span>)}
+                                {field.value ? (format(field.value, "PPP")) : (<span>{t('Pick a date or approximate timeframe')}</span>)}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button></FormControl>
                         </PopoverTrigger>
@@ -178,40 +178,40 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
                     </FormItem>
                  )}/>
                  <FormField control={form.control} name="involvedParties" render={({ field }) => (
-                    <FormItem><FormLabel>Who is involved in this issue (besides you)?</FormLabel><FormControl><Textarea placeholder="e.g., employer, landlord, family member, government agency, etc." {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('Who is involved in this issue (besides you)?')}</FormLabel><FormControl><Textarea placeholder={t('e.g., employer, landlord, family member, government agency, etc.')} {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
             </fieldset>
 
             {/* Section 3 */}
             <fieldset className="space-y-4 rounded-lg border p-4">
-                <legend className="-ml-1 px-1 text-lg font-medium font-headline">Section 3: Detailed Description</legend>
+                <legend className="-ml-1 px-1 text-lg font-medium font-headline">{t('Section 3: Detailed Description')}</legend>
                 <FormField control={form.control} name="description" render={({ field }) => (
-                    <FormItem><FormLabel>Please describe your legal situation clearly and in detail</FormLabel><FormControl><Textarea className="min-h-[120px]" placeholder="Include key facts, what happened, when, and any documents or evidence you have." {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('Please describe your legal situation clearly and in detail')}</FormLabel><FormControl><Textarea className="min-h-[120px]" placeholder={t('Include key facts, what happened, when, and any documents or evidence you have.')} {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                  <FormField control={form.control} name="desiredOutcome" render={({ field }) => (
-                    <FormItem><FormLabel>What specific outcome are you seeking?</FormLabel><FormControl><Textarea placeholder="e.g., settlement, compensation, divorce, legal advice, etc." {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('What specific outcome are you seeking?')}</FormLabel><FormControl><Textarea placeholder={t('e.g., settlement, compensation, divorce, legal advice, etc.')} {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                  <FormField control={form.control} name="previousStepsTaken" render={({ field }) => (
-                    <FormItem><FormLabel>Have you taken any steps so far (legal notice, police report, lawyer consultation, etc.)?</FormLabel><FormControl>
+                    <FormItem><FormLabel>{t('Have you taken any steps so far (legal notice, police report, lawyer consultation, etc.)?')}</FormLabel><FormControl>
                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="yes" id="yes" /></FormControl><FormLabel htmlFor="yes" className="font-normal">Yes</FormLabel></FormItem>
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="no" id="no" /></FormControl><FormLabel htmlFor="no" className="font-normal">No</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="yes" id="yes" /></FormControl><FormLabel htmlFor="yes" className="font-normal">{t('Yes')}</FormLabel></FormItem>
+                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="no" id="no" /></FormControl><FormLabel htmlFor="no" className="font-normal">{t('No')}</FormLabel></FormItem>
                         </RadioGroup>
                     </FormControl><FormMessage /></FormItem>
                 )}/>
                  {previousStepsTaken === 'yes' && (
                     <FormField control={form.control} name="previousStepsDescription" render={({ field }) => (
-                        <FormItem><FormLabel>If yes, please describe</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>{t('If yes, please describe')}</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                 )}
             </fieldset>
 
             {/* Section 4 */}
             <fieldset className="space-y-4 rounded-lg border p-4">
-                <legend className="-ml-1 px-1 text-lg font-medium font-headline">Section 4: Confidentiality & Consent</legend>
+                <legend className="-ml-1 px-1 text-lg font-medium font-headline">{t('Section 4: Confidentiality & Consent')}</legend>
                 <FormField control={form.control} name="documents" render={({ field: { onChange, ...rest } }) => (
                     <FormItem>
-                        <FormLabel>Upload Relevant Documents (optional)</FormLabel>
+                        <FormLabel>{t('Upload Relevant Documents (optional)')}</FormLabel>
                         <FormControl>
                             <Input type="file" multiple onChange={(e) => onChange(e.target.files)} {...rest} />
                         </FormControl>
@@ -222,14 +222,14 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                         <div className="space-y-1 leading-none">
-                            <FormLabel>Do you agree to share your information for the purpose of initial legal review?</FormLabel>
+                            <FormLabel>{t('Do you agree to share your information for the purpose of initial legal review?')}</FormLabel>
                             <FormMessage/>
                         </div>
                     </FormItem>
                 )}/>
             </fieldset>
 
-            {error && ( <div className="text-red-500"><p>{error}</p></div> )}
+            {error && ( <div className="text-red-500"><p>{t(error)}</p></div> )}
 
             <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || isUserLoading}>
               {isLoading ? (
@@ -241,7 +241,7 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
                 t('Submit Form Securely')
               )}
             </Button>
-            <p className="text-xs text-center text-muted-foreground">You will receive an acknowledgment within 24–48 hours. All data is encrypted and protected.</p>
+            <p className="text-xs text-center text-muted-foreground">{t('You will receive an acknowledgment within 24–48 hours. All data is encrypted and protected.')}</p>
           </form>
         </Form>
       </div>

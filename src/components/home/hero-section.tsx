@@ -57,7 +57,7 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
     if (result.success && result.data) {
       setAiResponse(result.data.initialResponse);
     } else {
-      setError(result.error || 'Failed to get a response.');
+      setError(result.error || t('Failed to get a response.'));
     }
 
     setIsLoading(false);
@@ -162,7 +162,7 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
 
             {error && (
                 <div className="mt-6 text-red-500">
-                    <p>{error}</p>
+                    <p>{t(error)}</p>
                 </div>
             )}
 
@@ -175,7 +175,7 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="prose prose-sm max-w-none text-foreground/90 prose-p:text-foreground/90 prose-strong:text-foreground">
-                  <p>{aiResponse}</p>
+                  <p>{t(aiResponse)}</p>
                 </CardContent>
               </Card>
             )}
