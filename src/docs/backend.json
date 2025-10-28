@@ -54,13 +54,6 @@
             "type": "string",
             "format": "uri",
             "description": "A link to the lawyer's LinkedIn profile."
-        },
-        "cases": {
-          "type": "array",
-          "description": "A list of legal cases submitted by the user.",
-          "items": {
-            "$ref": "#/backend/entities/Case"
-          }
         }
       },
       "required": [
@@ -174,8 +167,28 @@
                 }
             ]
         }
+      },
+      {
+        "path": "/users/{userId}/cases/{caseId}",
+        "definition": {
+          "entityName": "Case",
+          "schema": {
+            "$ref": "#/backend/entities/Case"
+          },
+          "description": "Stores the cases for a user. A user can create, read, update, and delete their own cases. No one else can access them.",
+          "params": [
+             {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns the case."
+            },
+            {
+              "name": "caseId",
+              "description": "The unique identifier for the case."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts. Any authenticated user can read public-safe fields from any user document, but only the user themselves can write to their own document, including updating their cases array. This enforces security while allowing necessary public data for the app to function."
+    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts and their associated cases to ensure data privacy and security. The homepage now queries the /users collection directly for lawyers, and security rules enforce that only specific public-safe fields are readable by other authenticated users. This approach simplifies the data model by removing the now-deprecated /lawyers collection and enforces security directly through rules. Users can manage their own cases in the cases subcollection."
   }
 }

@@ -25,7 +25,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
@@ -43,15 +43,6 @@ export function DocumentForm() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const userDocRef = useMemoFirebase(() => {
-    if (firestore && user) {
-      return doc(firestore, 'users', user.uid);
-    }
-    return null;
-  }, [firestore, user]);
-
-  const { data: userProfile } = useDoc(userDocRef);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -62,7 +53,7 @@ export function DocumentForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore || !userDocRef) {
+    if (!user || !firestore) {
         toast({
             variant: 'destructive',
             title: 'Authentication Error',
@@ -74,12 +65,15 @@ export function DocumentForm() {
     
     try {
         const file = values.file[0];
-
-        // Correctly generate a new unique ID for the case on the client-side.
-        const newCaseRef = doc(collection(firestore, 'users', user.uid, 'cases'));
+        
+        // This is the correct reference to the 'cases' subcollection for the current user.
+        const casesCollectionRef = collection(firestore, 'users', user.uid, 'cases');
+        
+        // Generate a new document reference within the 'cases' subcollection to get a unique ID.
+        const newCaseRef = doc(casesCollectionRef);
 
         const newCase = {
-            caseId: newCaseRef.id,
+            caseId: newCaseRef.id, // Use the ID from the new document reference.
             caseSubject: values.caseSubject,
             documentType: values.documentType,
             notes: values.notes,
@@ -88,10 +82,9 @@ export function DocumentForm() {
             status: 'Submitted',
         };
 
-        const existingCases = (userProfile as any)?.cases || [];
-        const updatedCases = [...existingCases, newCase];
-        
-        setDocumentNonBlocking(userDocRef, { cases: updatedCases }, { merge: true });
+        // Use the non-blocking update to add the new case document to the subcollection.
+        // We pass the newCaseRef which points to the exact location for the new document.
+        addDocumentNonBlocking(casesCollectionRef, newCase);
         
         toast({
           title: 'Case Filed Successfully',
