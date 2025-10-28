@@ -16,12 +16,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Switch } from '@/components/ui/switch';
 import { doc } from 'firebase/firestore';
 import { useTranslation } from '@/hooks/use-translation';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { cn } from '@/lib/utils';
+import { Calendar } from '../ui/calendar';
+import { format } from 'date-fns';
 
 const formSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -30,10 +34,48 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
   confirmPassword: z.string(),
   isLawyer: z.boolean().default(false),
+  dateOfBirth: z.date().optional(),
+  nationality: z.string().optional(),
+  nationalityProof: z.any().optional(),
+  barCouncilNumber: z.string().optional(),
+  licensePdf: z.any().optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
+}).refine(data => {
+    if (data.isLawyer) {
+        return !!data.dateOfBirth;
+    }
+    return true;
+}, {
+    message: "Date of Birth is required for lawyers.",
+    path: ["dateOfBirth"],
+}).refine(data => {
+    if (data.isLawyer) {
+        return !!data.nationality && data.nationality.length > 0;
+    }
+    return true;
+}, {
+    message: "Nationality is required for lawyers.",
+    path: ["nationality"],
+}).refine(data => {
+    if (data.isLawyer) {
+        return !!data.barCouncilNumber && data.barCouncilNumber.length > 0;
+    }
+    return true;
+}, {
+    message: "Bar Council Registration Number is required for lawyers.",
+    path: ["barCouncilNumber"],
+}).refine(data => {
+    if (data.isLawyer) {
+        return !!data.licensePdf;
+    }
+    return true;
+}, {
+    message: "Lawyer's license is required for verification.",
+    path: ["licensePdf"],
 });
+
 
 type SignupFormProps = {
     onLoginClick: () => void;
@@ -56,8 +98,12 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
       password: '',
       confirmPassword: '',
       isLawyer: false,
+      nationality: '',
+      barCouncilNumber: '',
     },
   });
+
+  const isLawyer = form.watch('isLawyer');
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -67,14 +113,25 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
 
       if (user && firestore) {
         const userRef = doc(firestore, 'users', user.uid);
+        const { confirmPassword, nationalityProof, licensePdf, ...userDataToSave } = values;
+
         const userData = {
+          ...userDataToSave,
           id: user.uid,
-          email: values.email,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          isLawyer: values.isLawyer,
           registrationDate: new Date().toISOString(),
+          dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : undefined,
         };
+        
+        // In a real app, you would handle file uploads to a service like Firebase Storage
+        // and save the URLs, not the file objects themselves.
+        // For this prototype, we'll just log that they exist.
+        if (values.nationalityProof) {
+          console.log('Nationality Proof provided:', values.nationalityProof[0].name);
+        }
+        if (values.licensePdf) {
+          console.log('License PDF provided:', values.licensePdf[0].name);
+        }
+        
         setDocumentNonBlocking(userRef, userData, { merge: true });
 
         if (values.isLawyer) {
@@ -196,6 +253,107 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                 </FormItem>
                 )}
             />
+
+            {isLawyer && (
+                <div className="space-y-4 pt-4 border-t">
+                    <FormField
+                        control={form.control}
+                        name="dateOfBirth"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>{t('Date of Birth')}</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>{t('Pick a date')}</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                    date > new Date() || date < new Date("1900-01-01")
+                                    }
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="nationality"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('Nationality')}</FormLabel>
+                            <FormControl>
+                                <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="nationalityProof"
+                        render={({ field: { onChange, ...rest } }) => (
+                            <FormItem>
+                                <FormLabel>{t('Proof of Nationality')}</FormLabel>
+                                <FormControl>
+                                    <Input type="file" accept="image/*,.pdf" onChange={(e) => onChange(e.target.files)} {...rest} />
+                                </FormControl>
+                                <FormDescription>{t('Aadhar, PAN, Driving License, etc.')}</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="barCouncilNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('Bar Council Registration Number')}</FormLabel>
+                            <FormControl>
+                                <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="licensePdf"
+                        render={({ field: { onChange, ...rest } }) => (
+                            <FormItem>
+                                <FormLabel>{t("Lawyer's License (PDF)")}</FormLabel>
+                                <FormControl>
+                                    <Input type="file" accept=".pdf" onChange={(e) => onChange(e.target.files)} {...rest} />
+                                </FormControl>
+                                <FormDescription>{t("Upload for verification.")}</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            )}
+            
             <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('Sign Up')}
