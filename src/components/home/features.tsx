@@ -1,0 +1,55 @@
+import { Gavel, FileCheck, BarChart3, Users } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+
+const featuresList = [
+  {
+    icon: <Users className="h-8 w-8" />,
+    title: 'Expert Connection',
+    description: 'Connect with vetted legal experts tailored to your specific case needs and geographical location.',
+  },
+  {
+    icon: <Gavel className="h-8 w-8" />,
+    title: 'AI Query Sorting',
+    description: 'Our AI provides instant, initial analysis of your query to categorize your issue and offer relevant information.',
+  },
+  {
+    icon: <FileCheck className="h-8 w-8" />,
+    title: 'Secure Document Submission',
+    description: 'Upload and share sensitive documents with your legal expert through our encrypted, secure platform.',
+  },
+  {
+    icon: <BarChart3 className="h-8 w-8" />,
+    title: 'Real-Time Case Tracking',
+    description: 'Stay informed on the progress of your case with a clear, up-to-date timeline of all activities.',
+  },
+];
+
+export function Features() {
+  return (
+    <section className="w-full py-12 lg:py-24 bg-card">
+      <div className="container">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
+            A Modern Approach to Legal Services
+          </h2>
+          <p className="mt-4 text-muted-foreground md:text-xl/relaxed">
+            Leveraging technology to make legal support more accessible, transparent, and efficient.
+          </p>
+        </div>
+        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+          {featuresList.map((feature) => (
+            <Card key={feature.title} className="border-0 bg-transparent shadow-none">
+              <CardHeader className="flex flex-row items-center gap-4">
+                <div className="bg-primary/10 text-primary p-3 rounded-full">{feature.icon}</div>
+                <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "expert1",
+      "description": "Portrait of a female legal expert",
+      "imageUrl": "https://images.unsplash.com/photo-1573496527892-904f897eb744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cHJvZmVzc2lvbmFsJTIwd29tYW58ZW58MHx8fHwxNzYxNjM0NjY0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional woman"
+    },
+    {
+      "id": "expert2",
+      "description": "Portrait of a male legal expert",
+      "imageUrl": "https://images.unsplash.com/photo-1556157382-97eda2d62296?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwcm9mZXNzaW9uYWwlMjBtYW58ZW58MHx8fHwxNzYxNTg2MDM4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional man"
+    },
+    {
+      "id": "expert3",
+      "description": "Portrait of a legal expert smiling",
+      "imageUrl": "https://images.unsplash.com/photo-1635768229592-8c2532d33cb7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzbWlsaW5nJTIwcHJvZmVzc2lvbmFsfGVufDB8fHx8MTc2MTU1NjU5M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "smiling professional"
+    },
+    {
+      "id": "expert4",
+      "description": "Portrait of a senior legal expert",
+      "imageUrl": "https://images.unsplash.com/photo-1584940120743-8981ca35b012?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzZW5pb3IlMjBwcm9mZXNzaW9uYWx8ZW58MHx8fHwxNzYxNjM5MjM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "senior professional"
+    }
+  ]
 }
