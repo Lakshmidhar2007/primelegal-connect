@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useTranslation } from '@/hooks/use-translation';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -33,6 +34,7 @@ export function LoginForm({ onSignupClick, onSuccess }: LoginFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const auth = useAuth();
+  const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,15 +49,15 @@ export function LoginForm({ onSignupClick, onSuccess }: LoginFormProps) {
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
-        title: 'Login Successful',
-        description: 'Welcome back!',
+        title: t('Login Successful'),
+        description: t('Welcome back!'),
       });
       onSuccess();
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message || 'An unexpected error occurred.',
+        title: t('Login Failed'),
+        description: t(error.message || 'An unexpected error occurred.'),
       });
     } finally {
       setIsSubmitting(false);
@@ -71,7 +73,7 @@ export function LoginForm({ onSignupClick, onSuccess }: LoginFormProps) {
                 name="email"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('Email')}</FormLabel>
                     <FormControl>
                     <Input type="email" placeholder="m@example.com" {...field} />
                     </FormControl>
@@ -84,7 +86,7 @@ export function LoginForm({ onSignupClick, onSuccess }: LoginFormProps) {
                 name="password"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t('Password')}</FormLabel>
                     <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -94,14 +96,14 @@ export function LoginForm({ onSignupClick, onSuccess }: LoginFormProps) {
             />
             <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login
+                {t('Login')}
             </Button>
             </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{' '}
+            {t("Don't have an account?")}{' '}
             <Button variant="link" className="p-0 h-auto" onClick={onSignupClick}>
-                Sign up
+                {t('Sign up')}
             </Button>
         </div>
     </div>

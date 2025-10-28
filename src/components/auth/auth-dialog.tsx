@@ -11,6 +11,7 @@ import {
 import { LoginForm } from './login-form';
 import { SignupForm } from './signup-form';
 import { Button } from '../ui/button';
+import { useTranslation } from '@/hooks/use-translation';
 
 type AuthDialogProps = {
   open: boolean;
@@ -19,6 +20,7 @@ type AuthDialogProps = {
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [isLoginView, setIsLoginView] = useState(true);
+  const { t } = useTranslation();
 
   const handleClose = () => {
     onOpenChange(false);
@@ -31,12 +33,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold font-headline text-center">
-            {isLoginView ? 'Login' : 'Sign Up'}
+            {isLoginView ? t('Login') : t('Sign Up')}
           </DialogTitle>
           <DialogDescription className="text-center">
             {isLoginView
-              ? 'Enter your credentials to access your account.'
-              : 'Create an account to get started.'}
+              ? t('Enter your credentials to access your account.')
+              : t('Create an account to get started.')}
           </DialogDescription>
         </DialogHeader>
         {isLoginView ? (

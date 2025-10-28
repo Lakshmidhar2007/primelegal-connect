@@ -28,6 +28,7 @@ import { useState, useEffect } from 'react';
 import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/hooks/use-translation';
 
 const formSchema = z.object({
   specialty: z.string().min(1, 'Please select a specialty.'),
@@ -41,6 +42,7 @@ export function LawyerProfileForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
@@ -84,8 +86,8 @@ export function LawyerProfileForm() {
         setDocumentNonBlocking(userDocRef, values, { merge: true });
 
         toast({
-            title: 'Profile Updated',
-            description: 'Your information has been saved successfully.',
+            title: t('Profile Updated'),
+            description: t('Your information has been saved successfully.'),
         });
     } catch(e) {
         // Error is handled by global error handler
@@ -114,21 +116,21 @@ export function LawyerProfileForm() {
           name="specialty"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Legal Specialty</FormLabel>
+              <FormLabel>{t('Legal Specialty')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select your primary area of practice" />
+                    <SelectValue placeholder={t('Select your primary area of practice')} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Corporate Law">Corporate Law</SelectItem>
-                  <SelectItem value="Family Law">Family Law</SelectItem>
-                  <SelectItem value="Intellectual Property">Intellectual Property</SelectItem>
-                  <SelectItem value="Criminal Defense">Criminal Defense</SelectItem>
-                  <SelectItem value="Real Estate Law">Real Estate Law</SelectItem>
-                  <SelectItem value="Tax Law">Tax Law</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="Corporate Law">{t('Corporate Law')}</SelectItem>
+                  <SelectItem value="Family Law">{t('Family Law')}</SelectItem>
+                  <SelectItem value="Intellectual Property">{t('Intellectual Property')}</SelectItem>
+                  <SelectItem value="Criminal Defense">{t('Criminal Defense')}</SelectItem>
+                  <SelectItem value="Real Estate Law">{t('Real Estate Law')}</SelectItem>
+                  <SelectItem value="Tax Law">{t('Tax Law')}</SelectItem>
+                  <SelectItem value="Other">{t('Other')}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -140,16 +142,16 @@ export function LawyerProfileForm() {
           name="bio"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Professional Bio</FormLabel>
+              <FormLabel>{t('Professional Bio')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Share a brief summary of your experience and qualifications..."
+                  placeholder={t('Share a brief summary of your experience and qualifications...')}
                   className="resize-none"
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                This will be displayed on your public profile.
+                {t('This will be displayed on your public profile.')}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -160,7 +162,7 @@ export function LawyerProfileForm() {
           name="website"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Website</FormLabel>
+              <FormLabel>{t('Website')}</FormLabel>
               <FormControl>
                 <Input placeholder="https://your-firm.com" {...field} />
               </FormControl>
@@ -173,7 +175,7 @@ export function LawyerProfileForm() {
           name="linkedin"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>LinkedIn Profile</FormLabel>
+              <FormLabel>{t('LinkedIn Profile')}</FormLabel>
               <FormControl>
                 <Input placeholder="https://linkedin.com/in/your-profile" {...field} />
               </FormControl>
@@ -183,7 +185,7 @@ export function LawyerProfileForm() {
         />
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save Changes
+          {t('Save Changes')}
         </Button>
       </form>
     </Form>

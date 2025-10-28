@@ -29,6 +29,7 @@ import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase 
 import { doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
+import { useTranslation } from '@/hooks/use-translation';
 
 const formSchema = z.object({
   caseSubject: z.string().min(5, 'Please provide a brief subject for your case.'),
@@ -43,6 +44,7 @@ export function DocumentForm() {
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const { t } = useTranslation();
 
    const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
@@ -65,8 +67,8 @@ export function DocumentForm() {
     if (!user || !firestore || !userDocRef) {
         toast({
             variant: 'destructive',
-            title: 'Authentication Error',
-            description: 'You must be logged in to submit a case.',
+            title: t('Authentication Error'),
+            description: t('You must be logged in to submit a case.'),
         });
         return;
     }
@@ -97,8 +99,8 @@ export function DocumentForm() {
         setDocumentNonBlocking(userDocRef, { cases: updatedCases }, { merge: true });
 
         toast({
-          title: 'Case Filed Successfully',
-          description: `Your case regarding "${values.caseSubject}" has been submitted. You will be notified of any updates.`,
+          title: t('Case Filed Successfully'),
+          description: t('Your case regarding "{{caseSubject}}" has been submitted. You will be notified of any updates.').replace('{{caseSubject}}', values.caseSubject),
           variant: 'default',
         });
         
@@ -110,8 +112,8 @@ export function DocumentForm() {
         console.error("Error submitting case:", error);
         toast({
           variant: 'destructive',
-          title: 'Submission Error',
-          description: 'Could not submit your case. Please try again.',
+          title: t('Submission Error'),
+          description: t('Could not submit your case. Please try again.'),
         });
     } finally {
         setIsSubmitting(false);
@@ -126,9 +128,9 @@ export function DocumentForm() {
           name="caseSubject"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Case Subject</FormLabel>
+              <FormLabel>{t('Case Subject')}</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Landlord-Tenant Security Deposit Dispute" {...field} />
+                <Input placeholder={t("e.g., Landlord-Tenant Security Deposit Dispute")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -139,19 +141,19 @@ export function DocumentForm() {
           name="documentType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Primary Document Type</FormLabel>
+              <FormLabel>{t('Primary Document Type')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a document type" />
+                    <SelectValue placeholder={t("Select a document type")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Contract">Contract</SelectItem>
-                  <SelectItem value="Court Order">Court Order</SelectItem>
-                  <SelectItem value="Lease Agreement">Lease Agreement</SelectItem>
-                  <SelectItem value="Evidence">Evidence</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="Contract">{t('Contract')}</SelectItem>
+                  <SelectItem value="Court Order">{t('Court Order')}</SelectItem>
+                  <SelectItem value="Lease Agreement">{t('Lease Agreement')}</SelectItem>
+                  <SelectItem value="Evidence">{t('Evidence')}</SelectItem>
+                  <SelectItem value="Other">{t('Other')}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -163,12 +165,12 @@ export function DocumentForm() {
           name="file"
           render={({ field: { onChange, value, ...rest } }) => (
             <FormItem>
-              <FormLabel>Attach Document</FormLabel>
+              <FormLabel>{t('Attach Document')}</FormLabel>
               <FormControl>
                 <Input type="file" onChange={(e) => onChange(e.target.files)} {...rest} />
               </FormControl>
               <FormDescription>
-                Max file size: 10MB. Accepted formats: PDF, DOCX, JPG.
+                {t('Max file size: 10MB. Accepted formats: PDF, DOCX, JPG.')}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -179,10 +181,10 @@ export function DocumentForm() {
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Case Details / Optional Notes</FormLabel>
+              <FormLabel>{t('Case Details / Optional Notes')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Provide a summary of your case and any other relevant details..."
+                  placeholder={t("Provide a summary of your case and any other relevant details...")}
                   {...field}
                 />
               </FormControl>
@@ -192,7 +194,7 @@ export function DocumentForm() {
         />
         <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Submit Case
+          {t('Submit Case')}
         </Button>
       </form>
     </Form>

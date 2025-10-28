@@ -9,9 +9,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { LoginForm } from '@/components/auth/login-form';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <div className="container flex min-h-[calc(100vh-14rem)] items-center justify-center py-12">
@@ -19,10 +21,10 @@ export default function LoginPage() {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-bold font-headline">
-              Login
+              {t('Login')}
             </CardTitle>
             <CardDescription>
-              Enter your credentials to access your account.
+              {t('Enter your credentials to access your account.')}
             </CardDescription>
           </CardHeader>
           <CardContent>

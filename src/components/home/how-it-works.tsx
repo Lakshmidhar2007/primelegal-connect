@@ -1,24 +1,7 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-
-const steps = [
-  {
-    id: 'ask',
-    title: '1. Ask Your Question',
-    description: 'Clearly describe your legal situation using our secure, confidential form. The more detail you provide, the better our initial analysis.',
-  },
-  {
-    id: 'insights',
-    title: '2. Get AI Insights',
-    description: 'Our advanced AI instantly analyzes your query, providing preliminary information, identifying key legal concepts, and suggesting next steps.',
-  },
-  {
-    id: 'connect',
-    title: '3. Connect with an Expert',
-    description: 'Based on the AI analysis and your needs, we connect you with a qualified legal professional for a formal consultation to handle your case.',
-  },
-];
+import { useTranslation } from '@/hooks/use-translation';
 
 type HowItWorksProps = {
   onAskQuestionClick: () => void;
@@ -26,6 +9,25 @@ type HowItWorksProps = {
 
 
 export function HowItWorks({ onAskQuestionClick }: HowItWorksProps) {
+  const { t } = useTranslation();
+  const steps = [
+    {
+      id: 'ask',
+      title: t('1. Ask Your Question'),
+      description: t('Clearly describe your legal situation using our secure, confidential form. The more detail you provide, the better our initial analysis.'),
+    },
+    {
+      id: 'insights',
+      title: t('2. Get AI Insights'),
+      description: t('Our advanced AI instantly analyzes your query, providing preliminary information, identifying key legal concepts, and suggesting next steps.'),
+    },
+    {
+      id: 'connect',
+      title: t('3. Connect with an Expert'),
+      description: t('Based on the AI analysis and your needs, we connect you with a qualified legal professional for a formal consultation to handle your case.'),
+    },
+  ];
+
   const getCardContent = (step: typeof steps[0]) => (
     <Card
         className={`flex flex-col text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-black text-white animate-fade-in-up overflow-hidden border border-transparent hover:border-primary hover:scale-105 h-full`} 
@@ -43,10 +45,10 @@ export function HowItWorks({ onAskQuestionClick }: HowItWorksProps) {
     <section className="container py-12 lg:py-24">
       <div className="mx-auto max-w-3xl text-center animate-slide-in-from-left" style={{ animationDelay: '300ms' }}>
         <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
-          Your Path to Legal Clarity
+          {t('Your Path to Legal Clarity')}
         </h2>
         <p className="mt-4 text-muted-foreground md:text-xl/relaxed">
-          Getting legal help has never been easier. Follow our straightforward three-step process.
+          {t('Getting legal help has never been easier. Follow our straightforward three-step process.')}
         </p>
       </div>
       <div className="mt-12 grid gap-8 md:grid-cols-3">

@@ -9,11 +9,13 @@ import Link from 'next/link';
 import { Button } from '../ui/button';
 import { useState } from 'react';
 import { AskQuestionDialog } from '../shared/ask-question-dialog';
+import { useTranslation } from '@/hooks/use-translation';
 
 
 export function Lawyers() {
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
   const firestore = useFirestore();
+  const { t } = useTranslation();
   
   const lawyersQuery = useMemoFirebase(() => {
     if (firestore) {
@@ -29,10 +31,10 @@ export function Lawyers() {
     <section className="container py-12 lg:py-24">
       <div className="mx-auto max-w-3xl text-center">
         <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
-          Meet Our Legal Experts
+          {t('Meet Our Legal Experts')}
         </h2>
         <p className="mt-4 text-muted-foreground md:text-xl/relaxed">
-          A curated network of experienced professionals ready to assist you.
+          {t('A curated network of experienced professionals ready to assist you.')}
         </p>
       </div>
       <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -66,19 +68,19 @@ export function Lawyers() {
               </CardHeader>
               <CardContent className="p-4 flex-grow">
                 <CardTitle className="font-headline text-xl">{lawyer.firstName} {lawyer.lastName}</CardTitle>
-                <p className="text-sm text-muted-foreground">{lawyer.specialty || 'Legal Professional'}</p>
+                <p className="text-sm text-muted-foreground">{t(lawyer.specialty || 'Legal Professional')}</p>
               </CardContent>
               <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                  <Button asChild variant="outline" className="w-full">
-                  <Link href={`/lawyers/profile?id=${lawyer.userId}`}>View Profile</Link>
+                  <Link href={`/lawyers/profile?id=${lawyer.userId}`}>{t('View Profile')}</Link>
                 </Button>
-                <Button variant="default" className="w-full" onClick={() => setIsQuestionDialogOpen(true)}>Connect</Button>
+                <Button variant="default" className="w-full" onClick={() => setIsQuestionDialogOpen(true)}>{t('Connect')}</Button>
               </CardFooter>
             </Card>
           ))
         ) : (
           <div className="text-center mt-12 col-span-4">
-            <p className="text-muted-foreground">No lawyers have registered on the platform yet. Please check back later.</p>
+            <p className="text-muted-foreground">{t('No lawyers have registered on the platform yet. Please check back later.')}</p>
           </div>
         )}
       </div>

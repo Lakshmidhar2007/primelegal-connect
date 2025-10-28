@@ -21,10 +21,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function CaseTrackingPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
@@ -55,24 +57,24 @@ export default function CaseTrackingPage() {
   return (
     <div className="container py-12 lg:py-24">
       <PageHeader
-        title="Case Tracking"
-        subtitle="Stay updated on the real-time progress of your legal matters."
+        title={t("Case Tracking")}
+        subtitle={t("Stay updated on the real-time progress of your legal matters.")}
       />
       <div className="mt-12">
         <Card>
           <CardHeader>
-            <CardTitle>Your Cases</CardTitle>
+            <CardTitle>{t("Your Cases")}</CardTitle>
             <CardDescription>
-              A summary of all your submitted cases.
+              {t("A summary of all your submitted cases.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Subject</TableHead>
-                  <TableHead className="w-[200px]">Date Submitted</TableHead>
-                  <TableHead className="w-[180px] text-right">Status</TableHead>
+                  <TableHead>{t("Subject")}</TableHead>
+                  <TableHead className="w-[200px]">{t("Date Submitted")}</TableHead>
+                  <TableHead className="w-[180px] text-right">{t("Status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -87,17 +89,17 @@ export default function CaseTrackingPage() {
                 ) : cases && cases.length > 0 ? (
                   cases.map((caseItem: any) => (
                     <TableRow key={caseItem.caseId}>
-                      <TableCell className="font-medium">{caseItem.caseSubject}</TableCell>
+                      <TableCell className="font-medium">{t(caseItem.caseSubject)}</TableCell>
                       <TableCell>{format(new Date(caseItem.submitted), 'PPP')}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant={getStatusVariant(caseItem.status)}>{caseItem.status}</Badge>
+                        <Badge variant={getStatusVariant(caseItem.status)}>{t(caseItem.status)}</Badge>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center h-24">
-                      No cases have been filed yet.
+                      {t("No cases have been filed yet.")}
                     </TableCell>
                   </TableRow>
                 )}

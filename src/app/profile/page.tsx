@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useTranslation } from '@/hooks/use-translation';
 
 const formSchema = z.object({
     firstName: z.string().min(1, 'First name is required'),
@@ -36,6 +37,7 @@ export default function ProfilePage() {
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const { t } = useTranslation();
 
     const userDocRef = useMemoFirebase(() => {
         if (firestore && user) {
@@ -108,8 +110,8 @@ export default function ProfilePage() {
             }
 
             toast({
-                title: 'Profile Updated',
-                description: 'Your information has been saved successfully.',
+                title: t('Profile Updated'),
+                description: t('Your information has been saved successfully.'),
             });
         } catch(e) {
             // Error is handled by global error handler
@@ -123,13 +125,13 @@ export default function ProfilePage() {
     return (
         <div className="container py-12 lg:py-24">
             <PageHeader
-                title="Your Profile"
-                subtitle="Manage your personal information."
+                title={t("Your Profile")}
+                subtitle={t("Manage your personal information.")}
             />
             <div className="mt-12 max-w-2xl mx-auto">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Account Details</CardTitle>
+                        <CardTitle className="font-headline">{t('Account Details')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
@@ -168,7 +170,7 @@ export default function ProfilePage() {
                                             name="firstName"
                                             render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel>First Name</FormLabel>
+                                                    <FormLabel>{t('First Name')}</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
@@ -181,7 +183,7 @@ export default function ProfilePage() {
                                             name="lastName"
                                             render={({ field }) => (
                                                 <FormItem className="flex-1">
-                                                    <FormLabel>Last Name</FormLabel>
+                                                    <FormLabel>{t('Last Name')}</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
@@ -195,7 +197,7 @@ export default function ProfilePage() {
                                         name="email"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Email</FormLabel>
+                                                <FormLabel>{t('Email')}</FormLabel>
                                                 <FormControl>
                                                     <Input disabled {...field} />
                                                 </FormControl>
@@ -205,7 +207,7 @@ export default function ProfilePage() {
                                     />
                                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Save Changes
+                                        {t('Save Changes')}
                                     </Button>
                                 </form>
                             </Form>

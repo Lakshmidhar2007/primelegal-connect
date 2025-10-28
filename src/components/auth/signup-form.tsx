@@ -21,6 +21,7 @@ import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Switch } from '@/components/ui/switch';
 import { doc } from 'firebase/firestore';
+import { useTranslation } from '@/hooks/use-translation';
 
 const formSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -44,6 +45,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const auth = useAuth();
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,15 +90,15 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
       }
 
       toast({
-        title: 'Account Created',
-        description: "You've been successfully signed up!",
+        title: t('Account Created'),
+        description: t("You've been successfully signed up!"),
       });
       onSuccess();
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Sign Up Failed',
-        description: error.message || 'An unexpected error occurred.',
+        title: t('Sign Up Failed'),
+        description: t(error.message || 'An unexpected error occurred.'),
       });
     } finally {
       setIsSubmitting(false);
@@ -113,7 +115,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                     name="firstName"
                     render={({ field }) => (
                     <FormItem className="flex-1">
-                        <FormLabel>First Name</FormLabel>
+                        <FormLabel>{t('First Name')}</FormLabel>
                         <FormControl>
                         <Input placeholder="John" {...field} />
                         </FormControl>
@@ -126,7 +128,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                     name="lastName"
                     render={({ field }) => (
                     <FormItem className="flex-1">
-                        <FormLabel>Last Name</FormLabel>
+                        <FormLabel>{t('Last Name')}</FormLabel>
                         <FormControl>
                         <Input placeholder="Doe" {...field} />
                         </FormControl>
@@ -140,7 +142,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                 name="email"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('Email')}</FormLabel>
                     <FormControl>
                     <Input type="email" placeholder="m@example.com" {...field} />
                     </FormControl>
@@ -153,7 +155,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                 name="password"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t('Password')}</FormLabel>
                     <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -166,7 +168,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                 name="confirmPassword"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel>{t('Confirm Password')}</FormLabel>
                     <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -180,9 +182,9 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                 render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
-                    <FormLabel>Are you a lawyer?</FormLabel>
+                    <FormLabel>{t('Are you a lawyer?')}</FormLabel>
                     <FormDescription>
-                        Enable this if you are a legal professional.
+                        {t('Enable this if you are a legal professional.')}
                     </FormDescription>
                     </div>
                     <FormControl>
@@ -196,14 +198,14 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
             />
             <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign Up
+                {t('Sign Up')}
             </Button>
             </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-            Already have an account?{' '}
+            {t('Already have an account?')}
             <Button variant="link" className="p-0 h-auto" onClick={onLoginClick}>
-                Login
+                {t('Login')}
             </Button>
         </div>
     </div>

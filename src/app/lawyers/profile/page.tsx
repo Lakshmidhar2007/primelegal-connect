@@ -11,11 +11,13 @@ import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/hooks/use-translation';
 
 function LawyerProfile() {
   const searchParams = useSearchParams();
   const lawyerId = searchParams.get('id');
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const lawyerDocRef = useMemoFirebase(() => {
     if (firestore && lawyerId) {
@@ -33,7 +35,7 @@ function LawyerProfile() {
   if (!lawyer) {
     return (
       <div className="container py-12 lg:py-24 text-center">
-        <PageHeader title="Lawyer Not Found" subtitle="The profile you are looking for does not exist." />
+        <PageHeader title={t("Lawyer Not Found")} subtitle={t("The profile you are looking for does not exist.")} />
       </div>
     );
   }
@@ -44,7 +46,7 @@ function LawyerProfile() {
   return (
     <div className="container py-12 lg:py-24">
         <div className="mx-auto max-w-4xl">
-            <PageHeader title={fullName} subtitle={(lawyer as any).specialty || 'Legal Professional'} />
+            <PageHeader title={fullName} subtitle={t((lawyer as any).specialty || 'Legal Professional')} />
             <Card className="mt-12">
                 <CardHeader className="items-center text-center border-b pb-6">
                     <Avatar className="h-24 w-24">
@@ -52,25 +54,25 @@ function LawyerProfile() {
                         <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                     <CardTitle className="mt-4 font-headline text-3xl">{fullName}</CardTitle>
-                    <p className="text-muted-foreground">{(lawyer as any).specialty}</p>
+                    <p className="text-muted-foreground">{t((lawyer as any).specialty)}</p>
                 </CardHeader>
                 <CardContent className="mt-6 grid gap-8 md:grid-cols-3">
                     <div className="md:col-span-2">
                         {(lawyer as any).bio && (
                             <div>
-                                <h3 className="text-lg font-semibold font-headline">About {(lawyer as any).firstName}</h3>
-                                <p className="mt-2 text-muted-foreground whitespace-pre-wrap">{(lawyer as any).bio}</p>
+                                <h3 className="text-lg font-semibold font-headline">{t('About')} {(lawyer as any).firstName}</h3>
+                                <p className="mt-2 text-muted-foreground whitespace-pre-wrap">{t((lawyer as any).bio)}</p>
                             </div>
                         )}
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold font-headline">Connect</h3>
+                        <h3 className="text-lg font-semibold font-headline">{t('Connect')}</h3>
                         <div className="mt-2 space-y-2">
                             {(lawyer as any).website && (
                                 <Button asChild variant="outline" className="w-full justify-start">
                                     <Link href={(lawyer as any).website} target="_blank" rel="noopener noreferrer">
                                         <LinkIcon className="mr-2 h-4 w-4" />
-                                        Website
+                                        {t('Website')}
                                     </Link>
                                 </Button>
                             )}
@@ -78,12 +80,12 @@ function LawyerProfile() {
                                 <Button asChild variant="outline" className="w-full justify-start">
                                     <Link href={(lawyer as any).linkedin} target="_blank" rel="noopener noreferrer">
                                         <Linkedin className="mr-2 h-4 w-4" />
-                                        LinkedIn
+                                        {t('LinkedIn')}
                                     </Link>
                                 </Button>
                             )}
                              <Button className="w-full">
-                                Connect Now
+                                {t('Connect Now')}
                             </Button>
                         </div>
                     </div>

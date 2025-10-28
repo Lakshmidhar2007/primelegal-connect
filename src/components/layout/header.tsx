@@ -21,12 +21,7 @@ import { Globe } from '../icons/globe';
 import { useLanguage } from '@/hooks/use-language';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { AskQuestionDialog } from '../shared/ask-question-dialog';
-
-const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/case-tracking', label: 'Track Case' },
-  { href: '/submit-documents', label: 'File a case' },
-];
+import { useTranslation } from '@/hooks/use-translation';
 
 type UserProfile = {
   isLawyer: boolean;
@@ -43,6 +38,13 @@ export function Header() {
   const firestore = useFirestore();
   const [isLawyer, setIsLawyer] = useState(false);
   const { setLanguage } = useLanguage();
+  const { t } = useTranslation();
+
+  const navLinks = [
+    { href: '/', label: t('Home') },
+    { href: '/case-tracking', label: t('Track Case') },
+    { href: '/submit-documents', label: t('File a case') },
+  ];
 
   const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
@@ -75,7 +77,7 @@ export function Header() {
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Logo className="h-8 w-8 text-primary" />
             <span className="font-bold font-headline text-lg">
-              PrimeLegal CONNECT
+              {t('PrimeLegal CONNECT')}
             </span>
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
@@ -93,25 +95,25 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end space-x-2">
           <Button variant="ghost" size="sm" onClick={() => setIsQuestionDialogOpen(true)}>
             <HelpCircle className="h-5 w-5 mr-2" />
-            Ask a question
+            {t('Ask a question')}
           </Button>
           <ModeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Globe className="h-[1.2rem] w-[1.2rem]" />
-                <span className="sr-only">Toggle language</span>
+                <span className="sr-only">{t('Toggle language')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setLanguage('English')}>English</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage('Spanish')}>Spanish</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage('French')}>French</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage('German')}>German</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('English')}>{t('English')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('Spanish')}>{t('Spanish')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('French')}>{t('French')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('German')}>{t('German')}</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setLanguage('Hindi')}>Hindi</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage('Bengali')}>Bengali</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage('Tamil')}>Tamil</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('Hindi')}>{t('Hindi')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('Bengali')}>{t('Bengali')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('Tamil')}>{t('Tamil')}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -121,14 +123,14 @@ export function Header() {
                 className="px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
               >
                 <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle Menu</span>
+                <span className="sr-only">{t('Toggle Menu')}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="pr-10">
               <Link href="/" className="mb-8 flex items-center" onClick={() => setIsSheetOpen(false)}>
                 <Logo className="mr-2 h-6 w-6 text-primary" />
                 <span className="font-bold font-headline text-lg">
-                  PrimeLegal CONNECT
+                  {t('PrimeLegal CONNECT')}
                 </span>
               </Link>
               <nav className="flex flex-col space-y-4">
@@ -148,7 +150,7 @@ export function Header() {
                       onClick={() => setIsSheetOpen(false)}
                       className="text-lg font-medium text-foreground/80 hover:text-foreground"
                     >
-                      Lawyer Dashboard
+                      {t('Lawyer Dashboard')}
                     </Link>
                   )}
               </nav>
@@ -158,7 +160,7 @@ export function Header() {
             <div className="flex items-center gap-2">
                  {isLawyer && (
                     <Button asChild variant="outline" size="sm" className="hidden md:flex">
-                        <Link href="/lawyer-dashboard">Lawyer Dashboard</Link>
+                        <Link href="/lawyer-dashboard">{t('Lawyer Dashboard')}</Link>
                     </Button>
                 )}
               <DropdownMenu>
@@ -175,20 +177,20 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href="/profile">Profile</Link>
+                      <Link href="/profile">{t('Profile')}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>{t('Logout')}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           ) : (
             <>
               <Button asChild variant="ghost">
-                <Link href="/login">Login</Link>
+                <Link href="/login">{t('Login')}</Link>
               </Button>
               <Button asChild className="hidden md:flex bg-accent hover:bg-accent/90 text-accent-foreground">
-                <Link href="/signup">Sign Up</Link>
+                <Link href="/signup">{t('Sign Up')}</Link>
               </Button>
             </>
           )}

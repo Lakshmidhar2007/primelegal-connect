@@ -7,9 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '../ui/button';
+import { useTranslation } from '@/hooks/use-translation';
 
 export function LawyerList() {
   const firestore = useFirestore();
+  const { t } = useTranslation();
   
   const lawyersQuery = useMemoFirebase(() => {
     if (firestore) {
@@ -47,17 +49,17 @@ export function LawyerList() {
               </Avatar>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg">{lawyer.firstName} {lawyer.lastName}</h3>
-                <p className="text-sm text-muted-foreground">{lawyer.specialty || 'Legal Professional'}</p>
+                <p className="text-sm text-muted-foreground">{t(lawyer.specialty || 'Legal Professional')}</p>
               </div>
               <Button asChild variant="outline">
-                <Link href={`/lawyers/profile/${lawyer.userId}`}>View</Link>
+                <Link href={`/lawyers/profile?id=${lawyer.userId}`}>{t('View')}</Link>
               </Button>
             </CardContent>
           </Card>
         ))
       ) : (
         <div className="text-center text-muted-foreground py-12">
-          <p>No lawyers have registered yet. Be the first!</p>
+          <p>{t('No lawyers have registered yet. Be the first!')}</p>
         </div>
       )}
     </div>
