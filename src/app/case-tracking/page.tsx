@@ -48,7 +48,7 @@ export default function CaseTrackingPage() {
               <TableBody>
                  <TableRow>
                     <TableCell colSpan={3} className="text-center h-24">
-                        Case listing is temporarily unavailable.
+                        No cases have been filed yet.
                     </TableCell>
                 </TableRow>
               </TableBody>
