@@ -34,7 +34,7 @@ export function HowItWorks() {
       <div className="mt-12 grid gap-8 md:grid-cols-3">
         {steps.map((step, i) => (
           <Card key={step.title} className="flex flex-col text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-card/50 animate-fade-in-up overflow-hidden" style={{animationDelay: `${400 + 150 * i}ms`}}>
-            {step.image && (
+            {step.image && i < 2 && ( // Only show images for the first two cards
               <CardContent className="p-0">
                   <div className="aspect-video overflow-hidden">
                   <Image
@@ -48,12 +48,12 @@ export function HowItWorks() {
                   </div>
               </CardContent>
             )}
-            <CardHeader className="items-center p-6">
+            <CardHeader className="items-center p-6 flex-grow">
               <CardTitle className="mt-4 font-headline text-2xl">{step.title}</CardTitle>
-            </CardHeader>
-            <CardDescription className="px-6 pb-6 text-foreground/80">
+              <CardDescription className="px-6 pb-6 text-foreground/80 flex-grow">
               {step.description}
             </CardDescription>
+            </CardHeader>
           </Card>
         ))}
       </div>
