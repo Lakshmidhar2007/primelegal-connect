@@ -1,50 +1,125 @@
 /**
- * @description This ruleset enforces a strict user-ownership model for user accounts,
- * ensuring that each user can only access their own account data.
+ * @fileOverview Firestore Security Rules for the PRIMELEGAL CONNECT platform.
  *
- * @dataStructure All user data is stored under the `/users/{userId}` path.
- * The `userId` in the path must match the authenticated user's UID.
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Users can only access their own data.
  *
- * @keySecurityDecisions
- * - Users can only read and write their own account data.
- * - User listing is explicitly denied.
+ * Data Structure:
+ * - User profiles are stored in `/users/{userId}`.
+ * - Cases, Documents, and Queries are nested under their respective user's path: `/users/{userId}/cases/{caseId}`, `/users/{userId}/cases/{caseId}/documents/{documentId}`, and `/users/{userId}/queries/{queryId}`.
  *
- * @denormalizationForAuthorization
- *  No denormalization is needed, as the path `/users/{userId}` directly contains the user's data.
+ * Key Security Decisions:
+ * - Users can only create, read, update, and delete their own cases, documents, and queries.
+ * - Listing of documents is restricted to the owner of the documents.
+ *
+ * Denormalization for Authorization:
+ * The user ID is embedded in the path for Cases, Documents, and Queries, which avoids the need for `get()` calls to authorize access.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the authenticated user is the owner of the document.
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    function isOwner(userId) {
-        return request.auth.uid == userId;
-    }
-    function isExistingOwner(userId) {
-      return isSignedIn() && isOwner(userId) && resource != null;
+    /**
+     * @description Grants access to user profiles.
+     * @path /users/{userId}
+     * @allow (create) User with ID 'user123' can create their own profile.
+     * @deny (create) User with ID 'user123' cannot create a profile with a different ID ('user456').
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Allows users to read and write their own account data.
-     * @path /users/{userId}
-     * @allow (create) if isSignedIn() && request.auth.uid == '{userId}'
-     * @allow (get, list) if isOwner(userId)
-     * @allow (update, delete) if isExistingOwner(userId)
-     * @deny (create) if !isSignedIn()
-     * @deny (get, list) if !isOwner(userId)
-     * @deny (update, delete) if !isExistingOwner(userId)
-     * @principle Enforces document ownership for all operations.
+     * @description Grants access to legal expert profiles.
+     * @path /legalExperts/{legalExpertId}
+     * @allow (get) Any user can read a legal expert's profile.
+     * @deny (create) No one can create legal expert profiles directly via client.  This would need to be done via a trusted environment
+     * @principle Allows public read access to legal expert profiles.
      */
-    match /users/{userId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false; // User listing is not permitted
+    match /legalExperts/{legalExpertId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
 
+    /**
+     * @description Grants access to cases associated with a user.
+     * @path /users/{userId}/cases/{caseId}
+     * @allow (create) User with ID 'user123' can create a case under their own user ID.
+     * @deny (update) User with ID 'user123' cannot update a case under a different user ID ('user456').
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/cases/{caseId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if false;
       allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Grants access to documents associated with a specific case.
+     * @path /users/{userId}/cases/{caseId}/documents/{documentId}
+     * @allow (create) User with ID 'user123' can create a document under their own case.
+     * @deny (delete) User with ID 'user123' cannot delete a document under a different user ID ('user456').
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/cases/{caseId}/documents/{documentId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Grants access to queries associated with a user.
+     * @path /users/{userId}/queries/{queryId}
+     * @allow (create) User with ID 'user123' can create a query under their own user ID.
+     * @deny (update) User with ID 'user123' cannot update a query under a different user ID ('user456').
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId}/queries/{queryId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
   }
 }
