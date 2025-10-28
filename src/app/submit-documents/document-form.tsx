@@ -27,7 +27,7 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 const formSchema = z.object({
-  caseId: z.string().regex(/^CASE-\d{3}$/, 'Please enter a valid Case ID (e.g., CASE-001).'),
+  caseSubject: z.string().min(5, 'Please provide a brief subject for your case.'),
   documentType: z.string().min(1, 'Please select a document type.'),
   file: z.any().refine(file => file?.length == 1, 'File is required.'),
   notes: z.string().optional(),
@@ -39,7 +39,7 @@ export function DocumentForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      caseId: '',
+      caseSubject: '',
       documentType: '',
       notes: '',
     },
@@ -49,12 +49,13 @@ export function DocumentForm() {
     setIsSubmitting(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log(values);
+    const newCaseId = `CASE-${String(Math.floor(Math.random() * 900) + 100).padStart(3, '0')}`;
+    console.log({ caseId: newCaseId, ...values});
     setIsSubmitting(false);
 
     toast({
-      title: 'Document Submitted Successfully',
-      description: `Your ${values.documentType.toLowerCase()} for case ${values.caseId} has been uploaded.`,
+      title: 'Case Filed Successfully',
+      description: `Your case regarding "${values.caseSubject}" has been submitted with ID ${newCaseId}.`,
       variant: 'default',
     });
     form.reset();
@@ -65,12 +66,12 @@ export function DocumentForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="caseId"
+          name="caseSubject"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Case ID</FormLabel>
+              <FormLabel>Case Subject</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., CASE-001" {...field} />
+                <Input placeholder="e.g., Landlord-Tenant Security Deposit Dispute" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -81,7 +82,7 @@ export function DocumentForm() {
           name="documentType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Document Type</FormLabel>
+              <FormLabel>Primary Document Type</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -105,7 +106,7 @@ export function DocumentForm() {
           name="file"
           render={({ field: { onChange, value, ...rest } }) => (
             <FormItem>
-              <FormLabel>Document File</FormLabel>
+              <FormLabel>Attach Document</FormLabel>
               <FormControl>
                 <Input type="file" onChange={(e) => onChange(e.target.files)} {...rest} />
               </FormControl>
@@ -121,10 +122,10 @@ export function DocumentForm() {
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Optional Notes</FormLabel>
+              <FormLabel>Case Details / Optional Notes</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Add any relevant notes about this document..."
+                  placeholder="Provide a summary of your case and any other relevant details..."
                   {...field}
                 />
               </FormControl>
@@ -134,7 +135,7 @@ export function DocumentForm() {
         />
         <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Submit Document
+          Submit Case
         </Button>
       </form>
     </Form>

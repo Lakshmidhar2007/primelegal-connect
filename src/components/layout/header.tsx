@@ -13,7 +13,7 @@ import { doc } from 'firebase/firestore';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/case-tracking', label: 'Track Case' },
-  { href: '/submit-documents', label: 'Submit Documents' },
+  { href: '/submit-documents', label: 'File a case' },
 ];
 
 export function Header() {
