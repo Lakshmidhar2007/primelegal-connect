@@ -16,53 +16,57 @@ const translationsCache: Record<string, Record<string, string>> = {};
 export function useTranslation() {
   const { language } = useLanguage();
   const [translations, setTranslations] = useState<Record<string, string>>(translationsCache[language] || {});
+  const [textsToTranslate, setTextsToTranslate] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // When language changes, load translations from cache if available
-    if (translationsCache[language]) {
-      setTranslations(translationsCache[language]);
-    } else {
+    if (language === 'English') {
       setTranslations({});
+      return;
     }
-  }, [language]);
+
+    const newTexts = new Set<string>();
+    textsToTranslate.forEach(text => {
+      if (!translationsCache[language] || !translationsCache[language][text]) {
+        newTexts.add(text);
+      }
+    });
+
+    if (newTexts.size > 0) {
+      newTexts.forEach(text => {
+        getTranslation({ text, targetLanguage: language }).then(response => {
+          if (response.success && response.data) {
+            const translatedText = response.data.translatedText;
+            
+            if (!translationsCache[language]) {
+              translationsCache[language] = {};
+            }
+            translationsCache[language][text] = translatedText;
+
+            setTranslations(prev => ({ ...prev, [text]: translatedText }));
+          }
+        });
+      });
+    }
+
+    // On language change, use cached translations if available
+    setTranslations(translationsCache[language] || {});
+
+  }, [language, textsToTranslate]);
 
   const t = useCallback(
     (text: string): string => {
-      // If language is English, return original text
       if (language === 'English') {
         return text;
       }
-
-      // If translation is already in the component's state, return it
-      if (translations[text]) {
-        return translations[text];
-      }
-
-      // If translation is in the global cache for the current language, use it
-      if (translationsCache[language] && translationsCache[language][text]) {
-        return translationsCache[language][text];
-      }
       
-      // If not translated yet, initiate translation
-      getTranslation({ text, targetLanguage: language }).then(response => {
-        if (response.success && response.data) {
-          const translatedText = response.data.translatedText;
-          
-          // Update global cache
-          if (!translationsCache[language]) {
-            translationsCache[language] = {};
-          }
-          translationsCache[language][text] = translatedText;
+      // Register the text for translation if not already tracked
+      if (!textsToTranslate.has(text)) {
+        setTextsToTranslate(prev => new Set(prev).add(text));
+      }
 
-          // Update local state to trigger re-render
-          setTranslations(prev => ({ ...prev, [text]: translatedText }));
-        }
-      });
-
-      // Return original text as a fallback while translation is in progress
-      return text;
+      return translations[text] || text;
     },
-    [language, translations]
+    [language, translations, textsToTranslate]
   );
 
   return { t, language };
