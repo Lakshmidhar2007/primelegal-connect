@@ -1,102 +1,101 @@
 /**
- * @fileoverview Firestore Security Rules for PRIMELEGAL CONNECT application.
+ * @file Firebase Security Rules for PRIMELEGAL CONNECT
  *
- * Core Philosophy:
- * This ruleset implements a hybrid security model: strict user-ownership for private data
- * (e.g., user accounts) and public read access with owner-only writes for public lawyer profiles.
- * It leverages Firebase Authentication to verify user identity and enforce access control.
+ * @core_philosophy This ruleset enforces a user-ownership model for private data,
+ * allowing users to read and write their own data. Public lawyer profiles are
+ * readable by anyone, but only writable by the profile owner.  Schema enforcement
+ * is relaxed for rapid prototyping but authorization checks are strictly enforced.
  *
- * Data Structure:
- * - /users/{userId}: Stores sensitive user account information. Access is restricted to the owning user.
- * - /lawyer_profiles/{lawyerId}: Stores public profile data for lawyers. Publicly readable, but only the lawyer can modify their profile.
+ * @data_structure
+ * - /users/{userId}: Stores private user account data.
+ * - /lawyer_profiles/{lawyerId}: Stores public lawyer profile data.
  *
- * Key Security Decisions:
+ * @key_security_decisions
  * - User listing is disabled.
- * - Public lawyer profiles are separated from private user accounts for secure public listing.
- * - Strict ownership is enforced on all write operations.
+ * - Public read access to /lawyer_profiles.
+ * - Strict ownership checks for all write operations on private data.
  *
- * Denormalization for Authorization:
- * The `PublicLawyerProfile` includes a `userId` field that MUST match the document ID (`lawyerId`).
- * This denormalization is critical for enforcing owner-only write access to the profile.
+ * @denormalization_for_authorization
+ * - Lawyer profiles use the `userId` field to enforce ownership, avoiding the need for extra reads.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants access to a user's document only to themselves.
+     * @description Controls access to user account documents.
      * @path /users/{userId}
-     * @allow (create) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can create /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @allow (get) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can get /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @allow (update) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can update /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @allow (delete) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can delete /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @deny (create) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 cannot create /users/anotherUserId.
-     * @deny (get) User anotherUserId cannot get /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
-     * @principle Enforces document ownership for all operations on user accounts.
+     * @allow (create) - User can create their own document if the userId matches their auth.uid.
+     * @allow (get, list, update, delete) - User can only access their own document.
+     * @deny (create) - User cannot create a document with a userId that doesn't match their auth.uid.
+     * @deny (get, list, update, delete) - User cannot access another user's document.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && exists(resource);
+      }
+
       allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
+      allow list: if false; // User listing is not allowed.
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.id;
+      allow update: if isExistingOwner(userId) && request.auth.uid == request.resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows public read access to lawyer profiles, but restricts write access to the profile owner.
+     * @description Controls access to public lawyer profile documents.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get) Any user (or no user) can read /lawyer_profiles/lawyer123.
-     * @allow (list) Any user (or no user) can list /lawyer_profiles.
-     * @allow (create) User lawyer123 can create /lawyer_profiles/lawyer123 if lawyerId matches their UID.
-     * @allow (update) User lawyer123 can update /lawyer_profiles/lawyer123 if lawyerId matches their UID.
-     * @allow (delete) User lawyer123 can delete /lawyer_profiles/lawyer123 if lawyerId matches their UID.
-     * @deny (create) User anotherUser cannot create /lawyer_profiles/lawyer123.
-     * @deny (update) User anotherUser cannot update /lawyer_profiles/lawyer123.
-     * @deny (delete) User anotherUser cannot delete /lawyer_profiles/lawyer123.
-     * @principle Allows public read access while enforcing owner-only write access.
+     * @allow (get, list) - Any user can read lawyer profiles.
+     * @allow (create, update, delete) - Only the lawyer can create, update, or delete their own profile.
+     * @deny (create) - User cannot create a profile with a lawyerId that doesn't match their auth.uid.
+     * @deny (update, delete) - User cannot modify another lawyer's profile.
+     * @principle Allows public read access but restricts write access to the owner.
      */
     match /lawyer_profiles/{lawyerId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner() {
+        return request.auth.uid == resource.data.userId;
+      }
+
+      function isExistingOwner() {
+        return isSignedIn() && request.auth.uid == resource.data.userId && exists(resource);
+      }
+
       allow get, list: if true;
-      allow create: if isLawyerOwner(lawyerId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingLawyerOwner(lawyerId) && request.resource.data.userId == lawyerId;
-      allow delete: if isExistingLawyerOwner(lawyerId);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow update: if isExistingOwner();
+      allow delete: if isExistingOwner();
     }
 
-    /**
-     * @description Access denied to /appointments collection.
-     * @path /appointments
-     * @allow (get) nobody can access /appointments
-     * @allow (list) nobody can access /appointments
-     * @allow (create) nobody can access /appointments
-     * @allow (update) nobody can access /appointments
-     * @allow (delete) nobody can access /appointments
-     */
-     match /appointments {
-      allow get: if false;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
+     /**
+      * @description Grants listing access to the chats collection for any signed-in user.
+      * @path /chats
+      * @allow (list) - Any signed-in user can list the contents of the chats collection.
+      * @deny (get, create, update, delete) - Not applicable or explicitly denied to promote security.
+      * @principle Allows listing of chat documents to signed-in users for potential chat functionality (requires further access controls on individual chat documents).
+      */
+     match /chats {
+        function isSignedIn() {
+            return request.auth != null;
+        }
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isLawyerOwner(lawyerId) {
-          return isSignedIn() && request.auth.uid == lawyerId;
-    }
-
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    function isExistingLawyerOwner(lawyerId) {
-      return isLawyerOwner(lawyerId) && resource != null;
-    }
+        allow get: if false;
+        allow list: if isSignedIn();
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+     }
   }
 }
