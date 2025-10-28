@@ -25,8 +25,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
@@ -43,6 +43,15 @@ export function DocumentForm() {
   const firestore = useFirestore();
   const router = useRouter();
 
+  const userDocRef = useMemoFirebase(() => {
+    if (firestore && user) {
+      return doc(firestore, 'users', user.uid);
+    }
+    return null;
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc(userDocRef);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -53,7 +62,7 @@ export function DocumentForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore) {
+    if (!user || !firestore || !userProfile || !userDocRef) {
         toast({
             variant: 'destructive',
             title: 'Authentication Error',
@@ -64,10 +73,10 @@ export function DocumentForm() {
     setIsSubmitting(true);
     
     try {
-        const casesCollectionRef = collection(firestore, 'users', user.uid, 'cases');
         const file = values.file[0];
 
         const newCase = {
+            caseId: doc(collection(firestore, 'users')).id, // Generate a unique ID
             caseSubject: values.caseSubject,
             documentType: values.documentType,
             notes: values.notes,
@@ -76,7 +85,10 @@ export function DocumentForm() {
             status: 'Submitted',
         };
 
-        const docRefPromise = addDocumentNonBlocking(casesCollectionRef, newCase);
+        const existingCases = (userProfile as any).cases || [];
+        const updatedCases = [...existingCases, newCase];
+        
+        setDocumentNonBlocking(userDocRef, { cases: updatedCases }, { merge: true });
         
         toast({
           title: 'Case Filed Successfully',
@@ -86,12 +98,7 @@ export function DocumentForm() {
         
         form.reset();
         
-        // Wait for the promise to resolve to get the ID, then navigate
-        const docRef = await docRefPromise;
-        if(docRef) {
-            // Optional: navigate to the case tracking page after submission
-             router.push('/case-tracking');
-        }
+        router.push('/case-tracking');
 
     } catch (error) {
         // This will be caught by the non-blocking update handler which emits a global error

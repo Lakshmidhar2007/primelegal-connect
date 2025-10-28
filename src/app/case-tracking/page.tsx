@@ -17,8 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, orderBy, query } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
@@ -41,15 +41,18 @@ export default function CaseTrackingPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const casesQuery = useMemoFirebase(() => {
+  const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
-      return query(collection(firestore, 'users', user.uid, 'cases'), orderBy('submitted', 'desc'));
+      return doc(firestore, 'users', user.uid);
     }
     return null;
   }, [firestore, user]);
 
-  const { data: cases, isLoading: areCasesLoading } = useCollection(casesQuery);
-  const isLoading = isUserLoading || areCasesLoading;
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+  
+  const cases = (userProfile as any)?.cases?.sort((a: any, b: any) => new Date(b.submitted).getTime() - new Date(a.submitted).getTime()) || [];
+  
+  const isLoading = isUserLoading || isProfileLoading;
 
   return (
     <div className="container py-12 lg:py-24">
@@ -84,13 +87,13 @@ export default function CaseTrackingPage() {
                     </TableRow>
                   ))
                 ) : cases && cases.length > 0 ? (
-                  cases.map((caseItem) => (
-                    <TableRow key={caseItem.id}>
-                      <TableCell className="font-medium">{(caseItem as any).caseSubject}</TableCell>
-                      <TableCell>{format(new Date((caseItem as any).submitted), 'PPP')}</TableCell>
+                  cases.map((caseItem: any) => (
+                    <TableRow key={caseItem.caseId}>
+                      <TableCell className="font-medium">{caseItem.caseSubject}</TableCell>
+                      <TableCell>{format(new Date(caseItem.submitted), 'PPP')}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant={getStatusVariant((caseItem as any).status) as any}>
-                          {(caseItem as any).status}
+                        <Badge variant={getStatusVariant(caseItem.status) as any}>
+                          {caseItem.status}
                         </Badge>
                       </TableCell>
                     </TableRow>

@@ -54,6 +54,13 @@
             "type": "string",
             "format": "uri",
             "description": "A link to the lawyer's LinkedIn profile."
+        },
+        "cases": {
+          "type": "array",
+          "description": "A list of legal cases submitted by the user.",
+          "items": {
+            "$ref": "#/backend/entities/Case"
+          }
         }
       },
       "required": [
@@ -91,6 +98,10 @@
       "type": "object",
       "description": "Represents a legal case submitted by a user.",
       "properties": {
+        "caseId": {
+          "type": "string",
+          "description": "A unique ID for the case."
+        },
         "caseSubject": {
           "type": "string",
           "description": "The subject line of the case."
@@ -123,7 +134,7 @@
           ]
         }
       },
-      "required": ["caseSubject", "documentType", "submitted", "status"]
+      "required": ["caseId", "caseSubject", "documentType", "submitted", "status"]
     }
   },
   "auth": {
@@ -141,7 +152,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserAccount"
           },
-          "description": "Stores user account information. The user can read/write their own document.",
+          "description": "Stores user account information. Any authenticated user can read public-safe fields (firstName, lastName, photoURL, specialty, isLawyer). Only the user themselves can read all fields and write to their own document.",
           "params": [
             {
               "name": "userId",
@@ -155,7 +166,7 @@
         "definition": {
             "entityName": "PublicLawyerProfile",
             "schema": { "$ref": "#/backend/entities/PublicLawyerProfile" },
-            "description": "DEPRECATED: This collection is no longer in use.",
+            "description": "DEPRECATED: Public lawyer data is now read directly from the /users collection with field-level security.",
             "params": [
                 {
                     "name": "lawyerId",
@@ -163,28 +174,8 @@
                 }
             ]
         }
-      },
-      {
-        "path": "/users/{userId}/cases/{caseId}",
-        "definition": {
-          "entityName": "Case",
-          "schema": {
-            "$ref": "#/backend/entities/Case"
-          },
-          "description": "Stores the cases submitted by a specific user. Access is controlled by user ownership. Users can read/write their own cases.",
-          "params": [
-             {
-              "name": "userId",
-              "description": "The unique identifier for the user who owns the case."
-            },
-            {
-              "name": "caseId",
-              "description": "The unique identifier for the case."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user-specific data. Each user has a document in the `/users` collection. Their legal cases are stored in a subcollection, `/users/{userId}/cases`, with security rules ensuring only the user can access their own cases. The `/lawyers` collection is deprecated."
+    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts. The homepage now queries the /users collection directly for lawyers, and security rules enforce that only specific public-safe fields are readable by other authenticated users. This approach simplifies the data model by removing the now-deprecated /lawyers collection and enforces security directly through rules. User cases are stored in an array within the user document itself."
   }
 }
