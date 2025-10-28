@@ -98,6 +98,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
       password: '',
       confirmPassword: '',
       isLawyer: false,
+      dateOfBirth: undefined,
       nationality: '',
       barCouncilNumber: '',
       nationalityProof: undefined,
