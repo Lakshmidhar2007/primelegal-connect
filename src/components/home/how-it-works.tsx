@@ -33,7 +33,7 @@ export function HowItWorks() {
       </div>
       <div className="mt-12 grid gap-8 md:grid-cols-3">
         {steps.map((step, i) => (
-          <Card key={step.title} className="flex flex-col text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-card/50 animate-fade-in-up overflow-hidden" style={{animationDelay: `${400 + 150 * i}ms`}}>
+          <Card key={step.title} className="flex flex-col text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-card/50 animate-fade-in-up overflow-hidden border hover:border-primary" style={{animationDelay: `${400 + 150 * i}ms`}}>
             <CardHeader className="items-center p-6 flex-grow">
               <CardTitle className="mt-4 font-headline text-2xl">{step.title}</CardTitle>
               <CardDescription className="px-6 pb-6 text-foreground/80 flex-grow">
