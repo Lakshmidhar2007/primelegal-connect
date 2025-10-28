@@ -1,98 +1,71 @@
 /**
- * @fileOverview Firestore Security Rules for PRIMELEGAL CONNECT.
+ * @fileoverview Firestore Security Rules for PRIMELEGAL CONNECT application.
  *
  * Core Philosophy:
- * This ruleset prioritizes user data privacy and enforces strict ownership for most data. Public read access is granted only to the `lawyer_profiles` collection, which contains denormalized, non-sensitive data.
+ * This ruleset enforces a user-ownership model for user accounts and lawyer profiles.
+ * Users can only read and write their own data. Public lawyer profiles are readable by everyone,
+ * but only writable by the owning lawyer.
  *
  * Data Structure:
- * - /users/{userId}: Stores private user account data. Only the authenticated user can read and write their own document.
- * - /lawyer_profiles/{lawyerId}: Stores public lawyer profile information. World-readable, but only the corresponding user can create/update/delete.
- * - /chats/{chatId}/messages: Store chat messages, where chatId is a composite of the two user ids participating in the chat. Only users participating in the chat can read or write to it.
+ * - /users/{userId}: Stores private user account data, accessible only by the user.
+ * - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles, publicly readable but only writable by the lawyer.
  *
  * Key Security Decisions:
- * - No user listing: Listing the `/users` collection is strictly forbidden.
- * - Public lawyer profiles: The `/lawyer_profiles` collection is explicitly designed for public read access.
- * - Ownership enforced: All write operations are validated against the authenticated user's UID.
- * - Chat ownership: Chat access is granted to the participants in the chat.
+ * - User accounts are strictly private, accessible only to the authenticated user.
+ * - Public lawyer profiles are publicly readable, enabling a directory of lawyers.
+ * - Write access to lawyer profiles is restricted to the profile owner.
  *
  * Denormalization for Authorization:
- * - The `lawyer_profiles` collection contains a `userId` field that MUST match the document ID (`lawyerId`). This is enforced on create to maintain referential integrity.
- *
- * Structural Segregation:
- * - Public lawyer profile information is stored in a separate `/lawyer_profiles` collection instead of being stored in the `/users/{userId}` document with a public/private flag. This ensures that we can give efficient public read access to the profile information without having to read user private data.
+ * - The lawyer_profiles collection requires that the lawyerId matches the user's UID for write operations.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user accounts. Only the user can read and write their own data.
+     * @description Manages user account data, ensuring only the authenticated user can access their own information.
      * @path /users/{userId}
-     * @allow (create) User 'user123' can create their account if request.auth.uid == 'user123' and request.resource.data.id == 'user123'.
-     * @allow (get, update, delete) User 'user123' can read/update/delete their own account.
-     * @deny (create) User 'user456' cannot create an account with ID 'user123'.
-     * @deny (get, update, delete) User 'user456' cannot read/update/delete user 'user123's account.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) - User with UID 'user_abc' can create their profile at /users/user_abc.
+     * @allow (get, list, update, delete) - User with UID 'user_abc' can read, update, and delete their profile at /users/user_abc.
+     * @deny (create) - User with UID 'user_xyz' cannot create a profile at /users/user_abc.
+     * @deny (get, list, update, delete) - User with UID 'user_xyz' cannot read, update, or delete the profile at /users/user_abc.
+     * @principle Enforces document ownership for all operations on user accounts.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      // Allow the user to create their own document if the userId matches their auth UID.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
     /**
-     * @description Secure public lawyer profiles. World-readable, but only the lawyer can create/update/delete their own profile.
+     * @description Manages public lawyer profiles, allowing public read access and owner-only write access.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get, list) Any user can read or list lawyer profiles.
-     * @allow (create) User 'lawyer123' can create their profile if request.auth.uid == 'lawyer123' and request.resource.data.userId == 'lawyer123'.
-     * @allow (update, delete) User 'lawyer123' can update/delete their own profile.
-     * @deny (create) User 'user456' cannot create a profile with ID 'lawyer123'.
-     * @deny (update, delete) User 'user456' cannot update/delete lawyer 'lawyer123's profile.
-     * @principle Public read access with owner-only writes, enforces referential integrity.
+     * @allow (get, list) - Any user can read any lawyer profile.
+     * @allow (create, update, delete) - Lawyer with UID 'lawyer_abc' can create, update, and delete their profile at /lawyer_profiles/lawyer_abc.
+     * @deny (create, update, delete) - User with UID 'user_xyz' cannot create, update, or delete the profile at /lawyer_profiles/lawyer_abc.
+     * @principle Allows public read access while enforcing ownership for write operations on lawyer profiles.
      */
     match /lawyer_profiles/{lawyerId} {
-      function isOwner(lawyerId) {
-        return request.auth.uid == lawyerId;
-      }
-
-      function isExistingOwner(lawyerId) {
-        return isOwner(lawyerId) && resource != null;
-      }
-
       allow get, list: if true;
-      allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(lawyerId);
+      allow create: if isSignedIn() && isOwner(lawyerId) && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && isExistingOwner(lawyerId);
     }
 
-    /**
-     * @description Secure chat messages, where chatId is a composite of the two user ids participating in the chat. Only users participating in the chat can read or write to it.
-     * @path /chats/{chatId}/messages/{messageId}
-     * @allow (get, list) Only users who are part of the chat participants can list messages.
-     * @allow (create, update, delete) Only users who are part of the chat participants can create/update/delete messages.
-     * @principle Shared access based on chat participation.
-     */
-    match /chats/{chatId}/messages/{messageId} {
-      function isChatParticipant(chatId) {
-        let userId1 = chatId.split("_")[0];
-        let userId2 = chatId.split("_")[1];
-        return request.auth.uid == userId1 || request.auth.uid == userId2;
-      }
+    // ---- Helper functions ----
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-      allow get, list: if isChatParticipant(chatId);
-      allow create: if isChatParticipant(chatId);
-      allow update: if isChatParticipant(chatId);
-      allow delete: if isChatParticipant(chatId);
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
     }
   }
 }
