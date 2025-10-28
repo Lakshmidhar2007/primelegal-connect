@@ -65,6 +65,27 @@
         "registrationDate"
       ]
     },
+    "PublicLawyerProfile": {
+      "title": "Public Lawyer Profile",
+      "type": "object",
+      "description": "Represents the publicly visible information for a lawyer.",
+      "properties": {
+          "firstName": {
+              "type": "string"
+          },
+          "lastName": {
+              "type": "string"
+          },
+          "photoURL": {
+              "type": "string",
+              "format": "uri"
+          },
+          "specialty": {
+              "type": "string"
+          }
+      },
+      "required": ["firstName", "lastName"]
+    },
     "Case": {
       "title": "Case",
       "type": "object",
@@ -129,6 +150,20 @@
               "description": "The unique identifier for the user.  This is also the Firebase Authentication UID."
             }
           ]
+        }
+      },
+      {
+        "path": "/lawyers/{lawyerId}",
+        "definition": {
+            "entityName": "PublicLawyerProfile",
+            "schema": { "$ref": "#/backend/entities/PublicLawyerProfile" },
+            "description": "Stores public-facing information for lawyers. This collection is readable by any authenticated user.",
+            "params": [
+                {
+                    "name": "lawyerId",
+                    "description": "The unique identifier for the lawyer, which matches their Firebase Auth UID."
+                }
+            ]
         }
       },
       {

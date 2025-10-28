@@ -87,7 +87,7 @@ export default function ProfilePage() {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsSubmitting(true);
-        if (!userDocRef) {
+        if (!userDocRef || !user || !firestore) {
             toast({ variant: 'destructive', title: 'Error', description: 'User not found.' });
             setIsSubmitting(false);
             return;
@@ -96,6 +96,17 @@ export default function ProfilePage() {
         try {
             const { email, ...updateData } = values; // email should not be updated here
             setDocumentNonBlocking(userDocRef, updateData, { merge: true });
+
+            if((userProfile as any)?.isLawyer) {
+                const lawyerDocRef = doc(firestore, 'lawyers', user.uid);
+                const publicProfileData = {
+                    firstName: values.firstName,
+                    lastName: values.lastName,
+                    photoURL: values.photoURL,
+                };
+                setDocumentNonBlocking(lawyerDocRef, publicProfileData, { merge: true });
+            }
+
             toast({
                 title: 'Profile Updated',
                 description: 'Your information has been saved successfully.',

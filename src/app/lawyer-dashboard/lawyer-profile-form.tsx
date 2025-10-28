@@ -74,14 +74,24 @@ export function LawyerProfileForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    if (!userDocRef) {
+    if (!userDocRef || !user || !firestore) {
         toast({ variant: 'destructive', title: 'Error', description: 'User not found.' });
         setIsSubmitting(false);
         return;
     }
 
     try {
+        // Update the private /users/{userId} document
         setDocumentNonBlocking(userDocRef, values, { merge: true });
+
+        // Update the public /lawyers/{lawyerId} document
+        const lawyerDocRef = doc(firestore, 'lawyers', user.uid);
+        const publicProfileData = {
+            specialty: values.specialty,
+            // We only copy fields that should be public
+        };
+        setDocumentNonBlocking(lawyerDocRef, publicProfileData, { merge: true });
+
         toast({
             title: 'Profile Updated',
             description: 'Your information has been saved successfully.',

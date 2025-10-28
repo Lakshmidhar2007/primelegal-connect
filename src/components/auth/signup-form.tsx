@@ -65,14 +65,24 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
 
       if (user && firestore) {
         const userRef = doc(firestore, 'users', user.uid);
-        setDocumentNonBlocking(userRef, {
+        const userData = {
           id: user.uid,
           email: values.email,
           firstName: values.firstName,
           lastName: values.lastName,
           isLawyer: values.isLawyer,
           registrationDate: new Date().toISOString(),
-        }, { merge: true });
+        };
+        setDocumentNonBlocking(userRef, userData, { merge: true });
+
+        if (values.isLawyer) {
+            const lawyerRef = doc(firestore, 'lawyers', user.uid);
+            const lawyerData = {
+                firstName: values.firstName,
+                lastName: values.lastName,
+            };
+            setDocumentNonBlocking(lawyerRef, lawyerData, { merge: true });
+        }
       }
 
       toast({
