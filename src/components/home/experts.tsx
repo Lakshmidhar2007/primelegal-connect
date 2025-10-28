@@ -6,28 +6,21 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useState } from 'react';
 import { AskQuestionDialog } from '../shared/ask-question-dialog';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from '../ui/skeleton';
 
-type Lawyer = {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  photoURL?: string;
-  specialty?: string;
-};
+const experts = PlaceHolderImages.filter(img => img.id.startsWith('expert'));
 
 export function Experts() {
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
-  const firestore = useFirestore();
+  
+  // For demonstration, we'll keep a loading state simulation
+  const [isLoading, setIsLoading] = useState(true);
+  useState(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(timer);
+  });
 
-  const lawyersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'users'), where('isLawyer', '==', true));
-  }, [firestore]);
-
-  const { data: experts, isLoading } = useCollection<Lawyer>(lawyersQuery);
 
   return (
     <>
@@ -62,16 +55,15 @@ export function Experts() {
             <Card key={expert.id} className="overflow-hidden text-center bg-card/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 animate-fade-in-up flex flex-col" style={{ animationDelay: `${800 + 150 * i}ms` }}>
               <CardHeader className="p-6 flex-grow-0">
                 <Avatar className="h-24 w-24 mx-auto">
-                  <AvatarImage src={expert.photoURL} />
+                  <AvatarImage src={expert.imageUrl} />
                   <AvatarFallback>
-                    {expert.firstName?.charAt(0)}
-                    {expert.lastName?.charAt(0)}
+                    LP
                   </AvatarFallback>
                 </Avatar>
               </CardHeader>
               <CardContent className="p-4 flex-grow">
-                <CardTitle className="font-headline text-xl">{expert.firstName} {expert.lastName}</CardTitle>
-                <p className="text-sm text-muted-foreground">{expert.specialty || 'Legal Professional'}</p>
+                <CardTitle className="font-headline text-xl">Legal Professional</CardTitle>
+                <p className="text-sm text-muted-foreground">Specialized in Various Fields</p>
               </CardContent>
               <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                 <Button asChild variant="outline" className="w-full">
