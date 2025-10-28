@@ -1,32 +1,30 @@
 /**
- * @fileoverview Firestore Security Rules for PRIMELEGAL CONNECT.
+ * @file Firebase Security Rules for PRIMELEGAL CONNECT.
  *
  * Core Philosophy:
- * This ruleset implements a hybrid security model. User account data is strictly
- * controlled by the owning user. Public lawyer profiles are publicly readable,
- * but only writable by the corresponding lawyer.  Case data, stored within the UserAccount document, is implicitly protected through user-level access controls.
+ * This ruleset enforces a strict user-ownership model for private user data and allows public read access to lawyer profiles.
  *
  * Data Structure:
- * - /users/{userId}: Stores private user account information.  Access is restricted to the owning user.
- * - /lawyer_profiles/{lawyerId}: Stores public profiles for lawyers.  Publicly readable, lawyer-owned write access.
+ * - User data is stored under `/users/{userId}`, accessible only by the user themselves.
+ * - Public lawyer profiles are stored under `/lawyer_profiles/{lawyerId}` and are publicly readable.
  *
  * Key Security Decisions:
- * - User accounts are private and owned by the user. Listing all user accounts is disallowed.
- * - Lawyer profiles are public and designed for listing.
+ * - Users can only access their own data.
+ * - Public lawyer profiles are readable by everyone, but only writable by the profile owner.
+ * - Data consistency is enforced between document IDs and the user's UID.
  *
  * Denormalization for Authorization:
- *  - The `PublicLawyerProfile` collection requires that the `userId` field must match the document ID (`lawyerId`) to ensure that a user can only create/modify their own profile.
+ * - Lawyer profiles store the `userId` to ensure that only the correct user can modify their profile.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user account data. Only the owning user can read or write their data.
+     * @description Controls access to user account information. Only the user themselves can read and write their data.
      * @path /users/{userId}
-     * @allow (get, create, update, delete, list) if the user is the owner of the account.
-     * @deny (create) if the user ID in the request does not match the authenticated user's ID.
-     * @deny (update, delete) if the document does not exist.
+     * @allow (read, write) User with UID 'user123' can read/write their own data at /users/user123.
+     * @deny (read, write) User with UID 'user456' cannot read/write data at /users/user123.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
@@ -39,24 +37,23 @@ service cloud.firestore {
       }
 
       function isExistingOwner(userId) {
-          return isSignedIn() && isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId));
+        return isSignedIn() && isOwner(userId) && resource != null;
       }
 
-      allow get: if isOwner(userId);
-      allow list: if false; // Listing user accounts is not permitted.
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
       allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Secure public lawyer profiles. Publicly readable, lawyer-owned write access.
+     * @description Controls access to public lawyer profiles. Public read, owner-only write.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get, list) Publicly readable.
-     * @allow (create, update, delete) if the user is the owner of the profile.
-     * @deny (create) if the lawyerId in the path does not match the authenticated user's ID.
-     * @deny (update, delete) if the document does not exist or if the user is not the owner.
-     * @principle Public read access with owner-only writes, enforcing ownership and validating ID consistency.
+     * @allow (read) Any user can read lawyer profiles.
+     * @allow (create, update, delete) Lawyer with UID 'lawyer123' can create/update/delete their own profile at /lawyer_profiles/lawyer123.
+     * @deny (create, update, delete) User with UID 'user456' cannot create/update/delete the profile at /lawyer_profiles/lawyer123.
+     * @principle Allows public reads, but restricts writes to the profile owner. Enforces that the `userId` field matches the document ID for ownership.
      */
     match /lawyer_profiles/{lawyerId} {
       function isSignedIn() {
@@ -68,28 +65,14 @@ service cloud.firestore {
       }
 
       function isExistingOwner(lawyerId) {
-          return isSignedIn() && isOwner(lawyerId) && existsAfter(/databases/$(database)/documents/lawyer_profiles/$(lawyerId));
+        return isSignedIn() && isOwner(lawyerId) && resource != null;
       }
 
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
       allow create: if isSignedIn() && isOwner(lawyerId);
       allow update: if isExistingOwner(lawyerId);
       allow delete: if isExistingOwner(lawyerId);
-    }
-
-        /**
-     * @description  Access to the 'appointments' collection is denied to all users.
-     * @path /appointments
-     * @allow (get, list) never allowed.
-     * @allow (create, update, delete) never allowed.
-     * @principle Access is explicitly denied for prototyping purposes.
-     */
-    match /appointments/{appointmentId} {
-        allow get: if false;
-        allow list: if false;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
     }
   }
 }
