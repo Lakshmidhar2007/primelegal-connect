@@ -65,6 +65,7 @@ export function Lawyers() {
               </CardContent>
               <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                 <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
               </CardFooter>
             </Card>
           ))
@@ -87,6 +88,13 @@ export function Lawyers() {
               <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                  <Button asChild variant="outline" className="w-full">
                   <Link href={`/lawyers/profile?id=${lawyer.id}`}>{t('View Profile')}</Link>
+                </Button>
+                <Button 
+                    className="w-full"
+                    onClick={() => handleConnectClick(lawyer.id)}
+                    disabled={user?.uid === lawyer.id}
+                >
+                    {t('Connect')}
                 </Button>
               </CardFooter>
             </Card>
