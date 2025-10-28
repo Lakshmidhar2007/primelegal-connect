@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, collection } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
@@ -62,7 +62,7 @@ export function DocumentForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore || !userProfile || !userDocRef) {
+    if (!user || !firestore || !userDocRef) {
         toast({
             variant: 'destructive',
             title: 'Authentication Error',
@@ -75,8 +75,11 @@ export function DocumentForm() {
     try {
         const file = values.file[0];
 
+        // Correctly generate a new unique ID for the case on the client-side.
+        const newCaseRef = doc(collection(firestore, 'users', user.uid, 'cases'));
+
         const newCase = {
-            caseId: doc(collection(firestore, 'users')).id, // Generate a unique ID
+            caseId: newCaseRef.id,
             caseSubject: values.caseSubject,
             documentType: values.documentType,
             notes: values.notes,
@@ -85,7 +88,7 @@ export function DocumentForm() {
             status: 'Submitted',
         };
 
-        const existingCases = (userProfile as any).cases || [];
+        const existingCases = (userProfile as any)?.cases || [];
         const updatedCases = [...existingCases, newCase];
         
         setDocumentNonBlocking(userDocRef, { cases: updatedCases }, { merge: true });
