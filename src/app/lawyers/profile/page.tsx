@@ -43,6 +43,8 @@ function LawyerProfile() {
 
   const fullName = `${(lawyer as any).firstName} ${(lawyer as any).lastName}`;
   const initials = `${(lawyer as any).firstName?.charAt(0)}${(lawyer as any).lastName?.charAt(0)}`;
+  const dateOfBirth = (lawyer as any).dateOfBirth ? new Date((lawyer as any).dateOfBirth) : null;
+
 
   return (
     <div className="container py-12 lg:py-24">
@@ -55,7 +57,7 @@ function LawyerProfile() {
                         <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
                     <CardTitle className="mt-4 font-headline text-3xl">{fullName}</CardTitle>
-                    <p className="text-muted-foreground flex items-center gap-2"><Briefcase className="h-4 w-4" />{t((lawyer as any).specialty)}</p>
+                    <p className="text-muted-foreground flex items-center gap-2"><Briefcase className="h-4 w-4" />{t((lawyer as any).specialty || "Not specified")}</p>
                 </CardHeader>
                 <CardContent className="mt-6 grid gap-8 md:grid-cols-3">
                     <div className="md:col-span-2">
@@ -65,7 +67,20 @@ function LawyerProfile() {
                                 <p className="mt-2 text-muted-foreground whitespace-pre-wrap">{t((lawyer as any).bio)}</p>
                             </div>
                         )}
-                        
+                        <div className="mt-6 pt-6 border-t">
+                            <h3 className="text-lg font-semibold font-headline">{t('Additional Details')}</h3>
+                            <ul className="mt-2 space-y-2 text-muted-foreground">
+                                {dateOfBirth && (
+                                    <li className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>{t('Born on')}: {format(dateOfBirth, 'PPP')}</span></li>
+                                )}
+                                {(lawyer as any).nationality && (
+                                    <li className="flex items-center gap-2"><Flag className="h-4 w-4" /><span>{t('Nationality')}: {t((lawyer as any).nationality)}</span></li>
+                                )}
+                                {(lawyer as any).barCouncilNumber && (
+                                     <li className="flex items-center gap-2"><Briefcase className="h-4 w-4" /><span>{t('Bar Council #')}: {(lawyer as any).barCouncilNumber}</span></li>
+                                )}
+                            </ul>
+                        </div>
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold font-headline">{t('Details')}</h3>

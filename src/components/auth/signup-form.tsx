@@ -122,9 +122,6 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
           dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : undefined,
         };
         
-        // In a real app, you would handle file uploads to a service like Firebase Storage
-        // and save the URLs, not the file objects themselves.
-        // For this prototype, we'll just log that they exist.
         if (values.nationalityProof) {
           console.log('Nationality Proof provided:', values.nationalityProof[0].name);
         }
@@ -141,6 +138,9 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
                 firstName: values.firstName,
                 lastName: values.lastName,
                 email: values.email,
+                dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : undefined,
+                nationality: values.nationality,
+                barCouncilNumber: values.barCouncilNumber,
             }
             setDocumentNonBlocking(lawyerProfileRef, lawyerProfileData, { merge: true });
         }
