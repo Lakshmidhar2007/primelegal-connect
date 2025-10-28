@@ -42,7 +42,7 @@ export function HowItWorks() {
             </Card>
           );
 
-          if (step.id === 'ask' || step.id === 'insights') {
+          if (step.id === 'insights') {
             return (
               <a key={step.id} href="#ask-ai" className="no-underline">
                 {card}
