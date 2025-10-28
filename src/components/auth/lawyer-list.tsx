@@ -52,7 +52,7 @@ export function LawyerList() {
                 <p className="text-sm text-muted-foreground">{t(lawyer.specialty || 'Legal Professional')}</p>
               </div>
               <Button asChild variant="outline">
-                <Link href={`/lawyers/profile?id=${lawyer.userId}`}>{t('View')}</Link>
+                <Link href={`/lawyers/profile?id=${lawyer.id}`}>{t('View')}</Link>
               </Button>
             </CardContent>
           </Card>

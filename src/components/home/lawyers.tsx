@@ -86,7 +86,7 @@ export function Lawyers() {
               </CardContent>
               <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                  <Button asChild variant="outline" className="w-full">
-                  <Link href={`/lawyers/profile?id=${lawyer.userId}`}>{t('View Profile')}</Link>
+                  <Link href={`/lawyers/profile?id=${lawyer.id}`}>{t('View Profile')}</Link>
                 </Button>
               </CardFooter>
             </Card>
