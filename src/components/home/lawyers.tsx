@@ -1,24 +1,17 @@
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '../ui/button';
-import { useState } from 'react';
-import { ChatDialog } from '../shared/chat-dialog';
 import { useTranslation } from '@/hooks/use-translation';
-import { AuthDialog } from '../auth/auth-dialog';
 
 export function Lawyers() {
-  const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
-  const [selectedLawyerId, setSelectedLawyerId] = useState<string | null>(null);
   const firestore = useFirestore();
   const { t } = useTranslation();
-  const { user } = useUser();
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
   
   const lawyersQuery = useMemoFirebase(() => {
     if (firestore) {
@@ -29,17 +22,6 @@ export function Lawyers() {
 
   const { data: lawyers, isLoading } = useCollection(lawyersQuery);
 
-  const handleConnectClick = (lawyerId: string) => {
-    if (!user) {
-      setShowAuthDialog(true);
-      return;
-    }
-    // Prevent lawyers from chatting with themselves or other lawyers from this UI
-    if (user.uid === lawyerId) return;
-
-    setSelectedLawyerId(lawyerId);
-    setIsChatDialogOpen(true);
-  };
 
   return (
     <>
@@ -65,7 +47,6 @@ export function Lawyers() {
               </CardContent>
               <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                 <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
               </CardFooter>
             </Card>
           ))
@@ -89,13 +70,6 @@ export function Lawyers() {
                  <Button asChild variant="outline" className="w-full">
                   <Link href={`/lawyers/profile?id=${lawyer.id}`}>{t('View Profile')}</Link>
                 </Button>
-                <Button 
-                    className="w-full"
-                    onClick={() => handleConnectClick(lawyer.id)}
-                    disabled={user?.uid === lawyer.id}
-                >
-                    {t('Connect')}
-                </Button>
               </CardFooter>
             </Card>
           ))
@@ -106,14 +80,6 @@ export function Lawyers() {
         )}
       </div>
     </section>
-    {isChatDialogOpen && selectedLawyerId && (
-        <ChatDialog 
-            open={isChatDialogOpen} 
-            onOpenChange={setIsChatDialogOpen}
-            lawyerId={selectedLawyerId}
-        />
-    )}
-    <AuthDialog open={showAuthDialog} onOpenChange={setShowAuthDialog} />
     </>
   );
 }
