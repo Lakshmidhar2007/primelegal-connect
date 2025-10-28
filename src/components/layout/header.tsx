@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, User, HelpCircle } from 'lucide-react';
+import { Menu, User, HelpCircle, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/icons/logo';
@@ -178,6 +178,9 @@ export function Header() {
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
                       <Link href="/profile">{t('Profile')}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings"><SettingsIcon className="mr-2 h-4 w-4" />{t('Settings')}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout}>{t('Logout')}</DropdownMenuItem>
