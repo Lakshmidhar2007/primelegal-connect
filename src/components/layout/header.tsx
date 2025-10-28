@@ -1,14 +1,14 @@
-
 'use client';
 
 import Link from 'next/link';
-import { Menu } from 'lucide-react';
+import { Menu, User, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/icons/logo';
-import { useState } from 'react';
-import { useUser, useAuth } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -20,10 +20,34 @@ export function Header() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
+  const [isLawyer, setIsLawyer] = useState(false);
+
+  const userDocRef = useMemoFirebase(() => {
+    if (firestore && user) {
+      return doc(firestore, 'users', user.uid);
+    }
+    return null;
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc<{ isLawyer: boolean }>(userDocRef);
+
+  useEffect(() => {
+    if (userProfile) {
+      setIsLawyer(userProfile.isLawyer);
+    } else {
+      setIsLawyer(false);
+    }
+  }, [userProfile]);
 
   const handleLogout = async () => {
     await signOut(auth);
   };
+
+  const allNavLinks = [...navLinks];
+  if (isLawyer) {
+    allNavLinks.push({ href: '/lawyer-dashboard', label: 'Lawyer Dashboard' });
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -36,7 +60,7 @@ export function Header() {
             </span>
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
-            {navLinks.map((link) => (
+            {allNavLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -66,7 +90,7 @@ export function Header() {
                 </span>
               </Link>
               <nav className="flex flex-col space-y-4">
-                {navLinks.map((link) => (
+                {allNavLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -80,7 +104,15 @@ export function Header() {
             </SheetContent>
           </Sheet>
           {isUserLoading ? null : user ? (
-            <Button onClick={handleLogout} variant="outline">Logout</Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="ghost" size="icon">
+                <Link href="/profile">
+                  <User />
+                  <span className="sr-only">Profile</span>
+                </Link>
+              </Button>
+              <Button onClick={handleLogout} variant="outline">Logout</Button>
+            </div>
           ) : (
             <>
               <Button asChild variant="ghost">
