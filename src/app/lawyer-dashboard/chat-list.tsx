@@ -64,11 +64,11 @@ function ChatListItem({ chat }: { chat: any }) {
           {t('Open Chat')}
         </Button>
       </div>
-      {isChatOpen && (
+      {isChatOpen && user && (
         <ChatDialog
           open={isChatOpen}
           onOpenChange={setIsChatOpen}
-          lawyerId={user!.uid} // The current user is the lawyer
+          lawyerId={user.uid} // The current user is the lawyer
           userId={otherParticipantId} // The other participant is the user
           chatId={chat.id}
         />
