@@ -1,110 +1,102 @@
 /**
- * @fileOverview Firestore Security Rules for PRIMELEGAL CONNECT.
+ * @fileoverview Firestore Security Rules for PRIMELEGAL CONNECT application.
  *
  * Core Philosophy:
- * This ruleset employs a strict user-ownership model for private user data and a public-read, owner-write model for lawyer profiles.
+ * This ruleset implements a hybrid security model: strict user-ownership for private data
+ * (e.g., user accounts) and public read access with owner-only writes for public lawyer profiles.
+ * It leverages Firebase Authentication to verify user identity and enforce access control.
  *
  * Data Structure:
- * - /users/{userId}: Contains private user account data. Only the user can read and write their own data.
- * - /lawyer_profiles/{lawyerId}: Contains public lawyer profile data. Anyone can read, but only the lawyer can create or update their profile.
+ * - /users/{userId}: Stores sensitive user account information. Access is restricted to the owning user.
+ * - /lawyer_profiles/{lawyerId}: Stores public profile data for lawyers. Publicly readable, but only the lawyer can modify their profile.
  *
  * Key Security Decisions:
- * - User listing is disabled to prevent unauthorized enumeration of user accounts.
- * - Public lawyer profiles are stored in a separate collection to allow public read access without compromising the privacy of user accounts.
+ * - User listing is disabled.
+ * - Public lawyer profiles are separated from private user accounts for secure public listing.
+ * - Strict ownership is enforced on all write operations.
  *
  * Denormalization for Authorization:
- * - The lawyer_profiles collection uses the lawyer's UID as the document ID (lawyerId) to easily enforce ownership.
+ * The `PublicLawyerProfile` includes a `userId` field that MUST match the document ID (`lawyerId`).
+ * This denormalization is critical for enforcing owner-only write access to the profile.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is made by a signed-in user.
-     * @returns {boolean} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user's UID matches the provided userId.
-     * @param {string} userId The user ID to compare against the authenticated user's UID.
-     * @returns {boolean} True if the user is the owner, false otherwise.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user's UID matches the provided userId and the resource exists.
-     * @param {string} userId The user ID to compare against the authenticated user's UID.
-     * @returns {boolean} True if the user is the existing owner, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Defines security rules for the /users/{userId} collection.
+     * @description Grants access to a user's document only to themselves.
      * @path /users/{userId}
-     * @allow (get) Authenticated user with matching UID can read their own data.
-     * @deny (get) Authenticated user cannot read another user's data.
-     * @allow (create) Authenticated user with matching UID can create their own data.
-     * @deny (create) Unauthenticated user cannot create user data.
-     * @allow (update) Authenticated user with matching UID can update their own data.
-     * @deny (update) Unauthenticated user cannot update user data.
-     * @allow (delete) Authenticated user with matching UID can delete their own data.
-     * @deny (delete) Unauthenticated user cannot delete user data.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can create /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
+     * @allow (get) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can get /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
+     * @allow (update) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can update /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
+     * @allow (delete) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 can delete /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
+     * @deny (create) User Dx2RT7SMBqMVxOkNbmpgrDply1E3 cannot create /users/anotherUserId.
+     * @deny (get) User anotherUserId cannot get /users/Dx2RT7SMBqMVxOkNbmpgrDply1E3.
+     * @principle Enforces document ownership for all operations on user accounts.
      */
     match /users/{userId} {
-      // Read rules
       allow get: if isOwner(userId);
-      allow list: if false; // User listing is not permitted
-
-      // Write rules
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Defines security rules for the /lawyer_profiles/{lawyerId} collection.
+     * @description Allows public read access to lawyer profiles, but restricts write access to the profile owner.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get) Any user can read a lawyer's profile.
-     * @allow (list) Any user can list lawyer profiles.
-     * @allow (create) Authenticated lawyer with matching UID can create their profile.
-     * @deny (create) Unauthenticated user cannot create lawyer profiles.
-     * @allow (update) Authenticated lawyer with matching UID can update their profile.
-     * @deny (update) Unauthenticated user cannot update lawyer profiles.
-     * @allow (delete) Authenticated lawyer with matching UID can delete their profile.
-     * @deny (delete) Unauthenticated user cannot delete lawyer profiles.
-     * @principle Allows public read access but restricts write access to the profile owner.
+     * @allow (get) Any user (or no user) can read /lawyer_profiles/lawyer123.
+     * @allow (list) Any user (or no user) can list /lawyer_profiles.
+     * @allow (create) User lawyer123 can create /lawyer_profiles/lawyer123 if lawyerId matches their UID.
+     * @allow (update) User lawyer123 can update /lawyer_profiles/lawyer123 if lawyerId matches their UID.
+     * @allow (delete) User lawyer123 can delete /lawyer_profiles/lawyer123 if lawyerId matches their UID.
+     * @deny (create) User anotherUser cannot create /lawyer_profiles/lawyer123.
+     * @deny (update) User anotherUser cannot update /lawyer_profiles/lawyer123.
+     * @deny (delete) User anotherUser cannot delete /lawyer_profiles/lawyer123.
+     * @principle Allows public read access while enforcing owner-only write access.
      */
     match /lawyer_profiles/{lawyerId} {
-      // Read rules: Public read access for lawyer profiles
       allow get, list: if true;
-
-      // Write rules: Only the lawyer can create, update, or delete their profile
-      allow create: if isSignedIn() && isOwner(lawyerId) && request.resource.data.userId == lawyerId;
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(lawyerId);
+      allow create: if isLawyerOwner(lawyerId) && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingLawyerOwner(lawyerId) && request.resource.data.userId == lawyerId;
+      allow delete: if isExistingLawyerOwner(lawyerId);
     }
 
     /**
-     * @description Defines security rules for the /chats collection.
-     * @path /chats
-     * @allow (get) Any user can read chats.
-     * @allow (list) Any user can list chats.
-     * @deny (create) No one can create chats.
-     * @deny (update) No one can update chats.
-     * @deny (delete) No one can delete chats.
-     * @principle Allows public read access but restricts all write access
+     * @description Access denied to /appointments collection.
+     * @path /appointments
+     * @allow (get) nobody can access /appointments
+     * @allow (list) nobody can access /appointments
+     * @allow (create) nobody can access /appointments
+     * @allow (update) nobody can access /appointments
+     * @allow (delete) nobody can access /appointments
      */
-    match /chats {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+     match /appointments {
+      allow get: if false;
+      allow list: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isLawyerOwner(lawyerId) {
+          return isSignedIn() && request.auth.uid == lawyerId;
+    }
+
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    function isExistingLawyerOwner(lawyerId) {
+      return isLawyerOwner(lawyerId) && resource != null;
     }
   }
 }
