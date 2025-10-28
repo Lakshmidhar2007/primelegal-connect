@@ -8,12 +8,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import { useState } from 'react';
-import { AskQuestionDialog } from '../shared/ask-question-dialog';
+import { ChatDialog } from '../shared/chat-dialog';
 import { useTranslation } from '@/hooks/use-translation';
 
 
 export function Lawyers() {
-  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
+  const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
+  const [selectedLawyerId, setSelectedLawyerId] = useState<string | null>(null);
   const firestore = useFirestore();
   const { t } = useTranslation();
   
@@ -25,6 +26,11 @@ export function Lawyers() {
   }, [firestore]);
 
   const { data: lawyers, isLoading } = useCollection(lawyersQuery);
+
+  const handleConnectClick = (lawyerId: string) => {
+    setSelectedLawyerId(lawyerId);
+    setIsChatDialogOpen(true);
+  };
 
   return (
     <>
@@ -74,7 +80,7 @@ export function Lawyers() {
                  <Button asChild variant="outline" className="w-full">
                   <Link href={`/lawyers/profile?id=${lawyer.userId}`}>{t('View Profile')}</Link>
                 </Button>
-                <Button variant="default" className="w-full" onClick={() => setIsQuestionDialogOpen(true)}>{t('Connect')}</Button>
+                <Button variant="default" className="w-full" onClick={() => handleConnectClick(lawyer.userId)}>{t('Connect')}</Button>
               </CardFooter>
             </Card>
           ))
@@ -85,7 +91,13 @@ export function Lawyers() {
         )}
       </div>
     </section>
-    <AskQuestionDialog open={isQuestionDialogOpen} onOpenChange={setIsQuestionDialogOpen} />
+    {isChatDialogOpen && selectedLawyerId && (
+        <ChatDialog 
+            open={isChatDialogOpen} 
+            onOpenChange={setIsChatDialogOpen}
+            lawyerId={selectedLawyerId}
+        />
+    )}
     </>
   );
 }

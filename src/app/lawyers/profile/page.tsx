@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -13,12 +13,14 @@ import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/use-translation';
 import { format } from 'date-fns';
+import { ChatDialog } from '@/components/shared/chat-dialog';
 
 function LawyerProfile() {
   const searchParams = useSearchParams();
   const lawyerId = searchParams.get('id');
   const firestore = useFirestore();
   const { t } = useTranslation();
+  const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
 
   const lawyerDocRef = useMemoFirebase(() => {
     if (firestore && lawyerId) {
@@ -47,6 +49,7 @@ function LawyerProfile() {
 
 
   return (
+    <>
     <div className="container py-12 lg:py-24">
         <div className="mx-auto max-w-4xl">
             <PageHeader title={fullName} subtitle={t((lawyer as any).specialty || 'Legal Professional')} />
@@ -101,7 +104,7 @@ function LawyerProfile() {
                                     </Link>
                                 </Button>
                             )}
-                             <Button className="w-full">
+                             <Button className="w-full" onClick={() => setIsChatDialogOpen(true)}>
                                 {t('Connect Now')}
                             </Button>
                         </div>
@@ -110,6 +113,14 @@ function LawyerProfile() {
             </Card>
         </div>
     </div>
+    {isChatDialogOpen && lawyerId && (
+        <ChatDialog 
+            open={isChatDialogOpen} 
+            onOpenChange={setIsChatDialogOpen}
+            lawyerId={lawyerId}
+        />
+    )}
+    </>
   );
 }
 

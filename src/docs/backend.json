@@ -243,6 +243,45 @@
         "dateTime",
         "status"
       ]
+    },
+    "Chat": {
+      "title": "Chat",
+      "type": "object",
+      "description": "Represents a chat conversation between a user and a lawyer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the chat session."
+        },
+        "participants": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "An array containing the UIDs of the two participants (user and lawyer)."
+        },
+        "lastMessage": {
+          "$ref": "#/backend/entities/Message"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "participants", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a single message within a chat.",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "text", "senderId", "timestamp"]
     }
   },
   "auth": {
@@ -300,8 +339,31 @@
             }
           ]
         }
+      },
+       {
+        "path": "/chats/{chatId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": { "$ref": "#/backend/entities/Message" },
+          "description": "Stores messages for a specific chat. Only participants of the chat can read and write messages.",
+          "params": [
+            { "name": "chatId", "description": "The unique ID of the chat." },
+            { "name": "messageId", "description": "The unique ID of the message." }
+          ]
+        }
+      },
+      {
+        "path": "/chats/{chatId}",
+        "definition": {
+          "entityName": "Chat",
+          "schema": { "$ref": "#/backend/entities/Chat" },
+          "description": "Metadata for each chat. Read/write access is limited to participants.",
+          "params": [
+            { "name": "chatId", "description": "The unique ID of the chat." }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases (stored as an array in the user doc) to ensure data privacy and security. The `lawyer_profiles` collection stores public information about lawyers, allowing for open read access for all users, while keeping the main `users` collection private. The `appointments` collection is added for scheduling."
+    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, public lawyer profiles, and now real-time chat. The `chats` collection stores metadata, and each chat has a subcollection for `messages`. This is a common and scalable pattern for chat applications in Firestore."
   }
 }
