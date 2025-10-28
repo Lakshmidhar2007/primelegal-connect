@@ -153,8 +153,7 @@
       "required": [
         "userId",
         "firstName",
-        "lastName",
-        "email"
+        "lastName"
       ]
     },
     "Case": {
@@ -206,6 +205,44 @@
         "status",
         "fileName"
       ]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "type": "object",
+      "description": "Represents an appointment slot created by a lawyer.",
+      "properties": {
+        "appointmentId": {
+          "type": "string",
+          "description": "A unique ID for the appointment."
+        },
+        "lawyerId": {
+          "type": "string",
+          "description": "The UID of the lawyer who created this slot."
+        },
+        "dateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The scheduled date and time of the appointment."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the appointment.",
+          "enum": [
+            "Available",
+            "Booked"
+          ]
+        },
+        "bookedBy": {
+          "type": "string",
+          "description": "The UID of the user who booked the appointment."
+        }
+      },
+      "required": [
+        "appointmentId",
+        "lawyerId",
+        "dateTime",
+        "status"
+      ]
     }
   },
   "auth": {
@@ -247,8 +284,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/appointments/{appointmentId}",
+        "definition": {
+          "entityName": "Appointment",
+          "schema": {
+            "$ref": "#/backend/entities/Appointment"
+          },
+          "description": "Stores appointment slots created by lawyers. Publicly readable. Only the lawyer who created it can write to it. A user can book it by updating the document.",
+          "params": [
+            {
+              "name": "appointmentId",
+              "description": "A unique ID for the appointment slot."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases (stored as an array in the user doc) to ensure data privacy and security. The `lawyer_profiles` collection stores public information about lawyers, allowing for open read access for all users, while keeping the main `users` collection private. This separation is key to securely displaying a list of lawyers."
+    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases (stored as an array in the user doc) to ensure data privacy and security. The `lawyer_profiles` collection stores public information about lawyers, allowing for open read access for all users, while keeping the main `users` collection private. The `appointments` collection is added for scheduling."
   }
 }
