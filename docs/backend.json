@@ -68,7 +68,7 @@
     "PublicLawyerProfile": {
       "title": "Public Lawyer Profile",
       "type": "object",
-      "description": "Represents the publicly visible information for a lawyer.",
+      "description": "DEPRECATED: This entity is no longer in use. Public lawyer data is derived from the UserAccount entity with field-level security.",
       "properties": {
           "firstName": {
               "type": "string"
@@ -171,7 +171,7 @@
           "schema": {
             "$ref": "#/backend/entities/Case"
           },
-          "description": "Stores the cases submitted by a specific user. Access is controlled by user ownership.",
+          "description": "Stores the cases for a user. A user can create, read, update, and delete their own cases. No one else can access them.",
           "params": [
              {
               "name": "userId",
@@ -185,6 +185,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts and their associated cases to ensure data privacy and security. The homepage now queries the /users collection directly for lawyers, and security rules enforce that only specific public-safe fields are readable by other authenticated users. This approach simplifies the data model by removing the now-deprecated /lawyers collection and enforces security directly through rules."
+    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts and their associated cases to ensure data privacy and security. The homepage now queries the /users collection directly for lawyers, and security rules enforce that only specific public-safe fields are readable by other authenticated users. This approach simplifies the data model by removing the now-deprecated /lawyers collection and enforces security directly through rules. Users can manage their own cases in the cases subcollection."
   }
 }
