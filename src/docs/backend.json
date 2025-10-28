@@ -287,13 +287,14 @@
         "id": { "type": "string", "description": "A unique ID for the message." },
         "text": { "type": "string", "description": "The content of the message." },
         "senderId": { "type": "string", "description": "The UID of the user who sent the message." },
+        "senderType": { "type": "string", "enum": ["user", "lawyer", "ai-bot"], "description": "The type of sender."},
         "timestamp": {
           "type": "string",
           "format": "date-time",
           "description": "Timestamp when the message was sent."
         }
       },
-      "required": ["id", "text", "senderId", "timestamp"]
+      "required": ["id", "text", "senderId", "senderType", "timestamp"]
     }
   },
   "auth": {

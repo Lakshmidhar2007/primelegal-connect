@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef }from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { Loader2, Send } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/hooks/use-toast';
+import { getAIChatResponse } from '@/actions/chat';
 
 type ChatDialogProps = {
   open: boolean;
@@ -66,6 +67,37 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    // When the dialog opens, check if it's a new chat and needs a welcome message.
+    const initializeChat = async () => {
+      if (open && chatId && firestore && profile) {
+        const chatRef = doc(firestore, 'chats', chatId);
+        const chatDoc = await getDoc(chatRef);
+        if (!chatDoc.exists()) {
+          // This is a new chat, create the document and send the AI welcome message.
+          const participants = [currentUser?.uid, lawyerId].sort();
+          await setDoc(chatRef, {
+            participants,
+            createdAt: serverTimestamp(),
+          }).catch(error => {
+             errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: chatRef.path,
+                operation: 'write',
+                requestResourceData: { participants }
+             }));
+          });
+          
+          // Call the server action to get the AI response and save it
+          await getAIChatResponse({
+              chatId: chatId,
+              lawyerName: (profile as any).firstName || 'the lawyer',
+          });
+        }
+      }
+    };
+    initializeChat();
+  }, [open, chatId, firestore, profile, currentUser, lawyerId]);
+
   useEffect(scrollToBottom, [messages]);
   
   const handleSendMessage = async () => {
@@ -77,51 +109,25 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
       id: uuidv4(),
       text: message,
       senderId: currentUser.uid,
+      senderType: 'user',
       timestamp: serverTimestamp(),
     };
 
-    const chatRef = doc(firestore, 'chats', chatId);
-    const messagesRef = collection(chatRef, 'messages');
+    const messagesRef = collection(firestore, 'chats', chatId, 'messages');
 
     try {
-      const chatDoc = await getDoc(chatRef);
-      if (!chatDoc.exists()) {
-        await setDoc(chatRef, {
-          participants: [currentUser.uid, lawyerId].sort(),
-          createdAt: serverTimestamp(),
-        });
-      }
-    } catch (error) {
-      // This is a read/write to the parent chat doc, also needs error handling
-       errorEmitter.emit(
-        'permission-error',
-        new FirestorePermissionError({
-          path: chatRef.path,
-          operation: 'write',
-          requestResourceData: {
-            participants: [currentUser.uid, lawyerId].sort(),
-          },
-        })
-      );
-      setIsSending(false);
-      return;
-    }
-    
-    addDoc(messagesRef, messageData)
-      .then(() => {
-        setMessage('');
-      })
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
+      await addDoc(messagesRef, messageData);
+      setMessage('');
+    } catch (serverError) {
+      const permissionError = new FirestorePermissionError({
           path: messagesRef.path,
           operation: 'create',
           requestResourceData: messageData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .finally(() => {
-        setIsSending(false);
       });
+      errorEmitter.emit('permission-error', permissionError);
+    } finally {
+        setIsSending(false);
+    }
   };
 
 
@@ -148,12 +154,16 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
              <div key={msg.id || index} className={cn("flex items-end gap-2 mb-4", msg.senderId === currentUser?.uid ? "justify-end" : "justify-start")}>
                  {msg.senderId !== currentUser?.uid && (
                     <Avatar className="h-8 w-8">
-                       <AvatarImage src={msg.senderId === 'ai-bot' ? undefined : (profile as any)?.photoURL} />
-                       <AvatarFallback>{msg.senderId === 'ai-bot' ? 'AI' : getInitials((profile as any)?.firstName)}</AvatarFallback>
+                       <AvatarImage src={msg.senderType === 'ai-bot' ? undefined : (profile as any)?.photoURL} />
+                       <AvatarFallback>{msg.senderType === 'ai-bot' ? 'AI' : getInitials((profile as any)?.firstName)}</AvatarFallback>
                     </Avatar>
                  )}
-                 <div className={cn("max-w-xs md:max-w-md p-3 rounded-lg", msg.senderId === currentUser?.uid ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                   <p className="text-sm">{msg.text}</p>
+                 <div className={cn(
+                    "max-w-xs md:max-w-md p-3 rounded-lg", 
+                    msg.senderId === currentUser?.uid ? "bg-primary text-primary-foreground" : "bg-muted",
+                    msg.senderType === 'ai-bot' && "bg-blue-100 dark:bg-blue-900 border border-blue-200 dark:border-blue-800"
+                 )}>
+                   <p className="text-sm">{t(msg.text)}</p>
                  </div>
              </div>
            ))}
