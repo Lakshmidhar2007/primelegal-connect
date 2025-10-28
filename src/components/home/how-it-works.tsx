@@ -21,7 +21,7 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="container py-12 lg:py-24">
+    <section className="container py-12 lg:py-24 animate-fade-in-up animation-delay-200">
       <div className="mx-auto max-w-3xl text-center">
         <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
           Your Path to Legal Clarity
@@ -31,8 +31,8 @@ export function HowItWorks() {
         </p>
       </div>
       <div className="mt-12 grid gap-8 md:grid-cols-3">
-        {steps.map((step) => (
-          <Card key={step.title} className="flex flex-col items-center p-6 text-center shadow-md hover:shadow-xl transition-shadow">
+        {steps.map((step, i) => (
+          <Card key={step.title} className="flex flex-col items-center p-6 text-center shadow-md hover:shadow-xl transition-shadow animate-fade-in-up" style={{animationDelay: `${200 * (i + 1)}ms`}}>
             <CardHeader className="items-center">
               {step.icon}
               <CardTitle className="mt-4 font-headline text-2xl">{step.title}</CardTitle>

@@ -28,7 +28,7 @@ const expertsData = [
 
 export function Experts() {
   return (
-    <section className="container py-12 lg:py-24">
+    <section className="container py-12 lg:py-24 animate-fade-in-up animation-delay-600">
       <div className="mx-auto max-w-3xl text-center">
         <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
           Meet Our Legal Experts
@@ -38,8 +38,8 @@ export function Experts() {
         </p>
       </div>
       <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-        {expertsData.map((expert) => (
-          <Card key={expert.name} className="overflow-hidden text-center">
+        {expertsData.map((expert, i) => (
+          <Card key={expert.name} className="overflow-hidden text-center animate-fade-in-up" style={{animationDelay: `${200 * (i + 1)}ms`}}>
             <CardHeader className="p-0">
               {expert.image && (
                 <Image

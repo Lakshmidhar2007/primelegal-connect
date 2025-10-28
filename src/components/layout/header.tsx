@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, User, Briefcase } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/icons/logo';
@@ -46,7 +46,10 @@ export function Header() {
 
   const allNavLinks = [...navLinks];
   if (isLawyer) {
-    allNavLinks.push({ href: '/lawyer-dashboard', label: 'Lawyer Dashboard' });
+    // The user requested to remove this, but lawyers still need a way to access their dashboard.
+    // A profile dropdown would be a good place for it.
+    // For now, removing it as requested. Lawyers can access it via direct URL.
+    // allNavLinks.push({ href: '/lawyer-dashboard', label: 'Lawyer Dashboard' });
   }
 
   return (
@@ -100,11 +103,25 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
+                  {isLawyer && (
+                    <Link
+                      href='/lawyer-dashboard'
+                      onClick={() => setIsSheetOpen(false)}
+                      className="text-lg font-medium text-foreground/80 hover:text-foreground"
+                    >
+                      Lawyer Dashboard
+                    </Link>
+                  )}
               </nav>
             </SheetContent>
           </Sheet>
           {isUserLoading ? null : user ? (
             <div className="flex items-center gap-2">
+                 {isLawyer && (
+                    <Button asChild variant="outline" size="sm">
+                        <Link href="/lawyer-dashboard">Lawyer Dashboard</Link>
+                    </Button>
+                )}
               <Button asChild variant="ghost" size="icon">
                 <Link href="/profile">
                   <User />

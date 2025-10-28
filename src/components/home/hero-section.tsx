@@ -47,7 +47,7 @@ export function HeroSection() {
   }
 
   return (
-    <section id="ask-ai" className="container py-12 text-center lg:py-24">
+    <section id="ask-ai" className="container py-12 text-center lg:py-24 animate-fade-in-up">
       <div className="mx-auto max-w-3xl">
         <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl">
           Get Instant Legal Insights with AI
