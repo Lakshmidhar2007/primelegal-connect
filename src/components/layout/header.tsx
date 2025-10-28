@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, User, Languages } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/icons/logo';
@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Globe } from '../icons/globe';
+import { useLanguage } from '@/hooks/use-language';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -31,6 +32,7 @@ export function Header() {
   const auth = useAuth();
   const firestore = useFirestore();
   const [isLawyer, setIsLawyer] = useState(false);
+  const { setLanguage } = useLanguage();
 
   const userDocRef = useMemoFirebase(() => {
     if (firestore && user) {
@@ -87,14 +89,14 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>English</DropdownMenuItem>
-              <DropdownMenuItem>Spanish</DropdownMenuItem>
-              <DropdownMenuItem>French</DropdownMenuItem>
-              <DropdownMenuItem>German</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('English')}>English</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('Spanish')}>Spanish</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('French')}>French</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('German')}>German</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Hindi</DropdownMenuItem>
-              <DropdownMenuItem>Bengali</DropdownMenuItem>
-              <DropdownMenuItem>Tamil</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('Hindi')}>Hindi</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('Bengali')}>Bengali</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('Tamil')}>Tamil</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

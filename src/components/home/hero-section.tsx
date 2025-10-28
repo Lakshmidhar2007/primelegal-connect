@@ -14,6 +14,7 @@ import { BrainCircuit, Loader2, Sparkles } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useUser } from '@/firebase';
 import { AuthDialog } from '@/components/auth/auth-dialog';
+import { useTranslation } from '@/hooks/use-translation';
 
 const formSchema = z.object({
   query: z.string().min(10, {
@@ -27,6 +28,7 @@ export function HeroSection() {
   const [error, setError] = useState<string | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { user, isUserLoading } = useUser();
+  const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -74,10 +76,10 @@ export function HeroSection() {
         <div className="container relative z-10">
           <div className="mx-auto max-w-3xl animate-fade-in" style={{ animationDelay: '100ms' }}>
             <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl">
-              Get Instant Legal Insights with AI
+              {t('Get Instant Legal Insights with AI')}
             </h1>
             <p className="mt-4 text-lg text-muted-foreground md:text-xl">
-              Describe your legal issue below, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.
+              {t("Describe your legal issue below, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.")}
             </p>
           </div>
 
@@ -86,7 +88,7 @@ export function HeroSection() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-center gap-2 font-headline text-2xl">
                   <Sparkles className="h-6 w-6 text-accent" />
-                  Ask Our AI Assistant
+                  {t('Ask Our AI Assistant')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -99,7 +101,7 @@ export function HeroSection() {
                         <FormItem>
                           <FormControl>
                             <Textarea
-                              placeholder="For example: 'I had a dispute with my landlord over the security deposit...'"
+                              placeholder={t("For example: 'I had a dispute with my landlord over the security deposit...'")}
                               className="min-h-[120px] resize-none text-base bg-background/70"
                               {...field}
                             />
@@ -112,10 +114,10 @@ export function HeroSection() {
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Analyzing...
+                          {t('Analyzing...')}
                         </>
                       ) : (
-                        'Get AI Analysis'
+                        t('Get AI Analysis')
                       )}
                     </Button>
                   </form>
@@ -128,7 +130,7 @@ export function HeroSection() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-headline">
                     <BrainCircuit className="h-6 w-6" />
-                    AI Generated Insights
+                    {t('AI Generated Insights')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -151,7 +153,7 @@ export function HeroSection() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-headline text-2xl">
                     <BrainCircuit className="h-6 w-6" />
-                    AI Generated Insights
+                    {t('AI Generated Insights')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="prose prose-sm max-w-none text-foreground/90 prose-p:text-foreground/90 prose-strong:text-foreground">

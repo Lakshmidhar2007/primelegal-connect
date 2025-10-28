@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { LanguageProvider } from '@/hooks/use-language';
 
 export const metadata: Metadata = {
   title: 'PRIMELEGAL CONNECT',
@@ -32,6 +33,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
         >
+          <LanguageProvider>
             <FirebaseClientProvider>
             <div className="relative min-h-screen flex flex-col">
                 <Header />
@@ -40,6 +42,7 @@ export default function RootLayout({
             </div>
             <Toaster />
             </FirebaseClientProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>
