@@ -76,7 +76,7 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
         if (!chatDoc.exists()) {
           // This is a new chat, create the document and send the AI welcome message.
           const participants = [currentUser?.uid, lawyerId].sort();
-          await setDoc(chatRef, {
+           setDoc(chatRef, {
             participants,
             createdAt: serverTimestamp(),
           }).catch(error => {
@@ -114,20 +114,21 @@ export function ChatDialog({ open, onOpenChange, lawyerId, userId: initialUserId
     };
 
     const messagesRef = collection(firestore, 'chats', chatId, 'messages');
-
-    try {
-      await addDoc(messagesRef, messageData);
-      setMessage('');
-    } catch (serverError) {
-      const permissionError = new FirestorePermissionError({
-          path: messagesRef.path,
-          operation: 'create',
-          requestResourceData: messageData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    } finally {
+    
+    setMessage('');
+    
+    addDoc(messagesRef, messageData)
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: messagesRef.path,
+            operation: 'create',
+            requestResourceData: messageData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
         setIsSending(false);
-    }
+      });
   };
 
 
