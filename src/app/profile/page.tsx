@@ -21,11 +21,13 @@ import { doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const formSchema = z.object({
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
     email: z.string().email(),
+    photoURL: z.string().optional(),
 });
 
 export default function ProfilePage() {
@@ -33,6 +35,7 @@ export default function ProfilePage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     const userDocRef = useMemoFirebase(() => {
         if (firestore && user) {
@@ -49,6 +52,7 @@ export default function ProfilePage() {
             firstName: '',
             lastName: '',
             email: '',
+            photoURL: '',
         },
     });
 
@@ -58,9 +62,28 @@ export default function ProfilePage() {
                 firstName: (userProfile as any).firstName || '',
                 lastName: (userProfile as any).lastName || '',
                 email: (userProfile as any).email || '',
+                photoURL: (userProfile as any).photoURL || '',
             });
+            if((userProfile as any).photoURL) {
+                setPreviewImage((userProfile as any).photoURL);
+            }
         }
     }, [userProfile, form]);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const dataUrl = reader.result as string;
+                setPreviewImage(dataUrl);
+                // For now, we'll just store the data URL. In a real app, you'd upload this to a service like Firebase Storage.
+                form.setValue('photoURL', dataUrl);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsSubmitting(true);
@@ -100,6 +123,9 @@ export default function ProfilePage() {
                     <CardContent>
                         {isLoading ? (
                             <div className="space-y-6">
+                                <div className="flex justify-center">
+                                    <Skeleton className="h-24 w-24 rounded-full" />
+                                </div>
                                 <div className="flex gap-4">
                                     <Skeleton className="h-10 flex-1" />
                                     <Skeleton className="h-10 flex-1" />
@@ -110,6 +136,21 @@ export default function ProfilePage() {
                         ) : (
                             <Form {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                    <div className="flex flex-col items-center space-y-4">
+                                        <Avatar className="h-24 w-24">
+                                            <AvatarImage src={previewImage ?? undefined} alt="Profile picture" />
+                                            <AvatarFallback>
+                                                {form.getValues('firstName')?.charAt(0)}
+                                                {form.getValues('lastName')?.charAt(0)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <Input
+                                            type="file"
+                                            accept="image/*"
+                                            className="max-w-xs"
+                                            onChange={handleFileChange}
+                                        />
+                                    </div>
                                     <div className="flex gap-4">
                                         <FormField
                                             control={form.control}
