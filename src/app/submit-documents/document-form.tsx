@@ -75,7 +75,9 @@ export function DocumentForm() {
         const file = values.file[0];
         
         // Firestore will generate a unique ID for the new case
+        const newCaseRef = doc(casesCollectionRef);
         const newCase = {
+            caseId: newCaseRef.id,
             caseSubject: values.caseSubject,
             documentType: values.documentType,
             notes: values.notes,
@@ -84,10 +86,7 @@ export function DocumentForm() {
             status: 'Submitted',
         };
 
-        const docRef = await addDocumentNonBlocking(casesCollectionRef, newCase);
-        
-        // Optionally add the generated ID to the document
-        // updateDocumentNonBlocking(doc(casesCollectionRef, docRef.id), { caseId: docRef.id });
+        await addDocumentNonBlocking(casesCollectionRef, newCase);
 
         toast({
           title: 'Case Filed Successfully',

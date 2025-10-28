@@ -127,7 +127,7 @@
           ]
         }
       },
-      "required": ["caseSubject", "documentType", "submitted", "status"]
+      "required": ["caseId", "caseSubject", "documentType", "submitted", "status"]
     }
   },
   "auth": {
