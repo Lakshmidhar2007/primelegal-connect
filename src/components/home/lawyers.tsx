@@ -6,22 +6,21 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { useState } from 'react';
 import { AskQuestionDialog } from '../shared/ask-question-dialog';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from '../ui/skeleton';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
-const experts = PlaceHolderImages.filter(img => img.id.startsWith('expert'));
-
-export function Experts() {
+export function Lawyers() {
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
+  const firestore = useFirestore();
+
+  const lawyersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'lawyer_profiles')) : null),
+    [firestore]
+  );
   
-  // For demonstration, we'll keep a loading state simulation
-  const [isLoading, setIsLoading] = useState(true);
-  useState(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  });
-
-
+  const { data: lawyers, isLoading } = useCollection(lawyersQuery);
+  
   return (
     <>
       <section className="container py-12 lg:py-24">
@@ -50,24 +49,24 @@ export function Experts() {
                 </CardFooter>
               </Card>
             ))
-          ) : experts?.length > 0 ? (
-            experts.map((expert, i) => (
-            <Card key={expert.id} className="overflow-hidden text-center bg-card/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col">
+          ) : lawyers?.length > 0 ? (
+            lawyers.map((lawyer: any, i: number) => (
+            <Card key={lawyer.id} className="overflow-hidden text-center bg-card/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col">
               <CardHeader className="p-6 flex-grow-0">
                 <Avatar className="h-24 w-24 mx-auto">
-                  <AvatarImage src={expert.imageUrl} />
+                  <AvatarImage src={lawyer.photoURL} />
                   <AvatarFallback>
-                    LP
+                    {lawyer.firstName?.charAt(0)}{lawyer.lastName?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
               </CardHeader>
               <CardContent className="p-4 flex-grow">
-                <CardTitle className="font-headline text-xl">Legal Professional</CardTitle>
-                <p className="text-sm text-muted-foreground">{expert.imageHint}</p>
+                <CardTitle className="font-headline text-xl">{lawyer.firstName} {lawyer.lastName}</CardTitle>
+                <p className="text-sm text-muted-foreground">{lawyer.specialty}</p>
               </CardContent>
               <CardFooter className="p-4 pt-0 flex flex-col gap-2">
                 <Button asChild variant="outline" className="w-full">
-                  <Link href={`/lawyers/${expert.id}`}>View Profile</Link>
+                  <Link href={`/lawyers/${lawyer.id}`}>View Profile</Link>
                 </Button>
                 <Button variant="default" className="w-full" onClick={() => setIsQuestionDialogOpen(true)}>Connect</Button>
               </CardFooter>

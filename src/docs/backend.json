@@ -54,13 +54,6 @@
             "type": "string",
             "format": "uri",
             "description": "A link to the lawyer's LinkedIn profile."
-        },
-        "cases": {
-          "type": "array",
-          "description": "An array of legal cases submitted by the user.",
-          "items": {
-            "$ref": "#/backend/entities/Case"
-          }
         }
       },
       "required": [
@@ -73,28 +66,38 @@
       ]
     },
     "PublicLawyerProfile": {
-      "title": "Public Lawyer Profile",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PublicLawyerProfile",
       "type": "object",
       "description": "Publicly visible information for a lawyer, derived from their UserAccount.",
       "properties": {
-          "firstName": {
-              "type": "string"
-          },
-          "lastName": {
-              "type": "string"
-          },
-          "photoURL": {
-              "type": "string",
-              "format": "uri"
-          },
-          "specialty": {
-              "type": "string"
-          },
-          "isLawyer": {
-              "type": "boolean"
-          }
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user this profile belongs to."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the lawyer."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the lawyer."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the lawyer's profile picture.",
+          "format": "uri"
+        },
+        "specialty": {
+          "type": "string",
+          "description": "The lawyer's primary area of legal practice."
+        },
+        "bio": {
+            "type": "string",
+            "description": "A professional biography for the lawyer."
+        }
       },
-      "required": ["firstName", "lastName", "isLawyer"]
+      "required": ["userId", "firstName", "lastName"]
     },
     "Case": {
       "title": "Case",
@@ -155,7 +158,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserAccount"
           },
-          "description": "Stores user account information. Any authenticated user can read public-safe fields (firstName, lastName, photoURL, specialty, isLawyer). Only the user themselves can read all fields and write to their own document.",
+          "description": "Stores user account information. Only the user themselves can read all fields and write to their own document.",
           "params": [
             {
               "name": "userId",
@@ -163,8 +166,44 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/cases/{caseId}",
+        "definition": {
+            "entityName": "Case",
+            "schema": {
+                "$ref": "#/backend/entities/Case"
+            },
+            "description": "Stores cases for a specific user.",
+            "params": [
+                {
+                    "name": "userId",
+                    "description": "The user's UID."
+                },
+                {
+                    "name": "caseId",
+                    "description": "A unique ID for the case."
+                }
+            ]
+        }
+      },
+       {
+        "path": "/lawyer_profiles/{lawyerId}",
+        "definition": {
+          "entityName": "PublicLawyerProfile",
+          "schema": {
+            "$ref": "#/backend/entities/PublicLawyerProfile"
+          },
+          "description": "Stores public-facing profiles for lawyers. Any authenticated user can read these profiles. Only the lawyer themselves can create or update their own profile.",
+          "params": [
+            {
+              "name": "lawyerId",
+              "description": "The unique ID for the lawyer profile, which should be the same as the user's UID."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication and case submissions. It leverages path-based ownership for user accounts to ensure data privacy and security. Cases are stored as an array within the user document, simplifying security rules to only require ownership of the user document itself. The homepage now queries the /users collection directly for lawyers, and security rules enforce that only specific public-safe fields are readable by other authenticated users. This approach simplifies the data model by removing the need for subcollections for cases and enforces security directly through rules on the /users collection."
+    "reasoning": "The Firestore structure is designed to support user authentication, case submissions, and public lawyer profiles. It leverages path-based ownership for user accounts and cases to ensure data privacy and security. A new top-level collection, `lawyer_profiles`, has been added to store public information about lawyers. This separation allows for more open read access for all authenticated users on the `lawyer_profiles` collection, while keeping the main `users` collection private to each individual user. This solves the previous issue of being unable to query for a list of all lawyers."
   }
 }
