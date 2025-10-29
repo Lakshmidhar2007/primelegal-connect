@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { getAIChatResponse } from '@/actions/chat';
@@ -93,7 +93,6 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
     setError(null);
 
     try {
-        const casesRef = collection(firestore, 'cases');
         const caseId = uuidv4();
         const caseData = {
             ...values,
@@ -106,7 +105,9 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
             documents: values.documents ? Array.from(values.documents).map((file: any) => file.name) : [],
         };
         
-        await addDocumentNonBlocking(collection(firestore, 'cases'), caseData);
+        const casesCollectionRef = collection(firestore, 'users', user.uid, 'cases');
+        await addDoc(casesCollectionRef, caseData);
+
 
         const lawyerName = "Selected Lawyer"; 
         
@@ -119,7 +120,7 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
             createdAt: serverTimestamp(),
             lastMessage: "AI: Welcome! How can I help?",
         };
-        await addDocumentNonBlocking(chatRef, chatData);
+        addDocumentNonBlocking(chatRef, chatData);
 
         await getAIChatResponse({ lawyerName: lawyerName, chatId: caseId });
 

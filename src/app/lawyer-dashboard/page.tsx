@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { useTranslation } from '@/hooks/use-translation';
 import { ClientCaseList } from './client-case-list';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, collectionGroup } from 'firebase/firestore';
 
 function LawyerDashboard() {
   const { t } = useTranslation();
@@ -15,7 +15,7 @@ function LawyerDashboard() {
 
   const casesQuery = useMemoFirebase(() => {
     if (firestore && user) {
-      return query(collection(firestore, 'cases'), where('lawyerId', '==', user.uid));
+      return query(collectionGroup(firestore, 'cases'), where('lawyerId', '==', user.uid));
     }
     return null;
   }, [firestore, user]);

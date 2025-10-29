@@ -25,8 +25,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from '@/hooks/use-translation';
@@ -77,7 +77,6 @@ export function DocumentForm() {
     try {
         const file = values.file[0];
         
-        // Generate a unique ID for the new case
         const newCaseId = uuidv4();
         
         const newCase = {
@@ -90,13 +89,8 @@ export function DocumentForm() {
             status: 'Submitted',
         };
         
-        // Get the current user document
-        const userDoc = await getDoc(userDocRef);
-        const existingCases = userDoc.exists() && userDoc.data().cases ? userDoc.data().cases : [];
-
-        const updatedCases = [...existingCases, newCase];
-
-        setDocumentNonBlocking(userDocRef, { cases: updatedCases }, { merge: true });
+        const casesCollectionRef = collection(firestore, 'users', user.uid, 'cases');
+        await addDoc(casesCollectionRef, newCase);
 
         toast({
           title: t('Case Filed Successfully'),

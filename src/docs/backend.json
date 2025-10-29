@@ -250,6 +250,14 @@
         }
       },
       {
+        "path": "/users/{userId}/cases/{caseId}",
+        "definition": {
+            "entityName": "Case",
+            "schema": { "$ref": "#/backend/entities/Case" },
+            "description": "Stores case submissions from a user. Only readable/writable by the user."
+        }
+      },
+      {
         "path": "/lawyer_profiles/{lawyerId}",
         "definition": {
           "entityName": "PublicLawyerProfile",
@@ -261,22 +269,6 @@
             {
               "name": "lawyerId",
               "description": "The unique ID for the lawyer profile, which should be the same as the user's UID."
-            }
-          ]
-        }
-      },
-       {
-        "path": "/cases/{caseId}",
-        "definition": {
-          "entityName": "Case",
-          "schema": {
-            "$ref": "#/backend/entities/Case"
-          },
-          "description": "Stores case submissions from users to lawyers. Readable by the user who created it and the lawyer it's assigned to. Writable only by the user who created it.",
-          "params": [
-            {
-              "name": "caseId",
-              "description": "A unique ID for the case submission."
             }
           ]
         }
@@ -302,6 +294,6 @@
           }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication, public lawyer profiles, and direct case submissions from users to lawyers. The 'cases' collection stores all case data, secured by rules. The 'appointments' collection has been removed."
+    "reasoning": "Cases are now stored in a subcollection under each user for better security and data locality. The top-level 'cases' collection has been removed. This simplifies security rules and queries."
   }
 }

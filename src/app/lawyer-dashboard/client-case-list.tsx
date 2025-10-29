@@ -35,9 +35,9 @@ export function ClientCaseList({ cases, isLoading }: ClientCaseListProps) {
   const router = useRouter();
 
 
-  const handleApprove = (caseId: string) => {
-    if (!firestore) return;
-    const caseRef = doc(firestore, 'cases', caseId);
+  const handleApprove = (userId: string, caseId: string) => {
+    if (!firestore || !userId || !caseId) return;
+    const caseRef = doc(firestore, 'users', userId, 'cases', caseId);
     setDocumentNonBlocking(caseRef, { status: 'Approved' }, { merge: true });
     toast({
         title: t('Case Approved'),
@@ -86,7 +86,7 @@ export function ClientCaseList({ cases, isLoading }: ClientCaseListProps) {
                     </TableCell>
                     <TableCell className="text-right">
                         {caseItem.status === 'Submitted' && (
-                            <Button onClick={() => handleApprove(caseItem.id)}>{t('Approve')}</Button>
+                            <Button onClick={() => handleApprove(caseItem.userId, caseItem.id)}>{t('Approve')}</Button>
                         )}
                         {caseItem.status === 'Approved' && (
                              <Button variant="outline" onClick={() => handleChat(caseItem.id)}>{t('Chat')}</Button>

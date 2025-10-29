@@ -18,8 +18,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -28,23 +28,23 @@ export default function CaseTrackingPage() {
   const firestore = useFirestore();
   const { t } = useTranslation();
 
-  const userDocRef = useMemoFirebase(() => {
+  const userCasesCollectionRef = useMemoFirebase(() => {
     if (firestore && user) {
-      return doc(firestore, 'users', user.uid);
+      return collection(firestore, 'users', user.uid, 'cases');
     }
     return null;
   }, [firestore, user]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+  const { data: cases, isLoading: areCasesLoading } = useCollection(userCasesCollectionRef);
 
-  const cases = (userProfile as any)?.cases || [];
-  const isLoading = isUserLoading || isProfileLoading;
+  const isLoading = isUserLoading || areCasesLoading;
 
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'Submitted':
         return 'secondary';
       case 'In Review':
+      case 'Approved':
         return 'default';
       case 'Resolved':
         return 'outline';
@@ -89,8 +89,8 @@ export default function CaseTrackingPage() {
                 ) : cases && cases.length > 0 ? (
                   cases.map((caseItem: any) => (
                     <TableRow key={caseItem.caseId}>
-                      <TableCell className="font-medium">{t(caseItem.caseSubject)}</TableCell>
-                      <TableCell>{format(new Date(caseItem.submitted), 'PPP')}</TableCell>
+                      <TableCell className="font-medium">{t(caseItem.caseSubject || caseItem.description)}</TableCell>
+                      <TableCell>{format(new Date(caseItem.submitted || caseItem.submittedAt), 'PPP')}</TableCell>
                       <TableCell className="text-right">
                         <Badge variant={getStatusVariant(caseItem.status)}>{t(caseItem.status)}</Badge>
                       </TableCell>

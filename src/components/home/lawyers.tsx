@@ -32,7 +32,7 @@ export function Lawyers() {
 
   const casesQuery = useMemoFirebase(() => {
     if (firestore && user) {
-        return query(collection(firestore, 'cases'), where('userId', '==', user.uid));
+        return query(collection(firestore, 'users', user.uid, 'cases'));
     }
     return null;
   }, [firestore, user]);
@@ -45,7 +45,7 @@ export function Lawyers() {
     if (!user) {
       setIsAuthOpen(true);
     } else {
-        const existingCase = cases?.find((c:any) => c.lawyerId === lawyerId && c.userId === user.uid);
+        const existingCase = cases?.find((c:any) => c.lawyerId === lawyerId);
         if (existingCase) {
              router.push(`/chat?id=${existingCase.id}`);
         } else {
@@ -57,7 +57,7 @@ export function Lawyers() {
 
   const getButtonState = (lawyerId: string) => {
     if (!user || !cases) return { text: t('Connect'), disabled: false, action: () => handleConnectClick(lawyerId) };
-    const existingCase = cases.find((c: any) => c.lawyerId === lawyerId && c.userId === user.uid);
+    const existingCase = cases.find((c: any) => c.lawyerId === lawyerId);
 
     if (existingCase && existingCase.status === 'Approved') {
       return { text: t('Chat with Lawyer'), disabled: false, action: () => router.push(`/chat?id=${existingCase.id}`) };
