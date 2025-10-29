@@ -30,24 +30,24 @@ export function Lawyers() {
     return null;
   }, [firestore]);
 
-  const chatsQuery = useMemoFirebase(() => {
+  const casesQuery = useMemoFirebase(() => {
     if (firestore && user) {
-        return query(collection(firestore, 'chats'), where('userId', '==', user.uid));
+        return query(collection(firestore, 'cases'), where('userId', '==', user.uid));
     }
     return null;
   }, [firestore, user]);
 
   const { data: lawyers, isLoading } = useCollection(lawyersQuery);
-  const { data: chats } = useCollection(chatsQuery);
+  const { data: cases } = useCollection(casesQuery);
 
 
   const handleConnectClick = (lawyerId: string) => {
     if (!user) {
       setIsAuthOpen(true);
     } else {
-        const existingChat = chats?.find((c:any) => c.lawyerId === lawyerId && c.userId === user.uid);
-        if (existingChat) {
-             router.push(`/chat?id=${existingChat.id}`);
+        const existingCase = cases?.find((c:any) => c.lawyerId === lawyerId && c.userId === user.uid);
+        if (existingCase) {
+             router.push(`/chat?id=${existingCase.id}`);
         } else {
             setSelectedLawyerId(lawyerId);
             setIsQuestionDialogOpen(true);
@@ -56,13 +56,16 @@ export function Lawyers() {
   };
 
   const getButtonState = (lawyerId: string) => {
-    if (!user || !chats) return { text: t('Connect'), disabled: false };
-    const existingChat = chats.find((c: any) => c.lawyerId === lawyerId && c.userId === user.uid);
+    if (!user || !cases) return { text: t('Connect'), disabled: false, action: () => handleConnectClick(lawyerId) };
+    const existingCase = cases.find((c: any) => c.lawyerId === lawyerId && c.userId === user.uid);
 
-    if (existingChat) {
-      return { text: t('Chat with Lawyer'), disabled: false };
+    if (existingCase && existingCase.status === 'Approved') {
+      return { text: t('Chat with Lawyer'), disabled: false, action: () => router.push(`/chat?id=${existingCase.id}`) };
     }
-    return { text: t('Connect'), disabled: false };
+    if (existingCase) {
+        return { text: t('Request Sent'), disabled: true, action: () => {} };
+    }
+    return { text: t('Connect'), disabled: false, action: () => handleConnectClick(lawyerId) };
 };
 
 
@@ -104,7 +107,7 @@ export function Lawyers() {
             ))
           ) : lawyers && lawyers.length > 0 ? (
             lawyers.map((lawyer: any) => {
-                const { text, disabled } = getButtonState(lawyer.id);
+                const { text, disabled, action } = getButtonState(lawyer.id);
                 return (
                     <Card key={lawyer.id} className="overflow-hidden text-center bg-card/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col">
                         <CardHeader className="p-6 flex-grow-0">
@@ -124,7 +127,7 @@ export function Lawyers() {
                         <Button asChild variant="outline" className="w-full">
                             <Link href={`/lawyers/profile?id=${lawyer.id}`}>{t('View Profile')}</Link>
                         </Button>
-                        <Button variant="default" className="w-full" onClick={() => handleConnectClick(lawyer.id)} disabled={disabled}>
+                        <Button variant="default" className="w-full" onClick={action} disabled={disabled}>
                             {text}
                         </Button>
                         </CardFooter>
