@@ -66,14 +66,6 @@ const formSchema = z.object({
 }, {
     message: "Bar Council Registration Number is required for lawyers.",
     path: ["barCouncilNumber"],
-}).refine(data => {
-    if (data.isLawyer) {
-        return !!data.licensePdf;
-    }
-    return true;
-}, {
-    message: "Lawyer's license is required for verification.",
-    path: ["licensePdf"],
 });
 
 
