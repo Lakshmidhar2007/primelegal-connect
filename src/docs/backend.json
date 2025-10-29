@@ -179,7 +179,8 @@
         "caseId": { "type": "string" },
         "userId": { "type": "string" },
         "lawyerId": { "type": "string" },
-        "status": { "type": "string", "enum": ["Submitted", "In Review", "Responded", "Closed"] },
+        "chatId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Submitted", "In Review", "Responded", "Closed", "Approved"] },
         "submittedAt": { "type": "string", "format": "date-time" },
         "fullName": { "type": "string" },
         "email": { "type": "string", "format": "email" },
@@ -196,6 +197,32 @@
         "documents": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["caseId", "userId", "lawyerId", "status", "submittedAt", "fullName", "email", "description"]
+    },
+    "Chat": {
+        "title": "Chat",
+        "type": "object",
+        "description": "Represents a chat session between a user and a lawyer.",
+        "properties": {
+            "chatId": { "type": "string" },
+            "caseId": { "type": "string" },
+            "userId": { "type": "string" },
+            "lawyerId": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["chatId", "caseId", "userId", "lawyerId", "createdAt"]
+    },
+    "ChatMessage": {
+        "title": "ChatMessage",
+        "type": "object",
+        "description": "Represents a single message in a chat.",
+        "properties": {
+            "messageId": { "type": "string" },
+            "chatId": { "type": "string" },
+            "senderId": { "type": "string" },
+            "text": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "required": ["messageId", "chatId", "senderId", "text", "timestamp"]
     }
   },
   "auth": {
@@ -253,6 +280,26 @@
             }
           ]
         }
+      },
+      {
+          "path": "/chats/{chatId}",
+          "definition": {
+              "entityName": "Chat",
+              "schema": {
+                  "$ref": "#/backend/entities/Chat"
+              },
+              "description": "Stores chat sessions. Readable by participants."
+          }
+      },
+      {
+          "path": "/chats/{chatId}/messages/{messageId}",
+          "definition": {
+              "entityName": "ChatMessage",
+              "schema": {
+                  "$ref": "#/backend/entities/ChatMessage"
+              },
+              "description": "Stores messages within a chat. Readable by participants."
+          }
       }
     ],
     "reasoning": "The Firestore structure is designed to support user authentication, public lawyer profiles, and direct case submissions from users to lawyers. The 'cases' collection stores all case data, secured by rules. The 'appointments' collection has been removed."

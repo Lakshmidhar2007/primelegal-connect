@@ -1,7 +1,7 @@
 'use server';
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { v4 as uuidv4 } from 'uuid';

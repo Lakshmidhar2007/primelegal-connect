@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, User, HelpCircle, Settings as SettingsIcon } from 'lucide-react';
+import { Menu, User, HelpCircle, Settings as SettingsIcon, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/icons/logo';
@@ -149,6 +149,9 @@ export function Header() {
           </Sheet>
           {isUserLoading ? null : user ? (
             <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" asChild>
+                  <Link href="/messages"><MessageSquare className="h-5 w-5" /></Link>
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button asChild variant="ghost" size="icon" className="rounded-full">

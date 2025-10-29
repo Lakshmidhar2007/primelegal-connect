@@ -21,9 +21,10 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
-import { collection } from 'firebase/firestore';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { getAIChatResponse } from '@/actions/chat';
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: 'Full name is required.' }),
@@ -93,9 +94,10 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
 
     try {
         const casesRef = collection(firestore, 'cases');
+        const caseId = uuidv4();
         const caseData = {
             ...values,
-            caseId: uuidv4(),
+            id: caseId,
             userId: user.uid,
             lawyerId: lawyerId,
             status: 'Submitted',
@@ -104,7 +106,22 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
             documents: values.documents ? Array.from(values.documents).map((file: any) => file.name) : [],
         };
         
-        await addDocumentNonBlocking(casesRef, caseData);
+        await addDocumentNonBlocking(collection(firestore, 'cases'), caseData);
+
+        const lawyerName = "Selected Lawyer"; 
+        
+        const chatRef = collection(firestore, 'chats');
+        const chatData = {
+            id: caseId,
+            caseId: caseId,
+            userId: user.uid,
+            lawyerId: lawyerId,
+            createdAt: serverTimestamp(),
+            lastMessage: "AI: Welcome! How can I help?",
+        };
+        await addDocumentNonBlocking(chatRef, chatData);
+
+        await getAIChatResponse({ lawyerName: lawyerName, chatId: caseId });
 
         toast({
             title: t('Case Submitted Successfully'),
