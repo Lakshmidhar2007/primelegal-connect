@@ -144,25 +144,11 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
-                  {isLawyer && (
-                    <Link
-                      href='/lawyer-dashboard'
-                      onClick={() => setIsSheetOpen(false)}
-                      className="text-lg font-medium text-foreground/80 hover:text-foreground"
-                    >
-                      {t('Lawyer Dashboard')}
-                    </Link>
-                  )}
               </nav>
             </SheetContent>
           </Sheet>
           {isUserLoading ? null : user ? (
             <div className="flex items-center gap-2">
-                 {isLawyer && (
-                    <Button asChild variant="outline" size="sm" className="hidden md:flex">
-                        <Link href="/lawyer-dashboard">{t('Lawyer Dashboard')}</Link>
-                    </Button>
-                )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button asChild variant="ghost" size="icon" className="rounded-full">
