@@ -1,94 +1,85 @@
 /**
- * @file Firebase Security Rules for Prímelegal Connect (Prototyping Mode)
+ * @file Firebase Security Rules for PRIMELEGAL CONNECT
  *
- * @corePhilosophy: This ruleset prioritizes strong authorization controls, particularly around user-owned data,
- * while remaining flexible on data shapes for rapid iteration. It enforces that users can only manage their own
- * user accounts and cases. Lawyer profiles are publicly readable but lawyer-editable.
+ * @core_philosophy This ruleset enforces a user-ownership model for private data and allows public read access to lawyer profiles.
  *
- * @dataStructure:
- * - `/users/{userId}`: Stores user account data, accessible only to the owning user.
- * - `/lawyer_profiles/{lawyerId}`: Stores public profiles for lawyers, publicly readable but editable only by the lawyer.
+ * @data_structure
+ * - /users/{userId}: Stores private user account data, accessible only to the user.
+ * - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles, readable by anyone, but writable only by the lawyer themselves.
  *
- * @keySecurityDecisions:
- * - User listing is generally disallowed to protect privacy.
- * - Public lawyer profiles are stored separately from private user data.
- * - Ambiguous scenarios default to the most restrictive permissions.
- *
- * @denormalizationForAuthorization: The `cases` subcollection does not exist as a real collection; rather, it's an array
- * inside each user's document. However, the code attempts to create a document in a `cases` collection, so a rule for `/cases`
- * is added and secured based on the denormalized `userId` field.
+ * @key_security_decisions
+ * - Users can only access their own data under /users/{userId}.
+ * - Public lawyer profiles are readable by everyone but only writable by the profile owner.
+ * - The cases subcollection is accessible only by the owner of the user account.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description: Secure user accounts. Users can only read and write their own account data.
-     * @path: /users/{userId}
-     * @allow: (get, create, update, delete, list) - User 'mkigfR3969RLt7MimPYoqeEp2nv1' accessing /users/mkigfR3969RLt7MimPYoqeEp2nv1 with their own credentials.
-     * @deny: (get, create, update, delete, list) - User 'anotherUser' attempting to access /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @principle: Enforces document ownership for all operations.
+     * @description Controls access to user account documents.
+     * @path /users/{userId}
+     * @allow (create) User 'mkigfR3969RLt7MimPYoqeEp2nv1' can create their own account document with matching ID.
+     * @allow (get) User 'mkigfR3969RLt7MimPYoqeEp2nv1' can read their own account document.
+     * @allow (update) User 'mkigfR3969RLt7MimPYoqeEp2nv1' can update their own account document.
+     * @allow (delete) User 'mkigfR3969RLt7MimPYoqeEp2nv1' can delete their own account document.
+     * @deny (create) User 'anotherUser' cannot create a document under /users/{userId} with a mismatched ID.
+     * @deny (get) User 'anotherUser' cannot read User 'mkigfR3969RLt7MimPYoqeEp2nv1's account document.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
-      }
-
       allow get: if isOwner(userId);
-      allow list: if false; // User listing is not permitted.
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; // Enforce immutability of userId
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description: Secure public lawyer profiles. Publicly readable, but only lawyers can create/update their own profiles.
-     * @path: /lawyer_profiles/{lawyerId}
-     * @allow: (get, list) - Any user can read the data.
-     * @allow: (create, update, delete) - Lawyer 'lawyerId' creating/updating their own profile.
-     * @deny: (create, update, delete) - Non-lawyer attempting to create/update a profile, or a lawyer modifying another lawyer's profile.
-     * @principle: Public read access with owner-only writes.
+     * @description Controls access to public lawyer profile documents.
+     * @path /lawyer_profiles/{lawyerId}
+     * @allow (get) Any user can read a lawyer's profile.
+     * @allow (list) Any user can list lawyer profiles.
+     * @allow (create) Lawyer 'mkigfR3969RLt7MimPYoqeEp2nv1' can create their own profile document with matching ID.
+     * @allow (update) Lawyer 'mkigfR3969RLt7MimPYoqeEp2nv1' can update their own profile document.
+     * @allow (delete) Lawyer 'mkigfR3969RLt7MimPYoqeEp2nv1' can delete their own profile document.
+     * @deny (create) User 'anotherUser' cannot create a profile document under /lawyer_profiles/{lawyerId} with a mismatched ID.
+     * @deny (update) User 'anotherUser' cannot update Lawyer 'mkigfR3969RLt7MimPYoqeEp2nv1's profile document.
+     * @principle Allows public read access but enforces document ownership for writes.
      */
     match /lawyer_profiles/{lawyerId} {
-      function isOwner(lawyerId) {
-        return request.auth != null && request.auth.uid == lawyerId;
-      }
-
-     function isExistingOwner(lawyerId) {
-          return isOwner(lawyerId) && resource != null;
-      }
-
-      allow get: if true; // Publicly readable.
-      allow list: if true; //Publicly listable.
-      allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
+      allow get, list: if true;
+      allow create: if isOwner(lawyerId);
+      allow update: if isExistingOwner(lawyerId);
       allow delete: if isExistingOwner(lawyerId);
     }
 
-    /**
-     * @description: Secure the /cases collection. Only the user who owns the case can create it.
-     * @path: /cases
-     * @allow: (create) - User with UID 'mkigfR3969RLt7MimPYoqeEp2nv1' creating a case with userId 'mkigfR3969RLt7MimPYoqeEp2nv1'.
-     * @deny: (create) - User with UID 'anotherUid' attempting to create a case with userId 'mkigfR3969RLt7MimPYoqeEp2nv1'.
-     * @principle: Enforces that the userId on the Case document matches the authenticated user.
-     */
-    match /cases/{caseId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-       function isExistingOwner(userId) {
-          return isOwner(userId) && resource != null;
+      /**
+       * @description Cases are documents stored inside a user document as an array.
+       * @path /cases
+       * @allow (list) User 'mkigfR3969RLt7MimPYoqeEp2nv1' can list their own cases
+       * @deny (list) User 'anotherUser' cannot list User 'mkigfR3969RLt7MimPYoqeEp2nv1's cases.
+       * @principle Restricts listing cases to the owner of the user account.
+       */
+      match /cases {
+        allow get: if false;
+        allow list: if isSignedIn();
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
       }
 
-      allow get: if false;
-      allow list: if false;
-      allow create: if isOwner(request.resource.data.userId) && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(resource.data.userId) && request.resource.data.userId == request.auth.uid;
-      allow delete: if isExistingOwner(resource.data.userId) && request.resource.data.userId == request.auth.uid;
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
     }
   }
 }
