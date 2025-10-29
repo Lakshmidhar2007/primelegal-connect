@@ -26,17 +26,20 @@ export function Lawyers() {
   
   const lawyersQuery = useMemoFirebase(() => {
     if (firestore) {
-      const casesRef = collection(firestore, 'cases');
-      if (user) {
-          return query(collection(firestore, 'lawyer_profiles'));
-      }
-      return collection(firestore, 'lawyer_profiles');
+      return query(collection(firestore, 'lawyer_profiles'));
+    }
+    return null;
+  }, [firestore]);
+
+  const casesQuery = useMemoFirebase(() => {
+    if (firestore && user) {
+        return query(collection(firestore, 'cases'), where('userId', '==', user.uid));
     }
     return null;
   }, [firestore, user]);
 
   const { data: lawyers, isLoading } = useCollection(lawyersQuery);
-  const {data: cases} = useCollection(firestore ? collection(firestore, 'cases') : null);
+  const {data: cases} = useCollection(casesQuery);
 
 
   const handleConnectClick = (lawyerId: string) => {
