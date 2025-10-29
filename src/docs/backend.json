@@ -124,6 +124,15 @@
           "description": "URL of the lawyer's profile picture.",
           "format": "uri"
         },
+        "email": {
+            "type": "string",
+            "format": "email",
+            "description": "The lawyer's contact email address."
+        },
+        "phone": {
+            "type": "string",
+            "description": "The lawyer's contact phone number."
+        },
         "specialty": {
           "type": "string",
           "description": "The lawyer's primary area of legal practice."

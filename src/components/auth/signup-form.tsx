@@ -108,7 +108,7 @@ export function SignupForm({ onLoginClick, onSuccess }: SignupFormProps) {
 
       if (user && firestore) {
         const userRef = doc(firestore, 'users', user.uid);
-        const { confirmPassword, nationalityProof, licensePdf, password, barCouncilNumber, nationality, ...userDataToSave } = values;
+        const { confirmPassword, nationalityProof, licensePdf, password, ...userDataToSave } = values;
 
         const userData = {
           ...userDataToSave,

@@ -126,6 +126,7 @@ export default function SettingsPage() {
                     firstName: values.firstName,
                     lastName: values.lastName,
                     photoURL: values.photoURL,
+                    phone: values.phone,
                     dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString().split('T')[0] : null,
                 };
                 setDocumentNonBlocking(lawyerProfileRef, lawyerUpdateData, { merge: true });

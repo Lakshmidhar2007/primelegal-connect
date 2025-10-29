@@ -1,12 +1,12 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
-import { Linkedin, Link as LinkIcon, Briefcase, User, Calendar, Flag } from 'lucide-react';
+import { Linkedin, Link as LinkIcon, Briefcase, User, Calendar, Flag, Mail, Phone } from 'lucide-react';
 import Link from 'next/link';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -91,6 +91,18 @@ function LawyerProfile() {
                     <div>
                         <h3 className="text-lg font-semibold font-headline">{t('Details')}</h3>
                         <div className="mt-2 space-y-4">
+                           {lawyer.email && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Mail className="h-4 w-4" />
+                                    <span>{lawyer.email}</span>
+                                </div>
+                            )}
+                             {lawyer.phone && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Phone className="h-4 w-4" />
+                                    <span>{lawyer.phone}</span>
+                                </div>
+                            )}
                            {lawyer.website && (
                                 <Button asChild variant="outline" className="w-full justify-start">
                                     <Link href={lawyer.website} target="_blank" rel="noopener noreferrer">
