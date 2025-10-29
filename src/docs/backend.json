@@ -187,44 +187,6 @@
         "documents": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["caseId", "userId", "lawyerId", "status", "submittedAt", "fullName", "email", "description"]
-    },
-    "Appointment": {
-      "title": "Appointment",
-      "type": "object",
-      "description": "Represents an appointment slot created by a lawyer.",
-      "properties": {
-        "appointmentId": {
-          "type": "string",
-          "description": "A unique ID for the appointment."
-        },
-        "lawyerId": {
-          "type": "string",
-          "description": "The UID of the lawyer who created this slot."
-        },
-        "dateTime": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The scheduled date and time of the appointment."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the appointment.",
-          "enum": [
-            "Available",
-            "Booked"
-          ]
-        },
-        "bookedBy": {
-          "type": "string",
-          "description": "The UID of the user who booked the appointment."
-        }
-      },
-      "required": [
-        "appointmentId",
-        "lawyerId",
-        "dateTime",
-        "status"
-      ]
     }
   },
   "auth": {
@@ -282,25 +244,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/appointments/{appointmentId}",
-        "definition": {
-          "entityName": "Appointment",
-          "schema": {
-            "$ref": "#/backend/entities/Appointment"
-          },
-          "description": "Stores appointment slots created by lawyers. Publicly readable. Only the lawyer who created it can write to it. A user can book it by updating the document.",
-          "params": [
-            {
-              "name": "appointmentId",
-              "description": "A unique ID for the appointment slot."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support user authentication, public lawyer profiles, appointments, and direct case submissions from users to lawyers. The new `cases` collection is a top-level collection to store all case data, secured by rules that ensure only the involved user and lawyer can access it."
+    "reasoning": "The Firestore structure is designed to support user authentication, public lawyer profiles, and direct case submissions from users to lawyers. The 'cases' collection stores all case data, secured by rules. The 'appointments' collection has been removed."
   }
 }
-    
