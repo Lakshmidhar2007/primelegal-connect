@@ -69,7 +69,7 @@ function MessagesList() {
                                         <p className="text-sm text-muted-foreground truncate">{t(chat.lastMessage)}</p>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        {formatDistanceToNow(new Date(chat.createdAt.seconds * 1000), { addSuffix: true })}
+                                        {chat.createdAt ? formatDistanceToNow(new Date(chat.createdAt.seconds * 1000), { addSuffix: true }) : ''}
                                     </p>
                                 </CardContent>
                             </Card>

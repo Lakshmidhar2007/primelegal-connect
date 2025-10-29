@@ -1,102 +1,86 @@
 /**
- * @fileoverview Firestore Security Rules for PRIMELEGAL CONNECT.
- *
- * Core Philosophy:
- * This ruleset enforces a user-ownership model for user accounts and lawyer profiles.
- * Users can only read and write their own data. Public lawyer profiles are readable by everyone,
- * but only writable by the owning lawyer.
+ * @fileOverview
+ * This ruleset enforces a user-ownership model for user accounts, allowing users to manage their profiles.
+ * Public lawyer profiles are readable by all but only writable by the owning lawyer.
  *
  * Data Structure:
- * - /users/{userId}: Stores private user account data, accessible only by the user.
+ * - /users/{userId}: Stores private user account data, accessible only to the user.
  * - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles, readable by all, writable only by the lawyer.
  *
  * Key Security Decisions:
- * - User listing is implicitly denied (no top-level `list` rule for `/users` or `/lawyer_profiles`).
- * - Public profiles are stored in a separate collection for efficient public reads while maintaining private user data.
- * - Data validation is minimized for prototyping but includes critical ownership checks.
- *
- * Denormalization for Authorization:
- * - The `lawyer_profiles` collection uses the `userId` field within the document to ensure that a lawyer can only update their own profile.
+ * - User accounts are strictly private and accessible only to the authenticated user.
+ * - Public lawyer profiles are publicly readable but only the owning lawyer can modify them.
+ * - Data consistency is enforced between the document ID and the user ID for both user accounts and public lawyer profiles.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Manages access to user account documents.
+     * @description Manages user account information. Only the user themselves can read and write their own document.
      * @path /users/{userId}
-     * @allow (create) User with UID 'user123' can create their account document at /users/user123.
-     * @allow (get) User with UID 'user123' can read their account document at /users/user123.
-     * @allow (update) User with UID 'user123' can update their account document at /users/user123.
-     * @allow (delete) User with UID 'user123' can delete their account document at /users/user123.
-     * @deny (create) User with UID 'user456' cannot create an account document at /users/user123.
-     * @deny (get) User with UID 'user456' cannot read the account document at /users/user123.
-     * @deny (update) User with UID 'user456' cannot update the account document at /users/user123.
-     * @deny (delete) User with UID 'user456' cannot delete the account document at /users/user123.
+     * @allow (create, update, delete) User 'mkigfR3969RLt7MimPYoqeEp2nv1' can create/update/delete their own profile document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
+     * @deny (create, update, delete) User 'anotherUser' cannot create/update/delete the document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
+     * @allow (get, list) User 'mkigfR3969RLt7MimPYoqeEp2nv1' can read their own profile document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
+     * @deny (get, list) User 'anotherUser' cannot read the document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      // Helper function to check if the request is made by the owner
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
-      // Helper function to check if the document exists and the request is made by the owner
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      // Allows the owner to read their own document
       allow get: if isOwner(userId);
-
-      // Allows the owner to list their own document (though there's only one).
       allow list: if isOwner(userId);
-
-      // Allows a user to create their own document if the userId matches their auth.uid
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-
-      // Allows the owner to update their own document if it already exists
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; // Enforce immutability of user ID.
-
-      // Allows the owner to delete their own document if it already exists
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Manages access to public lawyer profile documents.
+     * @description Manages public-facing lawyer profiles.  Any user can read a lawyer's profile.  Only the lawyer can create or update their profile.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get) Any user can read a lawyer profile.
-     * @allow (list) Any user can list lawyer profiles.
-     * @allow (create) Lawyer with UID 'lawyer123' can create their profile at /lawyer_profiles/lawyer123.
-     * @allow (update) Lawyer with UID 'lawyer123' can update their profile at /lawyer_profiles/lawyer123.
-     * @allow (delete) Lawyer with UID 'lawyer123' can delete their profile at /lawyer_profiles/lawyer123.
-     * @deny (create) User with UID 'user456' cannot create a lawyer profile at /lawyer_profiles/lawyer123.
-     * @deny (update) User with UID 'user456' cannot update the lawyer profile at /lawyer_profiles/lawyer123.
-     * @deny (delete) User with UID 'user456' cannot delete the lawyer profile at /lawyer_profiles/lawyer123.
-     * @principle Allows public reads, enforces document ownership for writes.
+     * @allow (get, list) Any user can read lawyer profiles.
+     * @allow (create, update, delete) User 'mkigfR3969RLt7MimPYoqeEp2nv1' can create/update/delete their own profile document at /lawyer_profiles/mkigfR3969RLt7MimPYoqeEp2nv1.
+     * @deny (create, update, delete) User 'anotherUser' cannot create/update/delete the document at /lawyer_profiles/mkigfR3969RLt7MimPYoqeEp2nv1.
+     * @principle Allows public read access while enforcing ownership for writes.
      */
     match /lawyer_profiles/{lawyerId} {
-      // Helper function to check if the request is made by the owner
-      function isOwner(lawyerId) {
-        return request.auth.uid == lawyerId;
-      }
+        function isSignedIn() {
+            return request.auth != null;
+        }
 
-      // Helper function to check if the document exists and the request is made by the owner
-      function isExistingOwner(lawyerId) {
-        return isOwner(lawyerId) && resource != null;
-      }
+        function isOwner(lawyerId) {
+            return isSignedIn() && request.auth.uid == lawyerId;
+        }
 
-      // Anyone can read lawyer profiles
-      allow get, list: if true;
+        function isExistingOwner(lawyerId) {
+            return isOwner(lawyerId) && resource != null;
+        }
 
-      // A lawyer can create their own profile if the lawyerId matches their auth.uid
-      allow create: if isOwner(lawyerId) && request.resource.data.userId == request.auth.uid;
+        allow get: if true;
+        allow list: if true;
+        allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
+        allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(lawyerId);
+    }
 
-      // A lawyer can update their own profile if it already exists
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId; //Enforce immutability
-
-      // A lawyer can delete their own profile if it already exists
-      allow delete: if isExistingOwner(lawyerId);
+    /**
+     * @description Secure the /chats collection.  Deny all listing for now until the rules for chat access are determined.
+     * @path /chats
+     * @deny (list) No user can list the chats collection.
+     * @principle Restricts unauthorized listing of a collection
+     */
+    match /chats/{chatId} {
+        allow get: if false;
+        allow list: if false;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
     }
   }
 }
