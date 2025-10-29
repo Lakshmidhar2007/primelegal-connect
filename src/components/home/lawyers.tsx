@@ -12,7 +12,6 @@ import { useState } from 'react';
 import { AuthDialog } from '../auth/auth-dialog';
 import { AskQuestionDialog } from '../shared/ask-question-dialog';
 import { useRouter } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
 
 export function Lawyers() {
   const firestore = useFirestore();
@@ -31,24 +30,24 @@ export function Lawyers() {
     return null;
   }, [firestore]);
 
-  const casesQuery = useMemoFirebase(() => {
+  const chatsQuery = useMemoFirebase(() => {
     if (firestore && user) {
-        return query(collection(firestore, 'cases'), where('userId', '==', user.uid));
+        return query(collection(firestore, 'chats'), where('userId', '==', user.uid));
     }
     return null;
   }, [firestore, user]);
 
   const { data: lawyers, isLoading } = useCollection(lawyersQuery);
-  const {data: cases} = useCollection(casesQuery);
+  const { data: chats } = useCollection(chatsQuery);
 
 
   const handleConnectClick = (lawyerId: string) => {
     if (!user) {
       setIsAuthOpen(true);
     } else {
-        const existingCase = cases?.find((c:any) => c.lawyerId === lawyerId && c.userId === user.uid);
-        if (existingCase) {
-             router.push(`/chat?id=${existingCase.id}`);
+        const existingChat = chats?.find((c:any) => c.lawyerId === lawyerId && c.userId === user.uid);
+        if (existingChat) {
+             router.push(`/chat?id=${existingChat.id}`);
         } else {
             setSelectedLawyerId(lawyerId);
             setIsQuestionDialogOpen(true);
@@ -57,20 +56,11 @@ export function Lawyers() {
   };
 
   const getButtonState = (lawyerId: string) => {
-    if (!user || !cases) return { text: t('Connect'), disabled: false };
-    const existingCase = cases.find((c: any) => c.lawyerId === lawyerId && c.userId === user.uid);
+    if (!user || !chats) return { text: t('Connect'), disabled: false };
+    const existingChat = chats.find((c: any) => c.lawyerId === lawyerId && c.userId === user.uid);
 
-    if (existingCase) {
-        switch (existingCase.status) {
-            case 'Submitted':
-                return { text: t('Request Sent'), disabled: true };
-            case 'Responded':
-                return { text: t('Chat with Lawyer'), disabled: false };
-            case 'Approved':
-                return { text: t('Chat with Lawyer'), disabled: false };
-            default:
-                return { text: t('Connect'), disabled: false };
-        }
+    if (existingChat) {
+      return { text: t('Chat with Lawyer'), disabled: false };
     }
     return { text: t('Connect'), disabled: false };
 };

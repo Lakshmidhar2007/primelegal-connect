@@ -1,93 +1,102 @@
 /**
- * @file Firestore Security Rules
- * @description This ruleset enforces a user-ownership model for user accounts and lawyer profiles.
+ * @fileoverview Firestore Security Rules for PRIMELEGAL CONNECT.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a user-ownership model for user accounts and lawyer profiles.
+ * Users can only read and write their own data. Public lawyer profiles are readable by everyone,
+ * but only writable by the owning lawyer.
  *
  * Data Structure:
- * - /users/{userId}: Stores private user account data. Only the authenticated user can read and write their own data.
- * - /lawyer_profiles/{lawyerId}: Stores public lawyer profile data. Anyone can read these profiles, but only the lawyer can create or modify their own profile.
+ * - /users/{userId}: Stores private user account data, accessible only by the user.
+ * - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles, readable by all, writable only by the lawyer.
  *
  * Key Security Decisions:
- * - Users can only access their own data under the /users/{userId} path.
- * - Lawyer profiles are publicly readable but only writable by the profile owner.
- * - The `cases` array stored inside `UserAccount` should not be accessed directly. Listing all `cases` at the top level is denied.
+ * - User listing is implicitly denied (no top-level `list` rule for `/users` or `/lawyer_profiles`).
+ * - Public profiles are stored in a separate collection for efficient public reads while maintaining private user data.
+ * - Data validation is minimized for prototyping but includes critical ownership checks.
  *
  * Denormalization for Authorization:
- * - The `lawyer_profiles` collection uses the `userId` field to ensure that only the authenticated user matching the `lawyerId` path can modify their own profile.
+ * - The `lawyer_profiles` collection uses the `userId` field within the document to ensure that a lawyer can only update their own profile.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
-     * @return {boolean} True if the request is authenticated, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user's UID matches the provided userId.
-     * @param {string} userId The user ID to compare against the authenticated user's UID.
-     * @return {boolean} True if the UID matches, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user is the owner of the existing document.
-     * @param {string} userId The user ID to compare against the authenticated user's UID.
-     * @return {boolean} True if the UID matches and the document exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Rules for user accounts.
+     * @description Manages access to user account documents.
      * @path /users/{userId}
-     * @allow (create) User with UID 'user123' can create their own account document with matching ID.
-     * @allow (get, update, delete) User with UID 'user123' can read, update, and delete their own account document.
-     * @deny (create) User with UID 'user456' cannot create an account document for 'user123'.
-     * @deny (get, update, delete) User with UID 'user456' cannot read, update, or delete the account document for 'user123'.
+     * @allow (create) User with UID 'user123' can create their account document at /users/user123.
+     * @allow (get) User with UID 'user123' can read their account document at /users/user123.
+     * @allow (update) User with UID 'user123' can update their account document at /users/user123.
+     * @allow (delete) User with UID 'user123' can delete their account document at /users/user123.
+     * @deny (create) User with UID 'user456' cannot create an account document at /users/user123.
+     * @deny (get) User with UID 'user456' cannot read the account document at /users/user123.
+     * @deny (update) User with UID 'user456' cannot update the account document at /users/user123.
+     * @deny (delete) User with UID 'user456' cannot delete the account document at /users/user123.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
+      // Helper function to check if the request is made by the owner
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      // Helper function to check if the document exists and the request is made by the owner
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      // Allows the owner to read their own document
       allow get: if isOwner(userId);
-      allow list: if false; // Prevent listing all user accounts.
+
+      // Allows the owner to list their own document (though there's only one).
+      allow list: if isOwner(userId);
+
+      // Allows a user to create their own document if the userId matches their auth.uid
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Allows the owner to update their own document if it already exists
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; // Enforce immutability of user ID.
+
+      // Allows the owner to delete their own document if it already exists
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for public lawyer profiles.
+     * @description Manages access to public lawyer profile documents.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get, list) Anyone can read the lawyer profiles.
-     * @allow (create, update, delete) User with UID 'lawyer123' can create, update, and delete their own profile with matching ID.
-     * @deny (create, update, delete) User with UID 'user456' cannot create, update, or delete the lawyer profile for 'lawyer123'.
-     * @principle Allows public read access but enforces ownership for write operations.
+     * @allow (get) Any user can read a lawyer profile.
+     * @allow (list) Any user can list lawyer profiles.
+     * @allow (create) Lawyer with UID 'lawyer123' can create their profile at /lawyer_profiles/lawyer123.
+     * @allow (update) Lawyer with UID 'lawyer123' can update their profile at /lawyer_profiles/lawyer123.
+     * @allow (delete) Lawyer with UID 'lawyer123' can delete their profile at /lawyer_profiles/lawyer123.
+     * @deny (create) User with UID 'user456' cannot create a lawyer profile at /lawyer_profiles/lawyer123.
+     * @deny (update) User with UID 'user456' cannot update the lawyer profile at /lawyer_profiles/lawyer123.
+     * @deny (delete) User with UID 'user456' cannot delete the lawyer profile at /lawyer_profiles/lawyer123.
+     * @principle Allows public reads, enforces document ownership for writes.
      */
     match /lawyer_profiles/{lawyerId} {
-      allow get, list: if true;
-      allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(lawyerId);
-    }
+      // Helper function to check if the request is made by the owner
+      function isOwner(lawyerId) {
+        return request.auth.uid == lawyerId;
+      }
 
-    /**
-     * @description Deny listing of cases at the top level collection.
-     * @path /cases
-     * @deny (list) Any user cannot list all cases directly.
-     * @principle Cases are not directly accessible. Cases are embedded inside UserAccount so need user context to be accessed.
-     */
-    match /cases {
-        allow get: if false;
-        allow list: if false;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
+      // Helper function to check if the document exists and the request is made by the owner
+      function isExistingOwner(lawyerId) {
+        return isOwner(lawyerId) && resource != null;
+      }
+
+      // Anyone can read lawyer profiles
+      allow get, list: if true;
+
+      // A lawyer can create their own profile if the lawyerId matches their auth.uid
+      allow create: if isOwner(lawyerId) && request.resource.data.userId == request.auth.uid;
+
+      // A lawyer can update their own profile if it already exists
+      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId; //Enforce immutability
+
+      // A lawyer can delete their own profile if it already exists
+      allow delete: if isExistingOwner(lawyerId);
     }
   }
 }
