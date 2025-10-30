@@ -21,10 +21,9 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
-import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { getAIChatResponse } from '@/actions/chat';
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: 'Full name is required.' }),
@@ -93,10 +92,9 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
     setError(null);
 
     try {
-        const caseId = uuidv4();
         const caseData = {
             ...values,
-            id: caseId,
+            id: uuidv4(),
             userId: user.uid,
             lawyerId: lawyerId,
             status: 'Submitted',
@@ -107,22 +105,6 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
         
         const casesCollectionRef = collection(firestore, 'users', user.uid, 'cases');
         await addDoc(casesCollectionRef, caseData);
-
-
-        const lawyerName = "Selected Lawyer"; 
-        
-        const chatRef = collection(firestore, 'chats');
-        const chatData = {
-            id: caseId,
-            caseId: caseId,
-            userId: user.uid,
-            lawyerId: lawyerId,
-            createdAt: serverTimestamp(),
-            lastMessage: "AI: Welcome! How can I help?",
-        };
-        addDocumentNonBlocking(chatRef, chatData);
-
-        await getAIChatResponse({ lawyerName: lawyerName, chatId: caseId });
 
         toast({
             title: t('Case Submitted Successfully'),

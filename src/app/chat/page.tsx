@@ -26,7 +26,7 @@ type ChatMessage = {
   id: string;
   text: string;
   senderId: string;
-  senderType: 'user' | 'lawyer' | 'ai-bot';
+  senderType: 'user' | 'lawyer';
   timestamp: Timestamp;
 };
 
@@ -60,7 +60,7 @@ function ChatRoom() {
       id: uuidv4(),
       text: values.message,
       senderId: user.uid,
-      senderType: 'user', 
+      senderType: 'user' as 'user' | 'lawyer', // Assume sender is always a user for this form
       timestamp: serverTimestamp(),
     };
     
@@ -76,7 +76,6 @@ function ChatRoom() {
           <div className="p-6 h-[600px] overflow-y-auto flex flex-col space-y-4">
             {messages?.map((msg) => {
               const isSender = msg.senderId === user?.uid;
-              const isBot = msg.senderType === 'ai-bot';
               return (
                 <div
                   key={msg.id}
@@ -85,14 +84,10 @@ function ChatRoom() {
                     isSender ? 'justify-end' : 'justify-start'
                   )}
                 >
-                  {!isSender && !isBot && (
+                  {!isSender && (
                     <Avatar className="h-8 w-8">
+                      {/* You can add lawyer's avatar logic here */}
                       <AvatarFallback>L</AvatarFallback>
-                    </Avatar>
-                  )}
-                   {isBot && (
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>AI</AvatarFallback>
                     </Avatar>
                   )}
                   <div
