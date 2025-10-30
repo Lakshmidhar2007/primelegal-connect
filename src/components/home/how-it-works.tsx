@@ -67,13 +67,13 @@ export function HowItWorks({ onAskQuestionClick }: HowItWorksProps) {
         >
             {getCardContent(steps[1])}
         </a>
-        <a 
+        <Link
             href="#meet-experts" 
             className="animate-fade-in-up"
             style={{animationDelay: `700ms`}}
         >
            {getCardContent(steps[2])}
-        </a>
+        </Link>
       </div>
     </section>
   );
