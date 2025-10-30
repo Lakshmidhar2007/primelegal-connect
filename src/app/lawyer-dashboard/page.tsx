@@ -16,6 +16,7 @@ function LawyerDashboard() {
 
   const casesQuery = useMemoFirebase(() => {
     if (firestore && user) {
+      // Use a collectionGroup query to find cases assigned to this lawyer across all users.
       return query(
         collectionGroup(firestore, 'cases'),
         where('lawyerId', '==', user.uid)
@@ -36,24 +37,31 @@ function LawyerDashboard() {
       }
       setIsClientInfoLoading(true);
       
+      // Extract unique user IDs from the cases
       const userIds = [...new Set(cases.map(c => c.userId).filter(Boolean))];
       const usersData: Record<string, any> = {};
 
+      // Fetch user documents in batches of 30 (Firestore 'in' query limit)
       if (userIds.length > 0) {
+        const userChunks = [];
         for (let i = 0; i < userIds.length; i += 30) {
-            const batch = userIds.slice(i, i + 30);
-            if (batch.length > 0) {
-                const usersQuery = query(collection(firestore, 'users'), where('id', 'in', batch));
+            userChunks.push(userIds.slice(i, i + 30));
+        }
+        
+        await Promise.all(userChunks.map(async (chunk) => {
+            if(chunk.length > 0) {
+                const usersQuery = query(collection(firestore, 'users'), where('id', 'in', chunk));
                 const usersSnapshot = await getDocs(usersQuery);
                 usersSnapshot.forEach(doc => {
                     usersData[doc.id] = doc.data();
                 });
             }
-        }
+        }));
       }
       
       const enrichedCases = cases.map(c => ({
           ...c,
+          // Use the fetched user data to add the client's full name.
           fullName: usersData[c.userId] ? `${usersData[c.userId].firstName} ${usersData[c.userId].lastName}` : 'Unknown Client'
       }));
 
