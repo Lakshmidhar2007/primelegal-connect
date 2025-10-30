@@ -79,7 +79,7 @@ export function Lawyers() {
 
   return (
     <>
-      <section className="container py-12 lg:py-24">
+      <section id="meet-experts" className="container py-12 lg:py-24 scroll-mt-20">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
             {t('Meet Our Legal Experts')}

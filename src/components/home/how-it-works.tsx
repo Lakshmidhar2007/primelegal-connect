@@ -2,6 +2,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
+import Link from 'next/link';
 
 type HowItWorksProps = {
   onAskQuestionClick: () => void;
@@ -66,12 +67,13 @@ export function HowItWorks({ onAskQuestionClick }: HowItWorksProps) {
         >
             {getCardContent(steps[1])}
         </a>
-        <div 
+        <a 
+            href="#meet-experts" 
             className="animate-fade-in-up"
             style={{animationDelay: `700ms`}}
         >
            {getCardContent(steps[2])}
-        </div>
+        </a>
       </div>
     </section>
   );
