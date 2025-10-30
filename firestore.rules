@@ -1,21 +1,17 @@
 /**
- * @fileoverview Firestore Security Rules for the PRIMELEGAL CONNECT application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for private data, while allowing public read access to lawyer profiles.
+ * @file Firestore Security Rules for PRIMELEGAL CONNECT
+ * @description This ruleset enforces a user-ownership model for user accounts and lawyer profiles.
  *
  * Data Structure:
- * - /users/{userId}: Stores sensitive user account information. Only the user can read/write.
- * - /lawyer_profiles/{lawyerId}: Stores public lawyer profiles. Publicly readable, but only the lawyer can edit.
- * - /users/{userId}/cases: Cases are stored as an array inside the user document
+ * - `/users/{userId}`: Stores private user account data. Only the user can read/write.
+ * - `/lawyer_profiles/{lawyerId}`: Stores public lawyer profile data. Publicly readable, but only the lawyer can create/update.
  *
  * Key Security Decisions:
- * - User listing is implicitly denied by the data model.
- * - Public lawyer profiles are explicitly separated from private user data.
- * - No data shape validation is performed in this prototyping phase.
+ * - User listing is generally disallowed to protect privacy.
+ * - Public lawyer profiles are stored in a separate collection for efficient, public read access.
  *
  * Denormalization for Authorization:
- * - The lawyer_profiles collection uses the lawyerId as the document ID to simplify ownership checks.
+ * - The `lawyer_profiles` documents are named using the `userId` from the `users` collection to allow owner-only write access without additional `get()` calls.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -24,76 +20,58 @@ service cloud.firestore {
     /**
      * @description Controls access to user account documents.
      * @path /users/{userId}
-     * @allow (create) User with UID 'mkigfR3969RLt7MimPYoqeEp2nv1' can create their own document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @deny (create) User with UID 'differentUserId' cannot create a document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @allow (get, list) User with UID 'mkigfR3969RLt7MimPYoqeEp2nv1' can read their own document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @deny (get, list) User with UID 'differentUserId' cannot read the document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @allow (update) User with UID 'mkigfR3969RLt7MimPYoqeEp2nv1' can update their own document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @deny (update) User with UID 'differentUserId' cannot update the document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @allow (delete) User with UID 'mkigfR3969RLt7MimPYoqeEp2nv1' can delete their own document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @deny (delete) User with UID 'differentUserId' cannot delete the document at /users/mkigfR3969RLt7MimPYoqeEp2nv1.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User with UID 'user123' can create their own account document with id 'user123'.
+     * @allow (get) User with UID 'user123' can read their own account document.
+     * @allow (update) User with UID 'user123' can update their own account document.
+     * @allow (delete) User with UID 'user123' can delete their own account document.
+     * @deny (create) User with UID 'user456' cannot create a document with id 'user123'.
+     * @deny (get) User with UID 'user456' cannot read user document 'user123'.
+     * @deny (update) User with UID 'user456' cannot update user document 'user123'.
+     * @deny (delete) User with UID 'user456' cannot delete user document 'user123'.
+     * @principle Enforces strict user ownership.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false; // Listing users is not permitted
+      // Helper function to check if the request is made by the owner of the document
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      // Helper function to check if the request is made by the existing owner of the document
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
 
-      // Allow self-creation: User can create their own document.
-      allow create: if isOwner(userId) ;
-      allow update: if isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if false; // User listing is not permitted.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
-
 
     /**
      * @description Controls access to public lawyer profile documents.
      * @path /lawyer_profiles/{lawyerId}
-     * @allow (get, list) Any user can read lawyer profiles.
-     * @deny (create) User with UID 'differentUserId' cannot create a profile for lawyerId 'lawyer123'.
-     * @allow (create) User with UID 'lawyer123' can create their profile.
-     * @allow (update) User with UID 'lawyer123' can update their profile at /lawyer_profiles/lawyer123.
-     * @deny (update) User with UID 'differentUserId' cannot update the profile at /lawyer_profiles/lawyer123.
-     * @allow (delete) User with UID 'lawyer123' can delete their own profile at /lawyer_profiles/lawyer123.
-     * @deny (delete) User with UID 'differentUserId' cannot delete the profile at /lawyer_profiles/lawyer123.
-     * @principle Public read access, owner-only writes.
+     * @allow (get) Any user can read a lawyer's public profile.
+     * @allow (create) Lawyer with UID 'lawyer123' can create their own profile document with id 'lawyer123'.
+     * @allow (update) Lawyer with UID 'lawyer123' can update their own profile document.
+     * @deny (create) User with UID 'user456' cannot create a lawyer profile with id 'lawyer123'.
+     * @deny (update) User with UID 'user456' cannot update lawyer profile 'lawyer123'.
+     * @principle Public read access with owner-only writes.
      */
     match /lawyer_profiles/{lawyerId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.auth.uid == lawyerId;
-      allow update: if isExistingOwner(lawyerId);
-      allow delete: if isExistingOwner(lawyerId);
+        // Helper function to check if the request is made by the owner of the document
+        function isOwner(lawyerId) {
+          return request.auth != null && request.auth.uid == lawyerId;
+        }
+        // Helper function to check if the request is made by the existing owner of the document
+        function isExistingOwner(lawyerId) {
+          return isOwner(lawyerId) && resource != null;
+        }
+
+      allow get: if true; // Public read access.
+      allow list: if false; // Listing is not permitted
+      allow create: if isOwner(lawyerId) && request.resource.data.userId == lawyerId;
+      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if false; // Deletion is not permitted
     }
-
-
-    /**
-     * @description Controls access to cases associated with a specific user. Cases are stored as a subcollection of the user document.
-     * @path /users/{userId}/cases
-     * @allow (list) User with UID 'mkigfR3969RLt7MimPYoqeEp2nv1' can list their cases.
-     * @deny (get) User with UID 'mkigfR3969RLt7MimPYoqeEp2nv1' cannot get a single case document directly (not a separate collection).
-     * @deny (create) Cases are nested inside the user document and cannot be created directly as separate documents.
-     * @deny (update) Cases are nested inside the user document and cannot be updated directly as separate documents.
-     * @deny (delete) Cases are nested inside the user document and cannot be deleted directly as separate documents.
-     * @principle Enforces ownership for listing cases. Get, create, update, delete operations are disabled because cases are an array inside user document.
-     */
-    match /users/{userId}/cases {
-      allow get: if false;
-      allow list: if isOwner(userId);
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-  }
-
-  // Helper Functions
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  function isOwner(userId) {
-    return isSignedIn() && request.auth.uid == userId;
-  }
-
-  function isExistingOwner(userId) {
-    return isOwner(userId) && resource != null;
   }
 }
