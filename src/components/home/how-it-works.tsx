@@ -31,11 +31,11 @@ export function HowItWorks({ onAskQuestionClick }: HowItWorksProps) {
 
   const getCardContent = (step: typeof steps[0]) => (
     <Card
-        className={`flex flex-col text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-black text-white animate-fade-in-up overflow-hidden border border-transparent hover:border-primary hover:scale-105 h-full`} 
+        className={`flex flex-col text-center shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 bg-card text-card-foreground animate-fade-in-up overflow-hidden border border-border hover:border-accent hover:scale-105 h-full`} 
     >
         <CardHeader className="items-center p-6 flex-grow">
             <CardTitle className="mt-4 font-headline text-2xl">{step.title}</CardTitle>
-            <CardDescription className="px-6 pb-6 text-white/80 flex-grow">
+            <CardDescription className="px-6 pb-6 text-muted-foreground flex-grow">
             {step.description}
             </CardDescription>
         </CardHeader>

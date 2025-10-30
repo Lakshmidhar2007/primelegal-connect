@@ -29,7 +29,7 @@ export function Features() {
   ];
 
   return (
-    <section className="w-full py-12 lg:py-24 bg-background/50">
+    <section className="w-full py-12 lg:py-24 bg-muted/50">
       <div className="container">
         <div className="mx-auto max-w-3xl text-center animate-slide-in-from-right" style={{ animationDelay: '500ms' }}>
           <h2 className="text-3xl font-bold tracking-tighter font-headline sm:text-4xl md:text-5xl">
@@ -43,7 +43,7 @@ export function Features() {
           {featuresList.map((feature, i) => (
             <Card key={feature.title} className="border-0 bg-transparent shadow-none animate-fade-in-up" style={{animationDelay: `${600 + 150 * i}ms`}}>
               <CardHeader className="flex flex-row items-center gap-4">
-                <div className="bg-primary/10 text-primary p-3 rounded-full">{feature.icon}</div>
+                <div className="bg-accent/20 text-accent p-3 rounded-full">{feature.icon}</div>
                 <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
               </CardHeader>
               <CardContent>
