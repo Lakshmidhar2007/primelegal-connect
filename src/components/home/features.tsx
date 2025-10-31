@@ -41,10 +41,10 @@ export function Features() {
         </div>
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {featuresList.map((feature, i) => (
-            <Card key={feature.title} className="border-0 bg-transparent shadow-none animate-fade-in-up text-center" style={{animationDelay: `${600 + 150 * i}ms`}}>
+            <Card key={feature.title} className="border-0 bg-transparent shadow-none animate-fade-in-up text-center group" style={{animationDelay: `${600 + 150 * i}ms`}}>
               <CardHeader className="flex flex-col items-center gap-4">
-                <div className="bg-primary/10 text-primary p-4 rounded-full">{feature.icon}</div>
-                <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
+                <div className="bg-primary/10 text-primary p-4 rounded-full transition-transform duration-300 group-hover:scale-110">{feature.icon}</div>
+                <CardTitle className="font-headline text-xl transition-transform duration-300 group-hover:scale-110">{feature.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">{feature.description}</p>
