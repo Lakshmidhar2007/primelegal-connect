@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -62,6 +63,8 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
 
     setIsLoading(false);
   }
+  
+  const headlineText = t('Get Instant Legal Insights with AI');
 
   return (
     <>
@@ -81,7 +84,11 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
         <div className="container relative z-10">
           <div className="mx-auto max-w-4xl animate-fade-in" style={{ animationDelay: '100ms' }}>
             <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl !leading-tight">
-              {t('Get Instant Legal Insights with AI')}
+              {headlineText.split(' ').map((word, index) => (
+                <span key={index} className="inline-block transition-transform duration-300 ease-out hover:scale-110 hover:text-primary">
+                  {word}&nbsp;
+                </span>
+              ))}
             </h1>
             <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
               {t("Describe your legal issue, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.")}
