@@ -22,6 +22,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { AskQuestionDialog } from '../shared/ask-question-dialog';
 import { useTranslation } from '@/hooks/use-translation';
+import { cn } from '@/lib/utils';
 
 type UserProfile = {
   isLawyer: boolean;
@@ -39,6 +40,28 @@ export function Header() {
   const [isLawyer, setIsLawyer] = useState(false);
   const { setLanguage } = useLanguage();
   const { t } = useTranslation();
+  const [isHidden, setIsHidden] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const controlNavbar = () => {
+      if (typeof window !== 'undefined') {
+        if (window.scrollY > lastScrollY && window.scrollY > 100) { // if scroll down hide the navbar
+          setIsHidden(true);
+        } else { // if scroll up show the navbar
+          setIsHidden(false);
+        }
+        setLastScrollY(window.scrollY);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', controlNavbar);
+      return () => {
+        window.removeEventListener('scroll', controlNavbar);
+      };
+    }
+  }, [lastScrollY]);
 
   const navLinks = [
     { href: '/', label: t('Home') },
@@ -71,7 +94,7 @@ export function Header() {
 
   return (
     <>
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300", isHidden ? '-translate-y-full' : 'translate-y-0')}>
       <div className="container flex h-16 items-center">
         <div className="mr-4 flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
