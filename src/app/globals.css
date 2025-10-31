@@ -10,42 +10,42 @@
     --card-foreground: 220 13% 20%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 13% 20%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 142 76% 96%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 13% 40%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 45%;
-    --accent: 142 66% 46%;
-    --accent-foreground: 0 0% 100%;
+    --primary: 210 40% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 98%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 142 76% 36%;
+    --ring: 210 40% 50%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 220 13% 11%;
-    --foreground: 210 20% 98%;
-    --card: 220 13% 16%;
-    --card-foreground: 210 20% 98%;
-    --popover: 220 13% 11%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 142 66% 46%;
-    --primary-foreground: 142 76% 96%;
-    --secondary: 220 14% 22%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 220 14% 22%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 142 56% 56%;
-    --accent-foreground: 0 0% 100%;
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 210 40% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 22%;
-    --input: 220 13% 22%;
-    --ring: 142 66% 46%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 210 40% 50%;
   }
 }
 
