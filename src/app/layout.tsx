@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { LanguageProvider } from '@/hooks/use-language';
+import { Chatbot } from '@/components/shared/chatbot';
 
 export const metadata: Metadata = {
   title: 'PrimeLegal CONNECT',
@@ -29,7 +30,7 @@ export default function RootLayout({
       <body className={cn('font-body antialiased bg-background')}>
         <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
         >
@@ -39,6 +40,7 @@ export default function RootLayout({
                 <Header />
                 <main className="flex-grow">{children}</main>
                 <Footer />
+                <Chatbot />
             </div>
             <Toaster />
             </FirebaseClientProvider>
