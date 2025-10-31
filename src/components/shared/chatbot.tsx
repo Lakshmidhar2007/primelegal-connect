@@ -90,7 +90,7 @@ export function Chatbot() {
   return (
     <>
       <Button
-        className="fixed top-4 left-4 z-50 h-16 w-16 rounded-full shadow-2xl animate-fade-in"
+        className="fixed bottom-4 right-4 z-50 h-16 w-16 rounded-full shadow-2xl animate-fade-in"
         onClick={() => setIsOpen(true)}
       >
         <Bot className="h-8 w-8" />
