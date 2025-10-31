@@ -7,10 +7,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { getAIResponse } from '@/actions/query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { BrainCircuit, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
+import { BrainCircuit, Loader2, Sparkles, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useUser } from '@/firebase';
 import { AuthDialog } from '@/components/auth/auth-dialog';
@@ -63,49 +63,36 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
     setIsLoading(false);
   }
 
-  const handleGetAnalysisClick = () => {
-    // This will trigger the form submission logic
-    form.handleSubmit(onSubmit)();
-  };
-
-  const handlePrimaryActionClick = () => {
-    if (onAskQuestionClick) {
-      onAskQuestionClick();
-    } else {
-      handleGetAnalysisClick();
-    }
-  }
-
   return (
     <>
-      <section id="ask-ai" className="relative py-12 text-center lg:py-24">
-        <div className="absolute inset-0 z-0">
+      <section id="ask-ai" className="relative py-20 text-center lg:py-32">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <Image
             src="https://storage.googleapis.com/project-1761647461454-stud-files/SCD-Exterior-1920-x-1080.jpg"
             alt="Courthouse background"
             fill
             style={{ objectFit: 'cover' }}
-            className="opacity-20"
+            className="opacity-10 dark:opacity-5"
             data-ai-hint="supreme court"
             priority
           />
-          <div className="absolute inset-0 bg-background/80 bg-gradient-to-b from-background/50 via-background/90 to-background"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background"></div>
         </div>
         <div className="container relative z-10">
-          <div className="mx-auto max-w-3xl animate-fade-in" style={{ animationDelay: '100ms' }}>
-            <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl">
+          <div className="mx-auto max-w-4xl animate-fade-in" style={{ animationDelay: '100ms' }}>
+            <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl !leading-tight">
               {t('Get Instant Legal Insights with AI')}
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground md:text-xl">
-              {t("Describe your legal issue below, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.")}
+            <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
+              {t("Describe your legal issue, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.")}
             </p>
           </div>
 
-          <div className="mx-auto mt-8 max-w-2xl animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            <Card className="shadow-lg bg-card/50 backdrop-blur-sm">
+          <div className="mx-auto mt-10 max-w-2xl animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+            <Card className="shadow-2xl bg-card/60 dark:bg-card/40 backdrop-blur-xl border border-white/10 dark:border-white/5 rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center justify-center gap-2 font-headline text-2xl">
-                  <Sparkles className="h-6 w-6 text-accent" />
+                  <Sparkles className="h-6 w-6 text-primary" />
                   {t('Ask Our AI Assistant')}
                 </CardTitle>
               </CardHeader>
@@ -119,8 +106,8 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
                         <FormItem>
                           <FormControl>
                             <Textarea
-                              placeholder={t("For example: 'I had a dispute with my landlord over the security deposit...'")}
-                              className="min-h-[120px] resize-none text-base bg-background/70"
+                              placeholder={t("e.g., 'I had a dispute with my landlord over the security deposit...'")}
+                              className="min-h-[120px] resize-none text-base bg-background/70 rounded-lg"
                               {...field}
                             />
                           </FormControl>
@@ -128,14 +115,16 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || isUserLoading}>
+                    <Button type="submit" size="lg" className="w-full text-lg font-semibold" disabled={isLoading || isUserLoading}>
                       {isLoading ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                           {t('Analyzing...')}
                         </>
                       ) : (
-                        t('Get AI Analysis')
+                        <>
+                          {t('Get AI Analysis')} <ArrowRight className="ml-2 h-5 w-5" />
+                        </>
                       )}
                     </Button>
                   </form>
@@ -144,53 +133,63 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
             </Card>
 
             {isLoading && (
-              <Card className="mt-6 text-left">
+              <Card className="mt-6 text-left shadow-2xl bg-card/60 dark:bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-headline">
-                    <BrainCircuit className="h-6 w-6" />
+                  <CardTitle className="flex items-center gap-2 font-headline text-xl">
+                    <BrainCircuit className="h-6 w-6 text-primary" />
                     {t('AI Generated Insights')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-1/2" />
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-1/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                    </div>
+                     <div className="space-y-2">
+                      <Skeleton className="h-5 w-1/4" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                     <div className="space-y-2">
+                      <Skeleton className="h-5 w-1/3" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
                 </CardContent>
               </Card>
             )}
 
             {error && (
-                <div className="mt-6 text-red-500 bg-red-500/10 p-4 rounded-md flex items-center gap-2">
+                <div className="mt-6 text-destructive-foreground bg-destructive/90 p-4 rounded-lg flex items-center gap-3">
                     <AlertTriangle className="h-5 w-5" />
-                    <p>{t(error)}</p>
+                    <p className='font-medium'>{t(error)}</p>
                 </div>
             )}
 
             {aiResponse && (
-              <Card className="mt-6 text-left animate-in fade-in-50 duration-500 bg-card/50 backdrop-blur-sm">
+              <Card className="mt-6 text-left animate-in fade-in-50 duration-500 shadow-2xl bg-card/60 dark:bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-headline text-2xl">
-                    <BrainCircuit className="h-6 w-6" />
+                    <BrainCircuit className="h-6 w-6 text-primary" />
                     {t('AI Generated Insights')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="prose prose-sm max-w-none text-foreground/90 prose-p:text-foreground/90 prose-strong:text-foreground">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-lg">{t('Problem')}</h3>
-                      <p className="mt-1">{t(aiResponse.problem)}</p>
-                    </div>
-                     <div>
-                      <h3 className="font-semibold text-lg">{t('Solution')}</h3>
-                      <p className="mt-1">{t(aiResponse.solution)}</p>
-                    </div>
-                     <div>
-                      <h3 className="font-semibold text-lg">{t('Applicable Indian Penal Code Sections')}</h3>
-                      <p className="mt-1 whitespace-pre-wrap">{t(aiResponse.ipcSections)}</p>
-                    </div>
+                <CardContent className="space-y-6 text-base">
+                  <div>
+                    <h3 className="font-semibold text-lg tracking-tight">{t('Identified Problem')}</h3>
+                    <p className="mt-1 text-muted-foreground">{t(aiResponse.problem)}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg tracking-tight">{t('Suggested Solution')}</h3>
+                    <p className="mt-1 text-muted-foreground">{t(aiResponse.solution)}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg tracking-tight">{t('Applicable Indian Penal Code Sections')}</h3>
+                    <p className="mt-1 text-muted-foreground whitespace-pre-wrap font-mono text-sm">{t(aiResponse.ipcSections)}</p>
                   </div>
                 </CardContent>
+                <CardFooter>
+                    <p className='text-xs text-muted-foreground text-center w-full'>*This is an AI-generated analysis and not a substitute for professional legal advice.</p>
+                </CardFooter>
               </Card>
             )}
           </div>
