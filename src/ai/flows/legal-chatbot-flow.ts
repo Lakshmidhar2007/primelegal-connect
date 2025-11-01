@@ -74,7 +74,9 @@ const legalChatbotFlow = ai.defineFlow(
     2.  Wait for the user's response.
 
     If the user wants to draft a complaint:
-    You must use the 'draftComplaint' tool. To use the tool, you must first ask the user for all the necessary information one by one. Do not ask for all details at once.
+    You must use the 'draftComplaint' tool. To use the tool, you must first ask the user for all the necessary information.
+    **CRITICAL INSTRUCTION:** You MUST ask for each piece of information ONE BY ONE. Wait for the user's answer before you ask the next question. Do not ask for multiple details at once.
+    
     Ask for each piece of information in this specific order:
     a) "To begin, what is your full name?"
     b) "What is your age and gender?"
