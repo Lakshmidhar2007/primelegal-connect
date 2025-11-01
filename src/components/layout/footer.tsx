@@ -69,6 +69,16 @@ export function Footer() {
                     <p className="text-sm text-muted-foreground">{t('Email')}</p>
                 </div>
             </div>
+            <Separator />
+            <div className="flex items-start gap-4">
+                <div className="bg-primary/10 text-primary p-3 rounded-full mt-1">
+                    <Phone className="h-5 w-5"/>
+                </div>
+                <div>
+                    <p className="font-semibold">8247444865, 8122846046, 9894139729</p>
+                    <p className="text-sm text-muted-foreground">{t('Phone Numbers')}</p>
+                </div>
+            </div>
              <Separator />
             <div className="flex items-center gap-4">
                 <div className="bg-primary/10 text-primary p-3 rounded-full">
