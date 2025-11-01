@@ -9,15 +9,20 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 
 const DraftComplaintInputSchema = z.object({
-  complainantName: z.string(),
-  complainantContact: z.string(),
-  respondentName: z.string(),
-  respondentContact: z.string(),
-  facts: z.string(),
-  reliefSought: z.string(),
+    fullName: z.string().describe("The complainant's full name."),
+    ageAndGender: z.string().describe("The complainant's age and gender."),
+    parentName: z.string().describe("The complainant's father's or mother's name."),
+    address: z.string().describe("The complainant's full residential address."),
+    contactInfo: z.string().describe("The complainant's contact number and/or email."),
+    occupation: z.string().describe("The complainant's occupation."),
+    incidentDate: z.string().describe("The date, time, and place of the incident."),
+    incidentDetails: z.string().describe("A clear, chronological description of what happened."),
+    suspectDetails: z.string().describe("Details of the suspect(s), if known."),
+    evidence: z.string().describe("Mention of any available evidence like photos, videos, or witnesses."),
+    requestedAction: z.string().describe("The specific action the user wants to be taken."),
 });
 export type DraftComplaintInput = z.infer<typeof DraftComplaintInputSchema>;
 
@@ -34,58 +39,55 @@ const prompt = ai.definePrompt({
     name: 'draftComplaintPrompt',
     input: { schema: DraftComplaintInputSchema },
     output: { schema: DraftComplaintOutputSchema },
-    prompt: `You are a paralegal AI specializing in drafting legal documents based on Indian law. 
-    Draft a formal legal complaint based on the following information. The complaint should be structured professionally with clear sections.
+    prompt: `You are a paralegal AI specializing in drafting legal complaints for police submission in India. 
+    Draft a formal complaint (First Information Report - F.I.R.) based on the following information. The complaint should be structured professionally with clear sections.
 
-    **BEFORE THE [APPROPRIATE COURT/FORUM] AT [CITY/DISTRICT]**
+    **To,
+    The Officer In-charge,
+    [Police Station Name],
+    [City/District]**
 
-    **Complaint No. __________ of 2024**
+    **Subject: First Information Report (F.I.R) regarding [Summarize the core issue from incident details]**
 
-    **IN THE MATTER OF:**
+    Respected Sir/Madam,
 
-    **Complainant:**
-    {{complainantName}}
-    {{complainantContact}}
+    I, the undersigned, wish to lodge the following complaint for your investigation and necessary action.
 
-    **VERSUS**
+    **1. Complainant's Details:**
+    -   **Full Name:** {{fullName}}
+    -   **Age & Gender:** {{ageAndGender}}
+    -   **Father's/Mother's Name:** {{parentName}}
+    -   **Occupation:** {{occupation}}
+    -   **Address:** {{address}}
+    -   **Contact Information:** {{contactInfo}}
 
-    **Respondent:**
-    {{respondentName}}
-    {{respondentContact}}
+    **2. Date, Time, and Place of Occurrence:**
+    -   {{incidentDate}}
 
-    **Subject: Complaint Regarding [Summarize the core issue]**
+    **3. Details of the Suspect(s) (if known):**
+    -   {{suspectDetails}}
 
-    **MOST RESPECTFULLY SHOWETH:**
+    **4. Account of the Incident:**
+    {{{incidentDetails}}}
 
-    1.  **Introduction of Parties:**
-        - That the Complainant is...
-        - That the Respondent is...
+    **5. Evidence or Supporting Material:**
+    -   {{evidence}}
 
-    2.  **Statement of Facts:**
-        - Present the facts provided in a clear, chronological order.
-        {{{facts}}}
+    **6. Prayer / Requested Action:**
+    {{{requestedAction}}}
 
-    3.  **Cause of Action:**
-        - Briefly state how the Respondent's actions have given rise to this complaint.
+    I declare that the information provided above is true to the best of my knowledge and belief. I request you to kindly register an F.I.R under the relevant sections of the law and take prompt action.
 
-    4.  **Relief Sought:**
-        - Clearly list the specific remedies or actions the Complainant is requesting.
-        {{{reliefSought}}}
+    Thank you for your assistance.
 
-    **PRAYER:**
-    It is, therefore, most respectfully prayed that this Hon'ble [Court/Forum] may be pleased to:
-    a) Direct the Respondent to [Primary Relief].
-    b) Award compensation of [Amount, if applicable].
-    c) Pass any other order(s) as this Hon'ble [Court/Forum] may deem fit and proper in the facts and circumstances of the case.
+    **Yours sincerely,**
 
-    **Complainant**
-    Through
-    [Advocate's Name/Signature]
+    **{{fullName}}**
+
+    Date: [Current Date]
+    Place: [City of Incident]
     
-    Date:
-    Place:
-    
-    Return the entire formatted complaint as a single string in the 'complaintText' field. Do not include placeholders like '[APPROPRIATE COURT/FORUM]'; use generic but appropriate legal language.`,
+    Return the entire formatted complaint as a single string in the 'complaintText' field. Use generic but appropriate legal language and fill in placeholders where possible based on the provided information.`,
 });
 
 

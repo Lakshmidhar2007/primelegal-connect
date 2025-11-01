@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { draftComplaint } from './draft-complaint-flow';
 
 const ChatMessageSchema = z.object({
@@ -35,14 +35,19 @@ export async function legalChatbot(input: LegalChatbotInput): Promise<LegalChatb
 const draftComplaintTool = ai.defineTool(
     {
       name: 'draftComplaint',
-      description: 'Drafts a legal complaint based on the user provided details. Use this tool if the user asks to draft a complaint, lawsuit, or legal notice.',
+      description: 'Drafts a legal complaint for police submission based on user-provided details. Use this tool if the user agrees to draft a complaint.',
       inputSchema: z.object({
-        complainantName: z.string().describe("The name of the person filing the complaint."),
-        complainantContact: z.string().describe("The contact information of the person filing the complaint."),
-        respondentName: z.string().describe("The name of the person or entity the complaint is against."),
-        respondentContact: z.string().describe("The contact information of the person or entity the complaint is against."),
-        facts: z.string().describe("A detailed account of the events and facts leading to the complaint."),
-        reliefSought: z.string().describe("What the complainant is asking for as a resolution."),
+        fullName: z.string().describe("The complainant's full name."),
+        ageAndGender: z.string().describe("The complainant's age and gender."),
+        parentName: z.string().describe("The complainant's father's or mother's name."),
+        address: z.string().describe("The complainant's full residential address."),
+        contactInfo: z.string().describe("The complainant's contact number and/or email."),
+        occupation: z.string().describe("The complainant's occupation."),
+        incidentDate: z.string().describe("The date, time, and place of the incident."),
+        incidentDetails: z.string().describe("A clear, chronological description of what happened."),
+        suspectDetails: z.string().describe("Details of the suspect(s), if known."),
+        evidence: z.string().describe("Mention of any available evidence like photos, videos, or witnesses."),
+        requestedAction: z.string().describe("The specific action the user wants to be taken."),
       }),
       outputSchema: z.string(),
     },
@@ -71,14 +76,19 @@ const legalChatbotFlow = ai.defineFlow(
     If the user wants to draft a complaint:
     You must use the 'draftComplaint' tool. To use the tool, you must first ask the user for all the necessary information one by one. Do not ask for all details at once.
     Ask for each piece of information in this specific order:
-    a) "To start, could you please provide the full name of the person filing the complaint (the complainant)?"
-    b) After they answer, ask: "Thank you. What is the complainant's contact information (email or phone number)?"
-    c) After they answer, ask: "Next, what is the full name of the person or entity the complaint is against (the respondent)?"
-    d) After they answer, ask: "And what is the respondent's contact information?"
-    e) After they answer, ask: "Please provide a detailed account of the facts leading to this complaint. Be as specific as possible."
-    f) After they answer, ask: "Finally, what specific relief or outcome are you seeking from this complaint?"
+    a) "To begin, what is your full name?"
+    b) "What is your age and gender?"
+    c) "What is your father's or mother's name?"
+    d) "What is your full residential address, including any landmarks?"
+    e) "What is your contact number and/or email address?"
+    f) "What is your occupation?"
+    g) "Next, please state the date, approximate time, and location of the incident."
+    h) "Now, please describe the incident in detail, from start to finish."
+    i) "Do you have any details about the suspect(s)? Please provide their name, description, or any other identifying information if you can."
+    j) "Do you have any evidence to support your complaint, such as photos, videos, messages, or names of witnesses?"
+    k) "Finally, what specific action would you like the authorities to take?"
 
-    Once you have gathered all six pieces of information, and only then, call the 'draftComplaint' tool with all the details. After the tool returns the drafted complaint, present it to the user.
+    Once you have gathered all eleven pieces of information, and only then, call the 'draftComplaint' tool with all the details. After the tool returns the drafted complaint, present it to the user.
 
     If the user wants to ask a legal question, proceed to answer their question based on your legal knowledge.`;
 
