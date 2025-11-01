@@ -75,8 +75,12 @@ export function Footer() {
                     <Phone className="h-5 w-5"/>
                 </div>
                 <div>
-                    <p className="font-semibold">8247444865, 8122846046, 9894139729</p>
-                    <p className="text-sm text-muted-foreground">{t('Phone Numbers')}</p>
+                    <p className="font-semibold">{t('Contact')}</p>
+                    <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                        <p>8247444865</p>
+                        <p>8122846046</p>
+                        <p>9894139729</p>
+                    </div>
                 </div>
             </div>
              <Separator />
