@@ -38,14 +38,14 @@ function MessagesList() {
             return query(collection(firestore, 'chats'), where('userId', '==', user.uid));
         }
         return null;
-    }, [firestore, user]);
+    }, [firestore, user?.uid]);
 
     const lawyerChatsQuery = useMemoFirebase(() => {
         if (firestore && user?.uid) {
             return query(collection(firestore, 'chats'), where('lawyerId', '==', user.uid));
         }
         return null;
-    }, [firestore, user]);
+    }, [firestore, user?.uid]);
 
     const { data: userChats, isLoading: isUserChatsLoading } = useCollection<ChatItem>(userChatsQuery);
     const { data: lawyerChats, isLoading: isLawyerChatsLoading } = useCollection<ChatItem>(lawyerChatsQuery);
