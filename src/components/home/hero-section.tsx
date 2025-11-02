@@ -69,30 +69,34 @@ export function HeroSection({ onAskQuestionClick }: HeroSectionProps) {
   return (
     <>
       <section id="ask-ai" className="relative py-20 text-center lg:py-32">
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          <Image
-            src="https://storage.googleapis.com/project-1761647461454-stud-files/SCD-Exterior-1920-x-1080.jpg"
-            alt="Courthouse background"
-            fill
-            style={{ objectFit: 'cover' }}
-            className="opacity-10 dark:opacity-5"
-            data-ai-hint="supreme court"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background"></div>
-        </div>
         <div className="container relative z-10">
-          <div className="mx-auto max-w-4xl animate-fade-in" style={{ animationDelay: '100ms' }}>
-            <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl !leading-tight">
-              {headlineText.split(' ').map((word, index) => (
-                <span key={index} className="inline-block transition-transform duration-300 ease-out hover:scale-110 hover:text-primary">
-                  {word}&nbsp;
-                </span>
-              ))}
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
-              {t("Describe your legal issue, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.")}
-            </p>
+          <div className="mx-auto max-w-6xl animate-fade-in" style={{ animationDelay: '100ms' }}>
+            <div className="relative bg-muted/30 dark:bg-muted/20 rounded-3xl px-8 py-16 overflow-hidden">
+              <div className="absolute inset-0 z-0">
+                <Image
+                  src="/parliament.png"
+                  alt="Indian Parliament background"
+                  fill
+                  style={{ objectFit: 'cover', objectPosition: 'center' }}
+                  className="opacity-[0.4] dark:opacity-[0.25]"
+                  data-ai-hint="indian parliament"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/50 to-background/60"></div>
+              </div>
+              <div className="relative z-10 max-w-4xl mx-auto">
+                <h1 className="text-4xl font-bold tracking-tighter font-headline sm:text-5xl md:text-6xl lg:text-7xl !leading-tight">
+                  {headlineText.split(' ').map((word, index) => (
+                    <span key={index} className="inline-block transition-transform duration-300 ease-out hover:scale-110 hover:text-primary">
+                      {word}&nbsp;
+                    </span>
+                  ))}
+                </h1>
+                <p className="mt-6 text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
+                  {t("Describe your legal issue, and our AI will provide initial analysis and guidance. It's the first step towards clarity and resolution.")}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="mx-auto mt-10 max-w-2xl animate-fade-in-up" style={{ animationDelay: '200ms' }}>
