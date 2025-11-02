@@ -17,6 +17,7 @@ function LawyerDashboard() {
   const casesQuery = useMemoFirebase(() => {
     if (firestore && user) {
       // Use a collectionGroup query to find cases assigned to this lawyer across all users.
+      // Pass the firestore instance and the collection ID 'cases'
       return query(
         collectionGroup(firestore, 'cases'),
         where('lawyerId', '==', user.uid)
@@ -59,7 +60,12 @@ function LawyerDashboard() {
       
       // The `fullName` for the client is now directly on the case document.
       // So no extra fetching is needed. We just use the data we already have.
-      setCasesWithClientInfo(cases);
+      const enrichedCases = cases.map(caseItem => ({
+        ...caseItem,
+        fullName: caseItem.fullName || usersData[caseItem.userId]?.firstName + ' ' + usersData[caseItem.userId]?.lastName || 'Unknown Client'
+      }));
+
+      setCasesWithClientInfo(enrichedCases);
       setIsClientInfoLoading(false);
     };
 

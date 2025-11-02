@@ -1,107 +1,21 @@
-/**
- * @file Firebase Security Rules for PRIMELEGAL CONNECT
- *
- * @core_philosophy This ruleset enforces a strict user-ownership model for user accounts and their associated data.
- * Lawyer profiles are publicly readable but writable only by the owning lawyer. Chats are restricted to participants.
- *
- * @data_structure
- * - `/users/{userId}`: Stores private user account information. Accessible only by the user themselves.
- * - `/users/{userId}/cases/{caseId}`: Stores case data associated with a user. Accessible by the user and the assigned lawyer.
- * - `/lawyer_profiles/{lawyerId}`: Stores public profile information for lawyers. Publicly readable, but writable only by the lawyer.
- * - `/chats/{chatId}`: Stores metadata for a chat session. Accessible only by the participants of the chat.
- * - `/chats/{chatId}/messages/{messageId}`: Stores individual messages within a chat. Accessible only by chat participants.
- *
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Checks if the request is authenticated.
-     * @return {boolean} True if the request is authenticated, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
-     * @param {string} userId The user ID to compare against.
-     * @return {boolean} True if the user is signed in and their UID matches the provided userId, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user is the owner of an existing document.
-     * @param {string} userId The user ID of the supposed owner.
-     * @return {boolean} True if the user is signed in, their UID matches the provided userId, and the document exists.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-    
-    /**
-     * @description Checks if the user is a participant in a chat.
-     */
-    function isChatParticipant(chatId) {
-        let chatDoc = get(/databases/$(database)/documents/chats/$(chatId)).data;
-        return isSignedIn() && (request.auth.uid == chatDoc.userId || request.auth.uid == chatDoc.lawyerId);
-    }
-    
-    /**
-      * @description Checks if the user is a participant in a chat based on the resource data.
-      */
-    function isChatParticipantOnResource() {
-        return isSignedIn() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.lawyerId);
-    }
-
-    /**
-     * @description Rules for the /users/{userId} collection.
-     */
     match /users/{userId} {
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
-
-        /**
-         * @description Rules for the /users/{userId}/cases/{caseId} collection.
-         */
-        match /cases/{caseId} {
-          allow create: if isOwner(userId);
-          // Allow the assigned lawyer to read and update the case
-          allow get, update: if isOwner(userId) || (isSignedIn() && request.auth.uid == resource.data.lawyerId);
-          allow list: if isOwner(userId);
-          allow delete: if isExistingOwner(userId);
-        }
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    /**
-     * @description Rules for the /lawyer_profiles/{lawyerId} collection.
-     */
     match /lawyer_profiles/{lawyerId} {
-      allow create: if isOwner(lawyerId) && request.resource.data.userId == request.auth.uid;
-      allow get: if true;
-      allow list: if true;
-      allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(lawyerId);
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == lawyerId;
     }
 
-    /**
-     * @description Rules for chat collections.
-     */
     match /chats/{chatId} {
-        allow get, update: if isChatParticipant(chatId);
-        // Allow list only if the user is part of the chat. This rule is for collection queries.
-        allow list: if isSignedIn() && (request.query.where.field == 'userId' || request.query.where.field == 'lawyerId') && request.query.where.value == request.auth.uid;
-        allow create: if isSignedIn(); // A user creates a chat record via case approval
-        
-        match /messages/{messageId} {
-            allow read, list, create: if isChatParticipant(chatId);
-        }
+      allow read, write: if request.auth != null;
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null;
+      }
     }
   }
 }
