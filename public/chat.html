@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrimeLegal Chat</title>
+  <script type="module">
+    // ======== Firebase Setup ========
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // Replace this config with your own Firebase project config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAG0WkxynFzrsTMfvfkJ_S5hZxvMkA-FPc", // 👈 use your Web API Key here
+  authDomain: "studio-8593361603-692e2.firebaseapp.com",
+  projectId: "studio-8593361603-692e2",
+  storageBucket: "studio-8593361603-692e2.appspot.com",
+  messagingSenderId: "1046445083601",
+  appId: "1:1046445083601:web:fbeb9fecb968d001de2ef0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ======== Chat Logic ========
+    const messagesRef = collection(db, "messages");
+
+    const form = document.getElementById("messageForm");
+    const input = document.getElementById("messageInput");
+    const chatBox = document.getElementById("chatBox");
+
+    // Temporary demo user IDs (replace with your auth UIDs)
+    const senderId = "user1";
+    const receiverId = "user2";
+
+    // Send a message
+    async function sendMessage(e) {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      await addDoc(messagesRef, {
+        senderId,
+        receiverId,
+        text,
+        timestamp: serverTimestamp()
+      });
+      input.value = "";
+    }
+
+    form.addEventListener("submit", sendMessage);
+
+    // Listen for messages
+    const q = query(messagesRef, orderBy("timestamp", "asc"));
+    onSnapshot(q, (snapshot) => {
+      chatBox.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const msg = doc.data();
+        const messageDiv = document.createElement("div");
+        messageDiv.className = msg.senderId === senderId ? "sent" : "received";
+        messageDiv.textContent = msg.text;
+        chatBox.appendChild(messageDiv);
+      });
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
+
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h2 { margin: 10px; }
+    #chatContainer {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      height: 80vh;
+    }
+    #chatBox {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+    .sent {
+      align-self: flex-end;
+      background: #007bff;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 16px 16px 0 16px;
+      margin: 4px 0;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+    .received {
+      align-self: flex-start;
+      background: #e5e7eb;
+      color: black;
+      padding: 8px 12px;
+      border-radius: 16px 16px 16px 0;
+      margin: 4px 0;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+    form {
+      display: flex;
+      border-top: 1px solid #ddd;
+      padding: 10px;
+    }
+    input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 50%;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>PrimeLegal Chat</h2>
+  <div id="chatContainer">
+    <div id="chatBox"></div>
+    <form id="messageForm">
+      <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" />
+      <button type="submit">➤</button>
+    </form>
+  </div>
+</body>
+</html>
