@@ -11,12 +11,6 @@
  * - `/chats/{chatId}`: Stores metadata for a chat session. Accessible only by the participants of the chat.
  * - `/chats/{chatId}/messages/{messageId}`: Stores individual messages within a chat. Accessible only by chat participants.
  *
- * @key_security_decisions
- * - User listing is explicitly denied.
- * - Data validation is relaxed during this prototyping phase to allow for rapid schema iteration.
- * - Read-only collections are permitted for explicitly public data.
- * - All write operations are strictly controlled based on user identity and roles (e.g., case owner, lawyer).
- *
  */
 rules_version = '2';
 service cloud.firestore {
@@ -54,6 +48,13 @@ service cloud.firestore {
     function isChatParticipant(chatId) {
         let chatDoc = get(/databases/$(database)/documents/chats/$(chatId)).data;
         return isSignedIn() && (request.auth.uid == chatDoc.userId || request.auth.uid == chatDoc.lawyerId);
+    }
+    
+    /**
+      * @description Checks if the user is a participant in a chat based on the resource data.
+      */
+    function isChatParticipantOnResource() {
+        return isSignedIn() && (request.auth.uid == resource.data.userId || request.auth.uid == resource.data.lawyerId);
     }
 
     /**
@@ -93,7 +94,9 @@ service cloud.firestore {
      * @description Rules for chat collections.
      */
     match /chats/{chatId} {
-        allow get, list, update: if isChatParticipant(chatId);
+        allow get, update: if isChatParticipant(chatId);
+        // Allow list only if the user is part of the chat. This rule is for collection queries.
+        allow list: if isSignedIn() && (request.query.where.field == 'userId' || request.query.where.field == 'lawyerId') && request.query.where.value == request.auth.uid;
         allow create: if isSignedIn(); // A user creates a chat record via case approval
         
         match /messages/{messageId} {
