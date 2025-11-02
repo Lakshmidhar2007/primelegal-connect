@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
+import FirebaseProvider from '@/firebase/provider';
+
 import { ThemeProvider } from '@/components/theme-provider';
 import { LanguageProvider } from '@/hooks/use-language';
 import { Chatbot } from '@/components/shared/chatbot';
@@ -35,16 +36,14 @@ export default function RootLayout({
             disableTransitionOnChange
         >
           <LanguageProvider>
-            <FirebaseClientProvider>
-            <div className="relative min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-grow">{children}</main>
-                <Footer />
-                <Chatbot />
-            </div>
-            <Toaster />
-            </FirebaseClientProvider>
-          </LanguageProvider>
+  <FirebaseProvider>
+    <div className="relative min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-grow">{children}</main>
+    </div>
+  </FirebaseProvider>
+</LanguageProvider>
+
         </ThemeProvider>
       </body>
     </html>

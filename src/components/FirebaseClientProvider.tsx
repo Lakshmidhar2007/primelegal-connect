@@ -1,4 +1,3 @@
-// src/components/FirebaseClientProvider.tsx
 'use client';
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -16,11 +15,9 @@ export default function FirebaseClientProvider({ children }: { children: React.R
     return unsubscribe;
   }, []);
 
-  // while auth is initializing, render a light loader (no Firestore reads)
   if (!authReady) {
-    return <div style={{minHeight: "100vh"}}>Loading...</div>;
+    return <div style={{ minHeight: "100vh" }}>Loading...</div>;
   }
 
-  // pass user through context or global state if needed
   return <>{children}</>;
 }

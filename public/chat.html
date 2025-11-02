@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PrimeLegal Chat</title>
-  <script type="module">
-    // ======== Firebase Setup ========
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { 
-      getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrimeLegal Chat (Two-Way)</title>
 
-    import { 
-      getAuth, signInWithEmailAndPassword, onAuthStateChanged 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, serverTimestamp, query,
+      orderBy, onSnapshot, doc, setDoc
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import {
+      getAuth, signInWithEmailAndPassword, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-    // 🔥 Your Firebase Config
+    // ========== Firebase Config ==========
     const firebaseConfig = {
       apiKey: "AIzaSyAG0WkxynFzrsTMfvfkJ_S5hZxvMkA-FPc",
       authDomain: "studio-8593361603-692e2.firebaseapp.com",
@@ -25,73 +25,95 @@
       appId: "1:1046445083601:web:fbeb9fecb968d001de2ef0"
     };
 
-    // Initialize Firebase
+    // ========== Initialize Firebase ==========
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // ======== Chat Logic ========
+    // ========== DOM References ==========
     const chatBox = document.getElementById("chatBox");
     const form = document.getElementById("messageForm");
     const input = document.getElementById("messageInput");
     const status = document.getElementById("status");
+    const roleSelector = document.getElementById("role");
 
-    // For demo, we’ll use a fixed chatId.
-    // In your app, this should be dynamically generated based on user-lawyer pair.
-    const chatId = "primelegal_demo_chat";
-    const messagesRef = collection(db, `chats/${chatId}/messages`);
+    // ========== Demo Credentials ==========
+    const demoUsers = {
+      user: { email: "lakshmidhar2007@gmail.com", password: "123456" },
+      lawyer: { email: "lawyer@primelegal.com", password: "123456" }
+    };
 
-    // ======== Auth Section ========
-    // Replace with real user credentials in production
-    const demoEmail = "lakshmidhar2007@gmail.com";
-    const demoPassword = "123456"; // make sure this exists in your Firebase Auth users
-
-    async function login() {
+    // ========== Login Based on Role ==========
+    async function login(role) {
+      const creds = demoUsers[role];
       try {
-        await signInWithEmailAndPassword(auth, demoEmail, demoPassword);
-      } catch (error) {
-        console.error("Login failed:", error.message);
-        status.textContent = "Login failed. Check credentials.";
+        await signInWithEmailAndPassword(auth, creds.email, creds.password);
+      } catch (err) {
+        console.error("Login failed:", err.message);
+        status.textContent = "❌ Login failed: " + err.message;
       }
     }
 
+    // ========== Auth State ==========
     onAuthStateChanged(auth, (user) => {
       if (user) {
         status.textContent = "✅ Logged in as: " + user.email;
-        startChat();
+        startChat(user);
       } else {
-        status.textContent = "🔒 Signing in...";
-        login();
+        status.textContent = "🔒 Select role to sign in";
       }
     });
 
-    // ======== Start Chat ========
-    function startChat() {
+    // ========== Start Chat ==========
+    async function startChat(user) {
+      // Fixed shared chat ID for user-lawyer pair
+      const chatId = "primelegal_chat_1";
+      const chatRef = doc(db, "chats", chatId);
+      const messagesRef = collection(db, `chats/${chatId}/messages`);
+
+      // Ensure chat doc exists with both parties
+      await setDoc(chatRef, {
+        userId: demoUsers.user.email,
+        lawyerId: demoUsers.lawyer.email
+      }, { merge: true });
+
+      // Realtime listener for messages
       const q = query(messagesRef, orderBy("timestamp", "asc"));
       onSnapshot(q, (snapshot) => {
         chatBox.innerHTML = "";
         snapshot.forEach((doc) => {
           const msg = doc.data();
           const messageDiv = document.createElement("div");
-          messageDiv.className = msg.senderId === auth.currentUser.uid ? "sent" : "received";
+          messageDiv.className = msg.senderId === user.email ? "sent" : "received";
           messageDiv.textContent = msg.text;
           chatBox.appendChild(messageDiv);
         });
         chatBox.scrollTop = chatBox.scrollHeight;
       });
+
+      // Handle message sending
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        try {
+          await addDoc(messagesRef, {
+            senderId: user.email,
+            text,
+            timestamp: serverTimestamp()
+          });
+          input.value = "";
+        } catch (err) {
+          console.error("Message send failed:", err.message);
+        }
+      });
     }
 
-    // ======== Send Message ========
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (!text || !auth.currentUser) return;
-      await addDoc(messagesRef, {
-        senderId: auth.currentUser.uid,
-        text,
-        timestamp: serverTimestamp()
-      });
-      input.value = "";
+    // ========== Role Switch ==========
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const role = roleSelector.value;
+      login(role);
     });
   </script>
 
@@ -119,7 +141,7 @@
       max-width: 400px;
       display: flex;
       flex-direction: column;
-      height: 80vh;
+      height: 70vh;
     }
     #chatBox {
       flex: 1;
@@ -169,11 +191,31 @@
       margin-left: 6px;
       cursor: pointer;
     }
+    #roleContainer {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      gap: 10px;
+    }
+    select {
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
+
 <body>
   <h2>PrimeLegal Chat</h2>
-  <p id="status">Connecting...</p>
+  <div id="roleContainer">
+    <select id="role">
+      <option value="user">User</option>
+      <option value="lawyer">Lawyer</option>
+    </select>
+    <button id="loginBtn">Login</button>
+  </div>
+  <p id="status">Please choose a role and log in.</p>
+
   <div id="chatContainer">
     <div id="chatBox"></div>
     <form id="messageForm">

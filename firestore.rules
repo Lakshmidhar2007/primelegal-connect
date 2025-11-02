@@ -2,20 +2,71 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // helper
+    function isSignedIn() {
+      return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // read-only public lawyer profiles (anyone can read/list)
     match /lawyer_profiles/{lawyerId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == lawyerId;
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
 
-    match /chats/{chatId} {
-      allow read, write: if request.auth != null;
-      match /messages/{messageId} {
-        allow read, write: if request.auth != null;
+    // users - private to owner
+    match /users/{userId} {
+      allow create: if isSignedIn() && request.auth.uid == userId && request.resource.data.id == userId;
+      allow get, update, delete: if isOwner(userId);
+      allow list: if false;
+
+      match /cases/{caseId} {
+        allow create: if isOwner(userId);
+        // owner or assigned lawyer may read/update
+        allow get, update: if isOwner(userId) || (isSignedIn() && request.auth.uid == resource.data.lawyerId);
+        allow list: if isOwner(userId);
+        allow delete: if isOwner(userId);
       }
+    }
+
+    // chats metadata and subcollection messages
+    match /chats/{chatId} {
+      // create a chat when signed-in (your app will ensure correct userIds)
+      allow create: if isSignedIn();
+
+      // read/update/delete chat meta only if participant
+      allow get, update, delete: if isSignedIn() && (
+          request.auth.uid == resource.data.userId ||
+          request.auth.uid == resource.data.lawyerId
+      );
+
+      // list chats for the signed in user — query must be "where userId == auth.uid OR where lawyerId == auth.uid"
+      allow list: if isSignedIn()
+        && (
+          (request.query.where.field == "userId" && request.query.where.value == request.auth.uid)
+          || (request.query.where.field == "lawyerId" && request.query.where.value == request.auth.uid)
+        );
+
+      // messages are accessible only to chat participants
+      match /messages/{messageId} {
+        allow create: if isSignedIn() && (
+          request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.userId
+          || request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.lawyerId
+        );
+        allow read, list: if isSignedIn() && (
+          request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.userId
+          || request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.lawyerId
+        );
+      }
+    }
+
+    // block any other unintended access
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
