@@ -11,58 +11,87 @@
       getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot 
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // Replace this config with your own Firebase project config
+    import { 
+      getAuth, signInWithEmailAndPassword, onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    // 🔥 Your Firebase Config
     const firebaseConfig = {
-      apiKey: "AIzaSyAG0WkxynFzrsTMfvfkJ_S5hZxvMkA-FPc", // 👈 use your Web API Key here
-  authDomain: "studio-8593361603-692e2.firebaseapp.com",
-  projectId: "studio-8593361603-692e2",
-  storageBucket: "studio-8593361603-692e2.appspot.com",
-  messagingSenderId: "1046445083601",
-  appId: "1:1046445083601:web:fbeb9fecb968d001de2ef0"
+      apiKey: "AIzaSyAG0WkxynFzrsTMfvfkJ_S5hZxvMkA-FPc",
+      authDomain: "studio-8593361603-692e2.firebaseapp.com",
+      projectId: "studio-8593361603-692e2",
+      storageBucket: "studio-8593361603-692e2.appspot.com",
+      messagingSenderId: "1046445083601",
+      appId: "1:1046445083601:web:fbeb9fecb968d001de2ef0"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
     // ======== Chat Logic ========
-    const messagesRef = collection(db, "messages");
-
+    const chatBox = document.getElementById("chatBox");
     const form = document.getElementById("messageForm");
     const input = document.getElementById("messageInput");
-    const chatBox = document.getElementById("chatBox");
+    const status = document.getElementById("status");
 
-    // Temporary demo user IDs (replace with your auth UIDs)
-    const senderId = "user1";
-    const receiverId = "user2";
+    // For demo, we’ll use a fixed chatId.
+    // In your app, this should be dynamically generated based on user-lawyer pair.
+    const chatId = "primelegal_demo_chat";
+    const messagesRef = collection(db, `chats/${chatId}/messages`);
 
-    // Send a message
-    async function sendMessage(e) {
+    // ======== Auth Section ========
+    // Replace with real user credentials in production
+    const demoEmail = "lakshmidhar2007@gmail.com";
+    const demoPassword = "123456"; // make sure this exists in your Firebase Auth users
+
+    async function login() {
+      try {
+        await signInWithEmailAndPassword(auth, demoEmail, demoPassword);
+      } catch (error) {
+        console.error("Login failed:", error.message);
+        status.textContent = "Login failed. Check credentials.";
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        status.textContent = "✅ Logged in as: " + user.email;
+        startChat();
+      } else {
+        status.textContent = "🔒 Signing in...";
+        login();
+      }
+    });
+
+    // ======== Start Chat ========
+    function startChat() {
+      const q = query(messagesRef, orderBy("timestamp", "asc"));
+      onSnapshot(q, (snapshot) => {
+        chatBox.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const msg = doc.data();
+          const messageDiv = document.createElement("div");
+          messageDiv.className = msg.senderId === auth.currentUser.uid ? "sent" : "received";
+          messageDiv.textContent = msg.text;
+          chatBox.appendChild(messageDiv);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
+    }
+
+    // ======== Send Message ========
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = input.value.trim();
-      if (!text) return;
+      if (!text || !auth.currentUser) return;
       await addDoc(messagesRef, {
-        senderId,
-        receiverId,
+        senderId: auth.currentUser.uid,
         text,
         timestamp: serverTimestamp()
       });
       input.value = "";
-    }
-
-    form.addEventListener("submit", sendMessage);
-
-    // Listen for messages
-    const q = query(messagesRef, orderBy("timestamp", "asc"));
-    onSnapshot(q, (snapshot) => {
-      chatBox.innerHTML = "";
-      snapshot.forEach((doc) => {
-        const msg = doc.data();
-        const messageDiv = document.createElement("div");
-        messageDiv.className = msg.senderId === senderId ? "sent" : "received";
-        messageDiv.textContent = msg.text;
-        chatBox.appendChild(messageDiv);
-      });
-      chatBox.scrollTop = chatBox.scrollHeight;
     });
   </script>
 
@@ -77,6 +106,11 @@
       margin: 0;
     }
     h2 { margin: 10px; }
+    #status {
+      margin-bottom: 10px;
+      color: #555;
+      font-size: 0.9em;
+    }
     #chatContainer {
       background: white;
       border-radius: 12px;
@@ -139,6 +173,7 @@
 </head>
 <body>
   <h2>PrimeLegal Chat</h2>
+  <p id="status">Connecting...</p>
   <div id="chatContainer">
     <div id="chatBox"></div>
     <form id="messageForm">
