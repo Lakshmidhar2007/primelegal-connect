@@ -30,11 +30,12 @@ function LawyerDashboard() {
 
   useEffect(() => {
     const fetchClientInfo = async () => {
+      setIsClientInfoLoading(true);
       if (!cases || cases.length === 0 || !firestore) {
         setCasesWithClientInfo([]);
+        setIsClientInfoLoading(false);
         return;
       }
-      setIsClientInfoLoading(true);
       
       const userIds = [...new Set(cases.map(c => c.userId).filter(Boolean))];
       const usersData: Record<string, any> = {};
@@ -97,4 +98,3 @@ export default function LawyerDashboardPage() {
     </Suspense>
   )
 }
-    
