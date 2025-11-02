@@ -26,7 +26,7 @@ type ChatItem = {
 }
 
 function MessagesList() {
-    const { user } = useUser();
+    const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { t } = useTranslation();
     const [combinedChats, setCombinedChats] = useState<ChatItem[]>([]);
@@ -34,14 +34,14 @@ function MessagesList() {
     const [isInfoLoading, setIsInfoLoading] = useState(false);
 
     const userChatsQuery = useMemoFirebase(() => {
-        if (firestore && user) {
+        if (firestore && user?.uid) {
             return query(collection(firestore, 'chats'), where('userId', '==', user.uid));
         }
         return null;
     }, [firestore, user]);
 
     const lawyerChatsQuery = useMemoFirebase(() => {
-        if (firestore && user) {
+        if (firestore && user?.uid) {
             return query(collection(firestore, 'chats'), where('lawyerId', '==', user.uid));
         }
         return null;
@@ -83,7 +83,7 @@ function MessagesList() {
                 });
                 lawyerProfilesSnapshot.forEach(doc => {
                     // lawyer_profiles data is generally more public and complete for lawyers
-                    usersData[doc.id] = { ...usersData[doc.id], ...doc.data() };
+                    usersData[doc.data().userId] = { ...usersData[doc.data().userId], ...doc.data() };
                 });
             }
             
@@ -94,7 +94,7 @@ function MessagesList() {
         fetchOtherUsersInfo();
     }, [combinedChats, firestore, user]);
 
-    const isListLoading = isUserChatsLoading || isLawyerChatsLoading || isInfoLoading;
+    const isListLoading = isUserLoading || isUserChatsLoading || isLawyerChatsLoading || isInfoLoading;
 
     const getOtherUserInfo = (chat: ChatItem) => {
         if (!user) return { name: '...', photoURL: '' };
@@ -125,13 +125,16 @@ function MessagesList() {
                 ) : combinedChats && combinedChats.length > 0 ? (
                     combinedChats.map(chat => {
                         const { name, photoURL } = getOtherUserInfo(chat);
+                        const otherId = chat.userId === user?.uid ? chat.lawyerId : chat.userId;
+                        const otherUser = otherUsersInfo[otherId];
+
                         return (
                             <Link href={`/chat?id=${chat.id}`} key={chat.id}>
                                 <Card className="hover:bg-muted/50 transition-colors">
                                     <CardContent className="p-4 flex items-center gap-4">
                                         <Avatar className="h-12 w-12">
                                             <AvatarImage src={photoURL} />
-                                            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                                            <AvatarFallback>{name?.charAt(0) || 'U'}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 overflow-hidden">
                                             <h3 className="font-semibold truncate">{t(name)}</h3>
