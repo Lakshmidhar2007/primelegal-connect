@@ -15,15 +15,14 @@ function LawyerDashboard() {
   const firestore = useFirestore();
 
   const casesQuery = useMemoFirebase(() => {
-    if (firestore && user) {
-      // Correctly construct the collectionGroup query
+    if (firestore && user?.uid) {
       return query(
         collectionGroup(firestore, 'cases'),
         where('lawyerId', '==', user.uid)
       );
     }
     return null;
-  }, [firestore, user]);
+  }, [firestore, user?.uid]);
 
   const { data: cases, isLoading: areCasesLoading } = useCollection(casesQuery);
   const [casesWithClientInfo, setCasesWithClientInfo] = useState<any[]>([]);
