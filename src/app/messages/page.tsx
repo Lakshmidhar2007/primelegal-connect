@@ -20,64 +20,91 @@ type ChatItem = {
     createdAt: {
         seconds: number;
         nanoseconds: number;
-    },
-    lawyerName?: string;
-    lawyerPhotoURL?: string;
+    };
+    otherUserName?: string;
+    otherUserPhotoURL?: string;
 }
 
 function MessagesList() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { t } = useTranslation();
-    const [chatsWithLawyerInfo, setChatsWithLawyerInfo] = useState<ChatItem[]>([]);
-    const [isLawyerInfoLoading, setIsLawyerInfoLoading] = useState(false);
+    const [combinedChats, setCombinedChats] = useState<ChatItem[]>([]);
+    const [otherUsersInfo, setOtherUsersInfo] = useState<Record<string, any>>({});
+    const [isInfoLoading, setIsInfoLoading] = useState(false);
 
-    const chatsQuery = useMemoFirebase(() => {
+    const userChatsQuery = useMemoFirebase(() => {
         if (firestore && user) {
-            return query(
-                collection(firestore, 'chats'),
-                where('userId', '==', user.uid),
-                orderBy('createdAt', 'desc')
-            );
+            return query(collection(firestore, 'chats'), where('userId', '==', user.uid));
         }
         return null;
     }, [firestore, user]);
 
-    const { data: chats, isLoading } = useCollection<ChatItem>(chatsQuery);
+    const lawyerChatsQuery = useMemoFirebase(() => {
+        if (firestore && user) {
+            return query(collection(firestore, 'chats'), where('lawyerId', '==', user.uid));
+        }
+        return null;
+    }, [firestore, user]);
+
+    const { data: userChats, isLoading: isUserChatsLoading } = useCollection<ChatItem>(userChatsQuery);
+    const { data: lawyerChats, isLoading: isLawyerChatsLoading } = useCollection<ChatItem>(lawyerChatsQuery);
 
     useEffect(() => {
-        const fetchLawyerInfo = async () => {
-            if (!chats || chats.length === 0 || !firestore) {
-                setChatsWithLawyerInfo([]);
-                return;
-            }
-            setIsLawyerInfoLoading(true);
+        const allChats = [...(userChats || []), ...(lawyerChats || [])];
+        const uniqueChats = Array.from(new Map(allChats.map(chat => [chat.id, chat])).values());
+        uniqueChats.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        setCombinedChats(uniqueChats);
+    }, [userChats, lawyerChats]);
 
-            const lawyerIds = [...new Set(chats.map(c => c.lawyerId))];
-            const lawyersData: Record<string, any> = {};
+    useEffect(() => {
+        const fetchOtherUsersInfo = async () => {
+            if (combinedChats.length === 0 || !firestore || !user) return;
+            
+            setIsInfoLoading(true);
 
-            if (lawyerIds.length > 0) {
-                const lawyersQuery = query(collection(firestore, 'lawyer_profiles'), where('userId', 'in', lawyerIds));
-                const lawyersSnapshot = await getDocs(lawyersQuery);
-                lawyersSnapshot.forEach(doc => {
-                    lawyersData[doc.id] = doc.data();
+            const otherUserIds = combinedChats.map(chat => chat.userId === user.uid ? chat.lawyerId : chat.userId);
+            const uniqueOtherUserIds = [...new Set(otherUserIds)];
+            
+            const usersData: Record<string, any> = {};
+
+            if(uniqueOtherUserIds.length > 0) {
+                // Fetch from both users and lawyer_profiles collections
+                const userProfilesQuery = query(collection(firestore, 'users'), where('id', 'in', uniqueOtherUserIds));
+                const lawyerProfilesQuery = query(collection(firestore, 'lawyer_profiles'), where('userId', 'in', uniqueOtherUserIds));
+
+                const [userProfilesSnapshot, lawyerProfilesSnapshot] = await Promise.all([
+                    getDocs(userProfilesQuery),
+                    getDocs(lawyerProfilesQuery)
+                ]);
+
+                userProfilesSnapshot.forEach(doc => {
+                    usersData[doc.id] = doc.data();
+                });
+                lawyerProfilesSnapshot.forEach(doc => {
+                    // lawyer_profiles data is generally more public and complete for lawyers
+                    usersData[doc.id] = { ...usersData[doc.id], ...doc.data() };
                 });
             }
-
-            const enrichedChats = chats.map(chat => ({
-                ...chat,
-                lawyerName: lawyersData[chat.lawyerId] ? `${lawyersData[chat.lawyerId].firstName} ${lawyersData[chat.lawyerId].lastName}` : 'Legal Expert',
-                lawyerPhotoURL: lawyersData[chat.lawyerId]?.photoURL,
-            }));
-
-            setChatsWithLawyerInfo(enrichedChats);
-            setIsLawyerInfoLoading(false);
+            
+            setOtherUsersInfo(usersData);
+            setIsInfoLoading(false);
         };
 
-        fetchLawyerInfo();
-    }, [chats, firestore]);
+        fetchOtherUsersInfo();
+    }, [combinedChats, firestore, user]);
 
-    const isListLoading = isLoading || isLawyerInfoLoading;
+    const isListLoading = isUserChatsLoading || isLawyerChatsLoading || isInfoLoading;
+
+    const getOtherUserInfo = (chat: ChatItem) => {
+        if (!user) return { name: '...', photoURL: '' };
+        const otherId = chat.userId === user.uid ? chat.lawyerId : chat.userId;
+        const otherUser = otherUsersInfo[otherId];
+        return {
+            name: otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : t('Legal Expert'),
+            photoURL: otherUser?.photoURL
+        };
+    };
 
     return (
         <div className="container py-12 lg:py-16">
@@ -95,26 +122,29 @@ function MessagesList() {
                             </CardContent>
                         </Card>
                     ))
-                ) : chatsWithLawyerInfo && chatsWithLawyerInfo.length > 0 ? (
-                    chatsWithLawyerInfo.map(chat => (
-                        <Link href={`/chat?id=${chat.id}`} key={chat.id}>
-                            <Card className="hover:bg-muted/50 transition-colors">
-                                <CardContent className="p-4 flex items-center gap-4">
-                                    <Avatar className="h-12 w-12">
-                                        <AvatarImage src={chat.lawyerPhotoURL} />
-                                        <AvatarFallback>{chat.lawyerName?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 overflow-hidden">
-                                        <h3 className="font-semibold truncate">{t(chat.lawyerName || 'Legal Expert')}</h3>
-                                        <p className="text-sm text-muted-foreground truncate">{t(chat.lastMessage)}</p>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground shrink-0">
-                                        {chat.createdAt ? formatDistanceToNow(new Date(chat.createdAt.seconds * 1000), { addSuffix: true }) : ''}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    ))
+                ) : combinedChats && combinedChats.length > 0 ? (
+                    combinedChats.map(chat => {
+                        const { name, photoURL } = getOtherUserInfo(chat);
+                        return (
+                            <Link href={`/chat?id=${chat.id}`} key={chat.id}>
+                                <Card className="hover:bg-muted/50 transition-colors">
+                                    <CardContent className="p-4 flex items-center gap-4">
+                                        <Avatar className="h-12 w-12">
+                                            <AvatarImage src={photoURL} />
+                                            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 overflow-hidden">
+                                            <h3 className="font-semibold truncate">{t(name)}</h3>
+                                            <p className="text-sm text-muted-foreground truncate">{t(chat.lastMessage)}</p>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground shrink-0">
+                                            {chat.createdAt ? formatDistanceToNow(new Date(chat.createdAt.seconds * 1000), { addSuffix: true }) : ''}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        )
+                    })
                 ) : (
                     <div className="text-center text-muted-foreground py-16">
                         <p>{t('You have no active conversations.')}</p>
