@@ -88,9 +88,9 @@ export default function CaseTrackingPage() {
                   ))
                 ) : cases && cases.length > 0 ? (
                   cases.map((caseItem: any) => (
-                    <TableRow key={caseItem.caseId}>
-                      <TableCell className="font-medium">{t(caseItem.caseSubject || caseItem.description)}</TableCell>
-                      <TableCell>{format(new Date(caseItem.submitted || caseItem.submittedAt), 'PPP')}</TableCell>
+                    <TableRow key={caseItem.id}>
+                      <TableCell className="font-medium">{t(caseItem.fullName)}</TableCell>
+                      <TableCell>{format(new Date(caseItem.submittedAt), 'PPP')}</TableCell>
                       <TableCell className="text-right">
                         <Badge variant={getStatusVariant(caseItem.status)}>{t(caseItem.status)}</Badge>
                       </TableCell>
