@@ -100,5 +100,13 @@ service cloud.firestore {
       allow update: if isExistingOwner(lawyerId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(lawyerId);
     }
+    /**
+     * @description Rules for the /messages/{messageId} collection (chat feature)
+     * @note For now, allows public read/write access for testing.
+     *       You can tighten this later to only signed-in users.
+     */
+    match /messages/{messageId} {
+      allow read, write: if true;
+    }
   }
 }
