@@ -37,11 +37,9 @@ function LawyerDashboard() {
       }
       setIsClientInfoLoading(true);
       
-      // Extract unique user IDs from the cases
       const userIds = [...new Set(cases.map(c => c.userId).filter(Boolean))];
       const usersData: Record<string, any> = {};
 
-      // Fetch user documents in batches of 30 (Firestore 'in' query limit)
       if (userIds.length > 0) {
         const userChunks = [];
         for (let i = 0; i < userIds.length; i += 30) {
@@ -59,13 +57,9 @@ function LawyerDashboard() {
         }));
       }
       
-      const enrichedCases = cases.map(c => ({
-          ...c,
-          // Use the fetched user data to add the client's full name.
-          fullName: usersData[c.userId] ? `${usersData[c.userId].firstName} ${usersData[c.userId].lastName}` : 'Unknown Client'
-      }));
-
-      setCasesWithClientInfo(enrichedCases);
+      // The `fullName` for the client is now directly on the case document.
+      // So no extra fetching is needed. We just use the data we already have.
+      setCasesWithClientInfo(cases);
       setIsClientInfoLoading(false);
     };
 

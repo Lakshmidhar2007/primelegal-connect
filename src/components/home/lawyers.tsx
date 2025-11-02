@@ -47,7 +47,7 @@ export function Lawyers() {
     } else {
         const existingCase = cases?.find((c:any) => c.lawyerId === lawyerId);
         if (existingCase) {
-             router.push(`/chat?id=${existingCase.id}`);
+             router.push(`/chat?id=${existingCase.chatId}`);
         } else {
             setSelectedLawyerId(lawyerId);
             setIsQuestionDialogOpen(true);
@@ -60,7 +60,7 @@ export function Lawyers() {
     const existingCase = cases.find((c: any) => c.lawyerId === lawyerId);
 
     if (existingCase && existingCase.status === 'Approved') {
-      return { text: t('Chat'), icon: <MessageSquare className="ml-2 h-4 w-4" />, disabled: false, action: () => router.push(`/chat?id=${existingCase.id}`) };
+      return { text: t('Chat'), icon: <MessageSquare className="ml-2 h-4 w-4" />, disabled: false, action: () => router.push(`/chat?id=${existingCase.chatId}`) };
     }
     if (existingCase) {
         return { text: t('Request Sent'), icon: <Check className="ml-2 h-4 w-4" />, disabled: true, action: () => {} };

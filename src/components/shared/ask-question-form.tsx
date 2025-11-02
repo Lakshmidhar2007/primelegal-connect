@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { AuthDialog } from '@/components/auth/auth-dialog';
 import { useTranslation } from '@/hooks/use-translation';
 import { Input } from '../ui/input';
@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -92,9 +92,12 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
     setError(null);
 
     try {
+        const caseId = uuidv4();
+        const caseRef = doc(firestore, 'users', user.uid, 'cases', caseId);
+
         const caseData = {
             ...values,
-            id: uuidv4(),
+            id: caseId,
             userId: user.uid,
             lawyerId: lawyerId,
             status: 'Submitted',
@@ -103,8 +106,7 @@ export function AskQuestionForm({ onSuccess, lawyerId }: AskQuestionFormProps) {
             documents: values.documents ? Array.from(values.documents).map((file: any) => file.name) : [],
         };
         
-        const casesCollectionRef = collection(firestore, 'users', user.uid, 'cases');
-        await addDoc(casesCollectionRef, caseData);
+        setDocumentNonBlocking(caseRef, caseData, {});
 
         toast({
             title: t('Case Submitted Successfully'),

@@ -176,7 +176,7 @@
       "type": "object",
       "description": "Represents a legal case submitted by a user to a specific lawyer.",
       "properties": {
-        "caseId": { "type": "string" },
+        "id": { "type": "string" },
         "userId": { "type": "string" },
         "lawyerId": { "type": "string" },
         "chatId": { "type": "string" },
@@ -196,33 +196,33 @@
         "previousStepsDescription": { "type": "string" },
         "documents": { "type": "array", "items": { "type": "string" } }
       },
-      "required": ["caseId", "userId", "lawyerId", "status", "submittedAt", "fullName", "email", "description"]
+      "required": ["id", "userId", "lawyerId", "status", "submittedAt", "fullName", "email", "description"]
     },
     "Chat": {
         "title": "Chat",
         "type": "object",
         "description": "Represents a chat session between a user and a lawyer.",
         "properties": {
-            "chatId": { "type": "string" },
+            "id": { "type": "string" },
             "caseId": { "type": "string" },
             "userId": { "type": "string" },
             "lawyerId": { "type": "string" },
-            "createdAt": { "type": "string", "format": "date-time" }
+            "createdAt": { "type": "string", "format": "date-time" },
+            "lastMessage": { "type": "string" }
         },
-        "required": ["chatId", "caseId", "userId", "lawyerId", "createdAt"]
+        "required": ["id", "caseId", "userId", "lawyerId", "createdAt"]
     },
     "ChatMessage": {
         "title": "ChatMessage",
         "type": "object",
         "description": "Represents a single message in a chat.",
         "properties": {
-            "messageId": { "type": "string" },
-            "chatId": { "type": "string" },
+            "id": { "type": "string" },
             "senderId": { "type": "string" },
             "text": { "type": "string" },
             "timestamp": { "type": "string", "format": "date-time" }
         },
-        "required": ["messageId", "chatId", "senderId", "text", "timestamp"]
+        "required": ["id", "senderId", "text", "timestamp"]
     }
   },
   "auth": {
@@ -254,7 +254,7 @@
         "definition": {
             "entityName": "Case",
             "schema": { "$ref": "#/backend/entities/Case" },
-            "description": "Stores case submissions from a user. Only readable/writable by the user."
+            "description": "Stores case submissions from a user. Readable/writable by the user and the assigned lawyer."
         }
       },
       {
@@ -294,6 +294,6 @@
           }
       }
     ],
-    "reasoning": "Cases are now stored in a subcollection under each user for better security and data locality. The top-level 'cases' collection has been removed. This simplifies security rules and queries."
+    "reasoning": "Cases are stored in a subcollection under each user for security. A top-level 'chats' collection manages conversations, linking users and lawyers. This structure simplifies security rules and ensures data privacy."
   }
 }

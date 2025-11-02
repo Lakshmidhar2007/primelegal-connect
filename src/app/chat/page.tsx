@@ -1,9 +1,9 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useFirestore, useCollection, useUser, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, query, orderBy, Timestamp, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useCollection, useUser, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, useDoc } from '@/firebase';
+import { collection, query, orderBy, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-translation';
 import { v4 as uuidv4 } from 'uuid';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const chatSchema = z.object({
   message: z.string().min(1, 'Message cannot be empty'),
@@ -26,16 +27,53 @@ type ChatMessage = {
   id: string;
   text: string;
   senderId: string;
-  senderType: 'user' | 'lawyer';
-  timestamp: Timestamp;
+  timestamp: any;
 };
+
+type Profile = {
+    id: string;
+    photoURL?: string;
+    firstName?: string;
+    lastName?: string;
+}
 
 function ChatRoom() {
   const searchParams = useSearchParams();
   const chatId = searchParams.get('id');
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { t } = useTranslation();
+  
+  const [otherUserProfile, setOtherUserProfile] = useState<Profile | null>(null);
+
+  const chatDocRef = useMemoFirebase(() => {
+      if(firestore && chatId) return doc(firestore, 'chats', chatId);
+      return null;
+  }, [firestore, chatId]);
+
+  const { data: chatData } = useDoc(chatDocRef);
+
+  useEffect(() => {
+    const fetchOtherUser = async () => {
+        if (!chatData || !firestore || !user) return;
+        const otherUserId = (chatData as any).userId === user.uid ? (chatData as any).lawyerId : (chatData as any).userId;
+        
+        let otherUserDoc;
+        // Check if the other user is a lawyer to fetch from the correct collection
+        const lawyerProfileRef = doc(firestore, 'lawyer_profiles', otherUserId);
+        otherUserDoc = await getDoc(lawyerProfileRef);
+        
+        if (!otherUserDoc.exists()) {
+             const userProfileRef = doc(firestore, 'users', otherUserId);
+             otherUserDoc = await getDoc(userProfileRef);
+        }
+
+        if (otherUserDoc.exists()) {
+            setOtherUserProfile(otherUserDoc.data() as Profile);
+        }
+    };
+    fetchOtherUser();
+  }, [chatData, firestore, user]);
 
   const messagesQuery = useMemoFirebase(() => {
     if (firestore && chatId) {
@@ -44,7 +82,8 @@ function ChatRoom() {
     return null;
   }, [firestore, chatId]);
 
-  const { data: messages } = useCollection<ChatMessage>(messagesQuery);
+  const { data: messages, isLoading: areMessagesLoading } = useCollection<ChatMessage>(messagesQuery);
+  
   const form = useForm<z.infer<typeof chatSchema>>({
     resolver: zodResolver(chatSchema),
     defaultValues: {
@@ -53,29 +92,45 @@ function ChatRoom() {
   });
 
   const onSubmit = async (values: z.infer<typeof chatSchema>) => {
-    if (!chatId || !user || !firestore) return;
+    if (!chatId || !user || !firestore || !chatDocRef) return;
 
     const messagesRef = collection(firestore, 'chats', chatId, 'messages');
     const newMessage = {
       id: uuidv4(),
       text: values.message,
       senderId: user.uid,
-      senderType: 'user' as 'user' | 'lawyer', // Assume sender is always a user for this form
       timestamp: serverTimestamp(),
     };
     
-    await addDocumentNonBlocking(messagesRef, newMessage);
+    addDocumentNonBlocking(messagesRef, newMessage);
+    setDocumentNonBlocking(chatDocRef, { lastMessage: values.message, createdAt: serverTimestamp() }, { merge: true });
     form.reset();
   };
+  
+  const isLoading = isUserLoading || areMessagesLoading;
+  const getInitials = (profile: Profile | null) => {
+      if(!profile) return '';
+      return `${profile.firstName?.charAt(0) || ''}${profile.lastName?.charAt(0) || ''}`
+  }
 
   return (
     <div className="container py-12 lg:py-16">
-      <PageHeader title={t("Chat Room")} subtitle={t("Communicate with your legal expert.")} />
+      <PageHeader 
+        title={t(otherUserProfile ? `${otherUserProfile.firstName} ${otherUserProfile.lastName}` : "Chat Room")} 
+        subtitle={t("Communicate with your legal expert.")} 
+      />
       <Card className="mt-8">
         <CardContent className="p-0">
           <div className="p-6 h-[600px] overflow-y-auto flex flex-col space-y-4">
-            {messages?.map((msg) => {
+            {isLoading ? (
+                 <div className="space-y-4">
+                    <Skeleton className="h-12 w-1/2" />
+                    <Skeleton className="h-12 w-1/2 ml-auto" />
+                    <Skeleton className="h-12 w-1/2" />
+                 </div>
+            ) : messages?.map((msg) => {
               const isSender = msg.senderId === user?.uid;
+              const profile = isSender ? null : otherUserProfile;
               return (
                 <div
                   key={msg.id}
@@ -86,8 +141,8 @@ function ChatRoom() {
                 >
                   {!isSender && (
                     <Avatar className="h-8 w-8">
-                      {/* You can add lawyer's avatar logic here */}
-                      <AvatarFallback>L</AvatarFallback>
+                      <AvatarImage src={profile?.photoURL} />
+                      <AvatarFallback>{getInitials(profile)}</AvatarFallback>
                     </Avatar>
                   )}
                   <div
@@ -121,7 +176,7 @@ function ChatRoom() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" size="icon">
+                <Button type="submit" size="icon" disabled={!form.formState.isValid || form.formState.isSubmitting}>
                   <Send className="h-5 w-5" />
                 </Button>
               </form>
