@@ -23,27 +23,6 @@ interface FirebaseProviderProps {
   firestore: Firestore;
 }
 
-function FirebaseAuthListener({ children }: { children: React.ReactNode }) {
-  const { auth } = useAuth();
-  const [isUserLoading, setIsUserLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // The user state is managed in the main provider,
-      // this just determines the loading state.
-      setIsUserLoading(false);
-    });
-    return () => unsubscribe();
-  }, [auth]);
-
-  if (isUserLoading) {
-    return <div className="flex items-center justify-center min-h-screen w-full">Loading...</div>;
-  }
-
-  return <>{children}</>;
-}
-
-
 export default function FirebaseProvider({
   children,
   firebaseApp,
