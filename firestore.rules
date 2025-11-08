@@ -32,6 +32,12 @@ service cloud.firestore {
         allow delete: if isOwner(userId);
       }
     }
+    
+    // allow lawyers to query their cases via collectionGroup
+    match /{path=**}/cases/{caseId} {
+        allow list: if isSignedIn() && request.query.where.field == "lawyerId" && request.query.where.value == request.auth.uid;
+    }
+
 
     // chats metadata and subcollection messages
     match /chats/{chatId} {

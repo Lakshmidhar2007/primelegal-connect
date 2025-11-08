@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -28,14 +28,14 @@ export default function CaseTrackingPage() {
   const firestore = useFirestore();
   const { t } = useTranslation();
 
-  const userCasesCollectionRef = useMemoFirebase(() => {
-    if (firestore && user) {
-      return collection(firestore, 'users', user.uid, 'cases');
+  const userCasesQuery = useMemoFirebase(() => {
+    if (firestore && user?.uid) {
+      return query(collection(firestore, 'users', user.uid, 'cases'));
     }
     return null;
-  }, [firestore, user]);
+  }, [firestore, user?.uid]);
 
-  const { data: cases, isLoading: areCasesLoading } = useCollection(userCasesCollectionRef);
+  const { data: cases, isLoading: areCasesLoading } = useCollection(userCasesQuery);
 
   const isLoading = isUserLoading || areCasesLoading;
 
@@ -44,6 +44,7 @@ export default function CaseTrackingPage() {
       case 'Submitted':
         return 'secondary';
       case 'In Review':
+        return 'default';
       case 'Approved':
         return 'default';
       case 'Resolved':
@@ -72,8 +73,8 @@ export default function CaseTrackingPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("Subject")}</TableHead>
-                  <TableHead className="w-[200px]">{t("Date Submitted")}</TableHead>
+                  <TableHead>{t("Case Subject")}</TableHead>
+                  <TableHead>{t("Date Submitted")}</TableHead>
                   <TableHead className="w-[180px] text-right">{t("Status")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -89,8 +90,8 @@ export default function CaseTrackingPage() {
                 ) : cases && cases.length > 0 ? (
                   cases.map((caseItem: any) => (
                     <TableRow key={caseItem.id}>
-                      <TableCell className="font-medium">{t(caseItem.fullName)}</TableCell>
-                      <TableCell>{format(new Date(caseItem.submittedAt), 'PPP')}</TableCell>
+                      <TableCell className="font-medium">{t(caseItem.legalIssueType)}</TableCell>
+                      <TableCell>{caseItem.submittedAt ? format(new Date(caseItem.submittedAt), 'PPP') : 'N/A'}</TableCell>
                       <TableCell className="text-right">
                         <Badge variant={getStatusVariant(caseItem.status)}>{t(caseItem.status)}</Badge>
                       </TableCell>

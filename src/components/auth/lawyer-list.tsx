@@ -1,28 +1,70 @@
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import { useTranslation } from '@/hooks/use-translation';
+import { useState } from 'react';
+import { AskQuestionDialog } from '../shared/ask-question-dialog';
+import { AuthDialog } from './auth-dialog';
+import { useRouter } from 'next/navigation';
 
-export function LawyerList() {
+type LawyerListProps = {
+    isConnectMode?: boolean;
+}
+
+export function LawyerList({ isConnectMode = false }: LawyerListProps) {
   const firestore = useFirestore();
   const { t } = useTranslation();
+  const { user } = useUser();
+  const router = useRouter();
+
+  const [selectedLawyerId, setSelectedLawyerId] = useState<string | null>(null);
+  const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   
   const lawyersQuery = useMemoFirebase(() => {
     if (firestore) {
-      return collection(firestore, 'lawyer_profiles');
+      return query(collection(firestore, 'lawyer_profiles'));
     }
     return null;
   }, [firestore]);
 
   const { data: lawyers, isLoading } = useCollection(lawyersQuery);
 
+  const handleConnectClick = (lawyerId: string) => {
+    if (!user) {
+        setIsAuthOpen(true);
+        return;
+    }
+
+    if (isConnectMode) {
+      const form = document.querySelector('form');
+      if (form) {
+        // You might want to pass lawyerId to the form here
+        // For now, we'll just show the dialog
+        setIsQuestionDialogOpen(true);
+        setSelectedLawyerId(lawyerId);
+      }
+    } else {
+       router.push(`/submit-documents?lawyerId=${lawyerId}`);
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setIsQuestionDialogOpen(open);
+    if (!open) {
+        setSelectedLawyerId(null);
+    }
+  }
+
+
   return (
+    <>
     <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
       {isLoading ? (
         Array.from({ length: 3 }).map((_, i) => (
@@ -51,9 +93,13 @@ export function LawyerList() {
                 <h3 className="font-semibold text-lg">{lawyer.firstName} {lawyer.lastName}</h3>
                 <p className="text-sm text-muted-foreground">{t(lawyer.specialty || 'Legal Professional')}</p>
               </div>
-              <Button asChild variant="outline">
-                <Link href={`/lawyers/profile?id=${lawyer.id}`}>{t('View')}</Link>
-              </Button>
+              {isConnectMode ? (
+                 <Button onClick={() => handleConnectClick(lawyer.id)}>{t('Select')}</Button>
+              ) : (
+                <Button asChild variant="outline">
+                    <Link href={`/lawyers/profile?id=${lawyer.id}`}>{t('View')}</Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))
@@ -63,5 +109,14 @@ export function LawyerList() {
         </div>
       )}
     </div>
+    {isQuestionDialogOpen && selectedLawyerId && (
+        <AskQuestionDialog
+          open={isQuestionDialogOpen}
+          onOpenChange={handleDialogClose}
+          lawyerId={selectedLawyerId}
+        />
+      )}
+      <AuthDialog open={isAuthOpen} onOpenChange={setIsAuthOpen} />
+    </>
   );
 }

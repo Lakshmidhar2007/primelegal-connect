@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 
 function LawyerDashboard() {
   const { t } = useTranslation();
-  const { user } = useUser();
+  const { user, isUserLoading: isUserLoading } = useUser();
   const firestore = useFirestore();
 
   const casesQuery = useMemoFirebase(() => {
@@ -30,12 +30,12 @@ function LawyerDashboard() {
 
   useEffect(() => {
     const fetchClientInfo = async () => {
-      setIsClientInfoLoading(true);
       if (!cases || cases.length === 0 || !firestore) {
         setCasesWithClientInfo([]);
         setIsClientInfoLoading(false);
         return;
       }
+      setIsClientInfoLoading(true);
       
       const userIds = [...new Set(cases.map(c => c.userId).filter(Boolean))];
       const usersData: Record<string, any> = {};
@@ -57,8 +57,6 @@ function LawyerDashboard() {
         }));
       }
       
-      // The `fullName` for the client is now directly on the case document.
-      // So no extra fetching is needed. We just use the data we already have.
       const enrichedCases = cases.map(caseItem => ({
         ...caseItem,
         fullName: caseItem.fullName || usersData[caseItem.userId]?.firstName + ' ' + usersData[caseItem.userId]?.lastName || 'Unknown Client'
@@ -71,7 +69,7 @@ function LawyerDashboard() {
     fetchClientInfo();
   }, [cases, firestore]);
 
-  const isLoading = areCasesLoading || isClientInfoLoading;
+  const isLoading = isUserLoading || areCasesLoading || isClientInfoLoading;
 
   return (
     <div className="container py-12 lg:py-24">
